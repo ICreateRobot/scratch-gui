@@ -60,14 +60,14 @@ const SettingsMenu = ({
                 {canChangeLanguage && <LanguageMenu onRequestCloseSettings={onRequestClose} />}
                 {canChangeTheme && (
                     <React.Fragment>
-                        <TWGuiThemeMenu />
+                        {/* <TWGuiThemeMenu />
                         <TWBlocksThemeMenu
                             onOpenCustomSettings={onOpenCustomSettings}
-                        />
+                        /> */}
                         <TWAccentThemeMenu />
                     </React.Fragment>
                 )}
-                {onClickDesktopSettings && <TWDesktopSettings onClick={onClickDesktopSettings} />}
+                {/* {onClickDesktopSettings && <TWDesktopSettings onClick={onClickDesktopSettings} />} */}
             </MenuSection>
         </MenuBarMenu>
     </MenuLabel>
