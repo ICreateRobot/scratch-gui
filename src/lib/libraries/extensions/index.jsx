@@ -52,7 +52,10 @@ import returnIcon from './custom/return.svg';
 import galleryIcon from './gallery/gallery.svg';
 import {APP_NAME} from '../../brand';
 
+import robotteachable from './myExtension/robotteachable'
+
 export default [
+    robotteachable,
     {
         name: (
             <FormattedMessage
