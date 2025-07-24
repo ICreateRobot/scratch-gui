@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React , {useEffect, useState,useRef }from 'react';
 import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
@@ -50,6 +50,8 @@ import codeIcon from '!../../lib/tw-recolor/build!./icon--code.svg';
 import costumesIcon from '!../../lib/tw-recolor/build!./icon--costumes.svg';
 import soundsIcon from '!../../lib/tw-recolor/build!./icon--sounds.svg';
 
+import { setIsMaster ,setIsBricks,getIsBricks,setRobotIp,setCurrent, getCurrent} from 'scratch-gui/src/components/utils/utils.js';
+import TrainPage from '../TrainPage/TrainPage.jsx'
 const messages = defineMessages({
     addExtension: {
         id: 'gui.gui.addExtension',
@@ -159,6 +161,7 @@ const GUIComponent = props => {
         unknownPlatformModalVisible,
         invalidProjectModalVisible,
         vm,
+        onClickMaster,
         ...componentProps
     } = omit(props, 'dispatch');
     if (children) {
@@ -179,6 +182,14 @@ const GUIComponent = props => {
         FIXED_WIDTH +
         Math.max(0, customStageSize.width - FIXED_WIDTH)
     );
+
+    const [extensionName, setExtensionName] = useState(getCurrent().length>0 ? getCurrent() :'选择设备');
+    const [isTrain, setIsTrain] = useState(false);
+
+    const channelTrain=new BroadcastChannel('channelTrain')
+    channelTrain.addEventListener('message',(event)=>{
+        setIsTrain(event.data)
+    })
     return (<MediaQuery minWidth={unconstrainedWidth}>{isUnconstrained => {
         const stageSize = resolveStageSize(stageSizeMode, isUnconstrained);
 
@@ -324,6 +335,8 @@ const GUIComponent = props => {
                     onShare={onShare}
                     onStartSelectingFileUpload={onStartSelectingFileUpload}
                     onToggleLoginOpen={onToggleLoginOpen}
+                    onClickMaster={onClickMaster}
+                    extensionName={extensionName}
                 />
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
@@ -432,6 +445,7 @@ const GUIComponent = props => {
                             ) : null}
                         </Box>
 
+                        <TrainPage isTrain={isTrain}></TrainPage>
                         <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
                             <StageWrapper
                                 isFullScreen={isFullScreen}
@@ -540,7 +554,8 @@ GUIComponent.propTypes = {
     fontsModalVisible: PropTypes.bool,
     unknownPlatformModalVisible: PropTypes.bool,
     invalidProjectModalVisible: PropTypes.bool,
-    vm: PropTypes.instanceOf(VM).isRequired
+    vm: PropTypes.instanceOf(VM).isRequired,
+    onClickMaster: PropTypes.func,
 };
 GUIComponent.defaultProps = {
     backpackHost: null,

@@ -33,6 +33,7 @@ import ChangeUsername from '../../containers/tw-change-username.jsx';
 import CloudVariablesToggler from '../../containers/tw-cloud-toggler.jsx';
 import TWSaveStatus from './tw-save-status.jsx';
 
+import MasterController from 'scratch-gui/src/components/menu-bar/master-controller.jsx';
 import {openTipsLibrary, openSettingsModal, openRestorePointModal} from '../../reducers/modals';
 import {setPlayer} from '../../reducers/mode';
 import {
@@ -560,6 +561,11 @@ class MenuBar extends React.Component {
                             onRequestOpen={this.props.onClickSettings}
                             settingsMenuOpen={this.props.settingsMenuOpen}
                         />)}
+                         {(this.props.canChangeTheme || this.props.canChangeLanguage) && (
+                            <MasterController
+                            onClick={this.props.onClickMaster}
+                            value={this.props.extensionName}/>
+                         )}
                         {(this.props.canManageFiles) && (
                             <MenuLabel
                                 open={this.props.fileMenuOpen}
@@ -704,7 +710,7 @@ class MenuBar extends React.Component {
                                             </MenuItem>
                                         </MenuSection>
                                     )}
-                                    <MenuSection>
+                                    {/* <MenuSection>
                                         <MenuItem onClick={this.handleClickRestorePoints}>
                                             <FormattedMessage
                                                 defaultMessage="Restore points"
@@ -712,11 +718,11 @@ class MenuBar extends React.Component {
                                                 id="tw.menuBar.restorePoints"
                                             />
                                         </MenuItem>
-                                    </MenuSection>
+                                    </MenuSection> */}
                                 </MenuBarMenu>
                             </MenuLabel>
                         )}
-                        <MenuLabel
+                        {/* <MenuLabel
                             open={this.props.editMenuOpen}
                             onOpen={this.props.onClickEdit}
                             onClose={this.props.onRequestCloseEdit}
@@ -839,8 +845,8 @@ class MenuBar extends React.Component {
                                     </MenuItem>
                                 </MenuSection>
                             </MenuBarMenu>
-                        </MenuLabel>
-                        {this.props.isTotallyNormal && (
+                        </MenuLabel> */}
+                        {/* {this.props.isTotallyNormal && (
                             <MenuLabel
                                 open={this.props.modeMenuOpen}
                                 onOpen={this.props.onClickMode}
@@ -923,7 +929,7 @@ class MenuBar extends React.Component {
                                     />
                                 </span>
                             </div>
-                        )}
+                        )} */}
                     </div>
 
                     <Divider className={styles.divider} />
@@ -1145,7 +1151,8 @@ MenuBar.propTypes = {
     showComingSoon: PropTypes.bool,
     username: PropTypes.string,
     userOwnsProject: PropTypes.bool,
-    vm: PropTypes.instanceOf(VM).isRequired
+    vm: PropTypes.instanceOf(VM).isRequired,
+    onClickMaster: PropTypes.func,
 };
 
 MenuBar.defaultProps = {
