@@ -52,10 +52,67 @@ import returnIcon from './custom/return.svg';
 import galleryIcon from './gallery/gallery.svg';
 import {APP_NAME} from '../../brand';
 
-import robotteachable from './myExtension/robotteachable'
+import {
+    robotTeachableExtension,
+    robotImgExtension,
+    robotApriltagExtension,
+    robotColordeteExtension,
+    robotQrExtension,
+    robotGoodExtension,
+    robotFaceExtension,
+    robotColorplaceExtension,
+    robotColorxyExtension,
+    robotCatExtension,
+    robotTrafficExtension,
+    bricksMotorExtension,
+    bricksTwoMotorExtension,
+    bricksLightExtension,
+    bricksSensorsExtension,
+    bricksEventExtension,
+    robotMoveExtension,
+    robotSensorsExtension,
+    robotEventExtension,
+    robotWifiExtension,
+    robotEmoteExtension,
+    robotShowExtension,
+    robotSoundExtension,
+    robotActuatorExtension,
+    robotBleExtension,
+    deepseekExtension,
+    microbitExtension,
+    microbitPeripheralExtension
+} from './myExtension/myExten'
 
+// console.log(robotTeachableExtension)
 export default [
-    robotteachable,
+    robotTeachableExtension,
+    robotImgExtension,
+    robotApriltagExtension,
+    robotColordeteExtension,
+    robotQrExtension,
+    robotGoodExtension,
+    robotFaceExtension,
+    robotColorplaceExtension,
+    robotColorxyExtension,
+    robotCatExtension,
+    robotTrafficExtension,
+    bricksMotorExtension,
+    bricksTwoMotorExtension,
+    bricksLightExtension,
+    bricksSensorsExtension,
+    bricksEventExtension,
+    robotMoveExtension,
+    robotSensorsExtension,
+    robotEventExtension,
+    robotWifiExtension,
+    robotEmoteExtension,
+    robotShowExtension,
+    robotSoundExtension,
+    robotActuatorExtension,
+    robotBleExtension,
+    deepseekExtension,
+    microbitExtension,
+    microbitPeripheralExtension,
     {
         name: (
             <FormattedMessage
