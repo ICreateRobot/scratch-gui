@@ -235,6 +235,49 @@ class VideoProvider {
         return this._singleSetup;
     }
 
+
+    //覆盖上面同名的方法
+    _setupVideo () {
+        if (this._singleSetup) {
+            return this._singleSetup;
+        }
+        const constraints = {
+            width: { min: 480, ideal: 640 },
+            height: { min: 360, ideal: 480 }
+        };
+
+        console.log(this._preferredDeviceId)
+        // 如果存在指定设备ID，则添加 deviceId 约束
+        if (this._preferredDeviceId) {
+            constraints.deviceId = { exact: this._preferredDeviceId };
+        }
+
+        this._singleSetup = requestVideoStream(constraints)
+            .then(stream => {
+                this._video = document.createElement('video');
+                try {
+                    this._video.srcObject = stream;
+                } catch (error) {
+                    this._video.src = window.URL.createObjectURL(stream);
+                }
+                this._video.play();
+                this._track = stream.getTracks()[0];
+                return this;
+            })
+            .catch(error => {
+                this._singleSetup = null;
+                this.onError(error);
+            });
+
+        return this._singleSetup;
+    }
+
+    enableVideoWithDevice(deviceId = null) {
+
+        // 设置设备 ID 供 _setupVideo 使用
+        this._preferredDeviceId = deviceId;
+    }
+
     get videoReady () {
         if (!this.enabled) {
             return false;
