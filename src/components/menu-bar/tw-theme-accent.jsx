@@ -123,7 +123,7 @@ const AccentThemeMenu = ({
                 draggable={false}
             />
         </div>
-        <Submenu place={isRtl ? 'left' : 'right'}>
+        <Submenu  place='left'>
             {Object.keys(options).map(item => (
                 <AccentMenuItem
                     key={item}
