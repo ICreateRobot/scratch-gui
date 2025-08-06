@@ -88,7 +88,8 @@ class LanguageMenu extends React.PureComponent {
                 </div>
                 <Submenu
                     className={styles.languageSubmenu}
-                    place={this.props.isRtl ? 'left' : 'right'}
+                    // place={this.props.isRtl ? 'left' : 'right'}
+                    place='left'
                 >
                     {
                         Object.keys(locales)
