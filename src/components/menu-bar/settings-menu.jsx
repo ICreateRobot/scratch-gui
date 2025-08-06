@@ -38,13 +38,13 @@ const SettingsMenu = ({
             width={20}
             height={20}
         />
-        <span className={styles.dropdownLabel}>
+        {/* <span className={styles.dropdownLabel}>
             <FormattedMessage
                 defaultMessage="Settings"
                 description="Settings menu"
                 id="gui.menuBar.settings"
             />
-        </span>
+        </span> */}
         <img
             src={dropdownCaret}
             draggable={false}
