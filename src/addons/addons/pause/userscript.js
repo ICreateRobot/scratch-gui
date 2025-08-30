@@ -39,6 +39,6 @@ export default async function ({ addon, console, msg }) {
       markAsSeen: true,
       reduxEvents: ["scratch-gui/mode/SET_PLAYER", "fontsLoaded/SET_FONTS_LOADED", "scratch-gui/locales/SELECT_LOCALE"],
     });
-    addon.tab.appendToSharedSpace({ space: "afterGreenFlag", element: img, order: 0 });
+    // addon.tab.appendToSharedSpace({ space: "afterGreenFlag", element: img, order: 0 });
   }
 }
