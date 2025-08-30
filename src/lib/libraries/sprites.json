@@ -1,5 +1,27 @@
 [
     {
+        "name": "ICrobot",
+        "tags": [
+            "people",
+            "animals"
+        ],
+        "isStage": false,
+        "variables": {},
+        "costumes": [
+            {
+                "assetId": "b9dceeedbff38a8770e52ede57eb6231",
+                "name": "ICrobot",
+                "bitmapResolution": 1,
+                "md5ext": "b9dceeedbff38a8770e52ede57eb6231.svg",
+                "dataFormat": "svg",
+                "rotationCenterX": 72,
+                "rotationCenterY": 101
+            }
+        ],
+        "sounds": [],
+        "blocks": {}
+    },
+    {
         "name": "Abby",
         "tags": [
             "people",

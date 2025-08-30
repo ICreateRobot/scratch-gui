@@ -49,7 +49,7 @@ const projectData = translateFunction => {
                 sounds: [],
                 volume: 100
             },
-            {
+           {
                 isStage: false,
                 name: translator(messages.sprite, {index: 1}),
                 variables: {},
@@ -60,13 +60,13 @@ const projectData = translateFunction => {
                 currentCostume: 0,
                 costumes: [
                     {
-                        assetId: '927d672925e7b99f7813735c484c6922',
+                        assetId: 'b9dceeedbff38a8770e52ede57eb6231',
                         name: translator(messages.costume, {index: 1}),
                         bitmapResolution: 1,
-                        md5ext: '927d672925e7b99f7813735c484c6922.svg',
+                        md5ext: 'b9dceeedbff38a8770e52ede57eb6231.svg',
                         dataFormat: 'svg',
-                        rotationCenterX: 30.74937882782359,
-                        rotationCenterY: 58.864768144346826
+                        rotationCenterX: 72,
+                        rotationCenterY: 101
                     }
                 ],
                 sounds: [],
