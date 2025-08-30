@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { Children } from 'react';
 import {defineMessages, injectIntl, intlShape} from 'react-intl';
 
 import LibraryItem from '../../containers/library-item.jsx';
@@ -13,9 +13,14 @@ import Spinner from '../spinner/spinner.jsx';
 import Separator from '../tw-extension-separator/separator.jsx';
 import RemovedTrademarks from '../tw-removed-trademarks/removed-trademarks.jsx';
 import {APP_NAME} from '../../lib/brand.js';
-
+import {setContent} from '../../../../../utils/updataExtension.js'
 import styles from './library.css';
+// import GUIComponent from '../gui/gui.jsx'
+import { getIsMaster,setIsMaster,addLoadExtension,delLoadExtension,getLoadExtension,getAllLoaded,setAllLoaded } from 'scratch-gui/src/components/utils/utils.js';
+import axios from 'axios'
 
+import { setIsLoad } from 'scratch-gui/src/components/utils/utils.js';
+import { createLibraryLogic, HIDDEN_EXTENSIONS } from './hook/library-logic.js';
 const messages = defineMessages({
     filterPlaceholder: {
         id: 'gui.library.filterPlaceholder',
@@ -26,15 +31,38 @@ const messages = defineMessages({
         id: 'gui.library.allTag',
         defaultMessage: 'All',
         description: 'Label for library tag to revert to all items after filtering by tag.'
+    },
+    mainCon: {
+        id: 'gui.library.mainCon',
+        defaultMessage: 'ICreateCode',
+        description: 'Label for library tag to revert to all items after filtering by tag.'
     }
 });
 
 const ALL_TAG = {tag: 'all', intlLabel: messages.allTag};
-const tagListPrefix = [ALL_TAG];
+const MAIN_TAG={tag: 'main', intlLabel: messages.mainCon};
+const tagListPrefix = [ALL_TAG,MAIN_TAG];
 
 class LibraryComponent extends React.Component {
     constructor (props) {
         super(props);
+        this.logic = createLibraryLogic(this);
+        console.log('==============================')
+        console.log(this.logic)
+        // console.log('执行了')
+        this.handleSelect = (id) => this.logic.handleSelect(this.getFilteredData(), id);
+        this.handleTest = this.logic.handleTest;
+        this.handleOnline = this.logic.handleOnline;
+        this.sendMove =(dir,speed)=>this.logic.sendMove(dir,speed);
+        this.sort=(key)=>this.logic.sort(key)
+        this.getHiddenData = this.logic.getHiddenData
+        this.getFilteredData = this.logic.getFilteredData
+
+        this.oneExtension = this.logic.oneExtension;
+        this.channelLoadExtension = this.logic.channelLoadExtension;
+        this.channelClose = this.logic.channelClose;
+        this.channelMasterClose=this.logic.channelMasterClose
+
         bindAll(this, [
             'handleClose',
             'handleFilterChange',
@@ -45,9 +73,14 @@ class LibraryComponent extends React.Component {
             'handleSelect',
             'handleFavorite',
             'handleTagClick',
-            'setFilteredDataRef'
+            'setFilteredDataRef',
+            'handleTest',
+            'handleOnline',
+            'sendMove',
+            'sort'
         ]);
         const favorites = this.readFavoritesFromStorage();
+        // this.allLoaded=[] //已经添加过的扩展
         this.state = {
             playingItem: null,
             filterQuery: '',
@@ -57,15 +90,27 @@ class LibraryComponent extends React.Component {
             initialFavorites: favorites
         };
     }
+    
+    
     componentDidMount () {
+
+        
         // Rendering all the items in the library can take a bit, so we'll always
         // show one frame with a loading spinner.
+        const channelLoad = new BroadcastChannel('isLoading');
         setTimeout(() => {
             this.setState({
                 canDisplay: true
             });
         });
+        this.logic.initExtensionLoader(this.getFilteredData.bind(this), this.getHiddenData.bind(this));
+        
         if (this.props.setStopHandler) this.props.setStopHandler(this.handlePlayingEnd);
+    }
+    componentWillUnmount() {
+        // 清除定时器以防止内存泄漏
+        // clearInterval(this.intervalId);
+        setIsMaster(false)
     }
     componentDidUpdate (prevProps, prevState) {
         if (prevState.filterQuery !== this.state.filterQuery ||
@@ -246,8 +291,11 @@ class LibraryComponent extends React.Component {
     setFilteredDataRef (ref) {
         this.filteredDataRef = ref;
     }
+    
     render () {
         const filteredData = this.state.canDisplay && this.props.data && this.getFilteredData();
+        // console.log(getIsMaster())
+        if (getIsMaster()) return null;
         return (
             <Modal
                 fullScreen
@@ -273,6 +321,7 @@ class LibraryComponent extends React.Component {
                         {this.props.filterable && this.props.tags && (
                             <Divider className={classNames(styles.filterBarItem, styles.divider)} />
                         )}
+                        {/* tagListPrefix.concat(this.props.tags) */}
                         {this.props.tags &&
                             <div className={styles.tagWrapper}>
                                 {tagListPrefix.concat(this.props.tags).map((tagProps, id) => (
@@ -318,6 +367,8 @@ class LibraryComponent extends React.Component {
                                 incompatibleWithScratch={dataItem.incompatibleWithScratch}
                                 favorite={this.state.favorites.includes(dataItem[this.props.persistableKey])}
                                 onFavorite={this.handleFavorite}
+                                onTest={this.handleTest}
+                                onOnline={this.handleOnline}
                                 insetIconURL={dataItem.insetIconURL}
                                 internetConnectionRequired={dataItem.internetConnectionRequired}
                                 isPlaying={this.state.playingItem === index}
@@ -334,6 +385,7 @@ class LibraryComponent extends React.Component {
                                 onMouseEnter={this.handleMouseEnter}
                                 onMouseLeave={this.handleMouseLeave}
                                 onSelect={this.handleSelect}
+                                onClose={this.handleClose}
                             />
                         )
                     ))}
@@ -355,7 +407,9 @@ class LibraryComponent extends React.Component {
                     )}
                 </div>
             </Modal>
+            
         );
+        
     }
 }
 
