@@ -11,6 +11,8 @@ import bluetoothIconURL from './bluetooth.svg';
 import internetConnectionIconURL from './internet-connection.svg';
 import favoriteInactiveIcon from './favorite-inactive.svg';
 import favoriteActiveIcon from './favorite-active.svg';
+import { getIsMaster,setIsMaster,addLoadExtension,delLoadExtension,getLoadExtension } from 'scratch-gui/src/components/utils/utils.js';
+
 
 const messages = defineMessages({
     favorite: {
@@ -27,10 +29,58 @@ const messages = defineMessages({
 
 /* eslint-disable react/prefer-stateless-function */
 class LibraryItemComponent extends React.PureComponent {
+    state = {
+        fileContent: null,
+        loading: false,
+        isImported:false
+    };
+    fetchFileContent = async () => {
+        this.setState({ loading: true });
+        try {
+            const response = await fetch('http://8.130.129.159:9000/test/isUpdata.txt',{
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            }); // 替换为你的 IP 地址和文件路径
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const text = await response.text();
+            console.log(text)
+            this.setState({ fileContent: text.trim().toLowerCase() === 'true', loading: false });
+        } catch (error) {
+            console.error('Failed to fetch file:', error);
+            this.setState({ loading: false });
+        }
+    };
+
+    closePage(){
+        this.props.onClose()
+    }
+    
+    componentDidMount() {
+        // this.fetchFileContent();
+        this.setState ({isImported:getLoadExtension().includes(this.props.extensionId)}) ;
+
+        const channelClose = new BroadcastChannel('closePage')
+    }
     render () {
+        const isTrue = this.state.fileContent; // 获取文件内容状态
+        const testClass = classNames({
+            [styles.updateButton]: true,
+        });
+        const onlineClass = classNames({
+            [styles.onlineButton]:true,
+            // [styles.onlineButtonTrue]:isTrue,
+            // [styles.onlineButtonFalse]:!isTrue && this.state.fileContent !== null
+        });
         const favoriteMessage = this.props.intl.formatMessage(
             this.props.favorite ? messages.unfavorite : messages.favorite
         );
+        const channelLoadExtension = new BroadcastChannel('loadExtension')
+        const channelClose = new BroadcastChannel('closePage')
         const favorite = (
             <button
                 className={classNames(styles.favoriteContainer, {[styles.active]: this.props.favorite})}
@@ -45,7 +95,27 @@ class LibraryItemComponent extends React.PureComponent {
                 />
             </button>
         );
+        const test=(
+            <button
+                className={testClass}
+                onClick={this.props.onTest}
+                
+            >
+                本地更新
+            </button>
+        );
 
+        const online=(
+            <button
+                className={onlineClass}
+                onClick={this.props.onOnline}
+                
+            >
+                在线更新
+            </button>
+        );
+
+        
         return this.props.featured ? (
             <div
                 className={classNames(
@@ -59,6 +129,27 @@ class LibraryItemComponent extends React.PureComponent {
                 )}
                 onClick={this.props.onClick}
             >
+
+                {this.state.isImported && (
+                    <div className={styles.overlay}>
+                        <button
+                            className={styles.removeButton}
+                            onClick={(e) => {
+                                e.stopPropagation(); // 防止触发 onClick 的跳转逻辑
+                                delLoadExtension(this.props.extensionId)
+                                this.setState ({isImported:getLoadExtension().includes(this.props.extensionId)}) ;
+                                channelLoadExtension.postMessage({
+                                    op:'remove',
+                                    id:this.props.extensionId
+                                })
+                                channelClose.postMessage(true)
+                                // this.closePage()
+                            }}
+                        >
+                            −
+                        </button>
+                    </div>
+                )}
                 <div className={styles.featuredImageContainer}>
                     {this.props.disabled ? (
                         <div className={styles.comingSoonText}>
@@ -203,6 +294,9 @@ class LibraryItemComponent extends React.PureComponent {
                 ) : null}
 
                 {favorite}
+                {/* {this.props.extensionId} */}
+                {/* {test}
+                {online} */}
             </div>
         ) : (
             <Box
@@ -245,6 +339,8 @@ class LibraryItemComponent extends React.PureComponent {
                 ) : null}
 
                 {favorite}
+                {/* {test}
+                {online} */}
             </Box>
         );
     }
@@ -283,6 +379,8 @@ LibraryItemComponent.propTypes = {
     })),
     favorite: PropTypes.bool,
     onFavorite: PropTypes.func,
+    onTest: PropTypes.func,
+    onOnline : PropTypes.func,
     onBlur: PropTypes.func.isRequired,
     onClick: PropTypes.func.isRequired,
     onFocus: PropTypes.func.isRequired,
@@ -291,7 +389,8 @@ LibraryItemComponent.propTypes = {
     onMouseLeave: PropTypes.func.isRequired,
     onPlay: PropTypes.func.isRequired,
     onStop: PropTypes.func.isRequired,
-    showPlayButton: PropTypes.bool
+    showPlayButton: PropTypes.bool,
+    onClose:PropTypes.func
 };
 
 LibraryItemComponent.defaultProps = {

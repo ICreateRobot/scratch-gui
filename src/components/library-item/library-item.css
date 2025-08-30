@@ -1,6 +1,34 @@
 @import "../../css/colors.css";
 @import "../../css/units.css";
 
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: 8px;
+    z-index: 10;
+    border-radius: 8px;
+}
+
+.removeButton {
+    background: #ff5f56;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+}
 .library-item {
     display: flex;
     flex-direction: column;
