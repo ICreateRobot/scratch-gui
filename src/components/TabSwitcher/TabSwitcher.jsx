@@ -821,6 +821,107 @@ const ControlPanelLayout = ({extension}) => {
     };
   }, [handleMessage]);
 
+  // this.channelSerialData=new BroadcastChannel('serial-data')
+
+  const handleMessagePort = useCallback(throttle((event) => {
+    const now = Date.now();
+    if (now - lastUpdateTime.current < throttleInterval) return;
+    
+    lastUpdateTime.current = now;
+    
+    const data = event.data;
+    // console.log(data)
+    setRealtimeValues(data.slice(9))
+    let newImage = dynamicImageRef.current;
+    
+    if (data[0] === 1 && data[1] === 1) {
+      newImage = bn1;
+    } else if (data[0] === 0 && data[1] === 1) {
+      newImage = bn2;
+    } else if (data[0] === 1 && data[1] === 0) {
+      newImage = bn3;
+    } else if (data[0] === 0 && data[1] === 0) {
+      newImage = bn5;
+    }
+    
+    // 只有图片真正改变时才更新状态
+    if (newImage !== dynamicImageRef.current) {
+      setIsLoading(true);
+      setDynamicImage(newImage);
+      
+      // 短暂显示加载状态
+      setTimeout(() => setIsLoading(false), 50);
+    }
+  }, throttleInterval), []);
+
+  // 接收BroadcastChannel数据
+  useEffect(() => {
+    const channelSerialData=new BroadcastChannel('serial-data')
+    channelSerialData.addEventListener('message', handleMessagePort);
+
+    // 清理事件监听
+    return () => {
+      channelSerialData.removeEventListener('message', handleMessagePort);
+      channelSerialData.close();
+    };
+  }, [handleMessagePort]);
+
+  // 处理接收数据的优化函数
+  const handleMessageBle = useCallback(
+    throttle((senor) => {
+      // console.log('进入监听函数')
+      const now = Date.now();
+      if (now - lastUpdateTime.current < throttleInterval) return;
+
+      lastUpdateTime.current = now;
+
+      const data = JSON.parse(senor); // 直接是回调传过来的数据
+      // console.log(data);
+
+      // 更新实时数值
+      setRealtimeValues(data.slice(9));
+
+      // 根据前两个字节判断要显示的图片
+      let newImage = dynamicImageRef.current;
+      if (data[0] === 1 && data[1] === 1) {
+        newImage = bn1;
+      } else if (data[0] === 0 && data[1] === 1) {
+        newImage = bn2;
+      } else if (data[0] === 1 && data[1] === 0) {
+        newImage = bn3;
+      } else if (data[0] === 0 && data[1] === 0) {
+        newImage = bn5;
+      }
+
+      // 只有图片真正改变时才更新状态
+      if (newImage !== dynamicImageRef.current) {
+        setIsLoading(true);
+        setDynamicImage(newImage);
+
+        // 短暂显示加载状态
+        setTimeout(() => setIsLoading(false), 50);
+      }
+    }, throttleInterval),
+    []
+  );
+  // 接收数据
+  useEffect(() => {
+    // 注册监听
+    window.EditorPreload.sendSenorData(handleMessageBle);
+
+    // 这里不用 removeListener，因为 sendSenorData 应该是一次性注册
+    // 如果 preload 那边支持取消监听，可以在 return 里加上取消逻辑
+    return () => {
+      // 比如：window.EditorPreload.removeSenorData(handleMessage)
+    };
+  }, [handleMessageBle]);
+
+  // window.EditorPreload.sendSenorData((senor) => {
+  //     // console.log("📩 收到返回值:", senor);
+  //     this.changeElector((JSON.parse(window.EditorPreload.getRobotData())[4]/4)*100)
+  //     this.lastReciveTime=Date.now()
+  // })
+
   useEffect(() => {
 
     // console.log('控制台初始化一次')
@@ -832,6 +933,7 @@ const ControlPanelLayout = ({extension}) => {
       getBricksPort.close();
     };
   }, []);
+  
 
 
 
