@@ -266,6 +266,26 @@ class MenuBar extends React.Component {
             }
         })
 
+         this.channelBle = new BroadcastChannel('isBle')
+        this.channelBle.addEventListener('message',(event)=>{
+            this.toggleVisibility(event.data)
+            setElectron(event.data)
+            if(event.data==false){
+                this.changeElector(-1)
+            }
+        })
+        this.channelPort = new BroadcastChannel('channelPort')
+        this.channelPort.addEventListener('message',(event)=>{
+
+            if (typeof event.data === 'boolean') {
+                this.toggleVisibility(event.data)
+                setElectron(event.data)
+                if(event.data==false){
+                    this.changeElector(-1)
+                }
+            }
+            
+        })
         // this.elector={
         //     message:100
         // }
@@ -276,6 +296,21 @@ class MenuBar extends React.Component {
             this.lastReciveTime=Date.now()
            
             // console.log(event.data)
+        })
+
+        window.EditorPreload.sendSenorData((senor) => {
+            // console.log("📩 收到返回值:", senor);
+           this.changeElector((JSON.parse(senor)[4]/4)*100)
+            this.lastReciveTime=Date.now()
+        })
+
+        this.channelSerialData=new BroadcastChannel('serial-data')
+        this.channelSerialData.addEventListener('message',(event)=>{
+            if(Array.isArray(event.data) && event.data.length>1){
+                this.changeElector((event.data[4]/4)*100)
+                this.lastReciveTime=Date.now()
+            }
+            
         })
          
     }
