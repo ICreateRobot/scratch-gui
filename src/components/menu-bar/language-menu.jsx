@@ -99,17 +99,8 @@ class LanguageMenu extends React.PureComponent {
                                     key={locale}
                                     className={styles.languageMenuItem}
                                     // eslint-disable-next-line react/jsx-no-bind
-                                    // onClick={() => this.props.onChangeLanguage(locale)}
+                                    onClick={() => this.props.onChangeLanguage(locale)}
                                     // eslint-disable-next-line react/jsx-no-bind
-                                    onClick={() => {
-                                        if (locale !== this.props.currentLocale) {
-                                            // eslint-disable-next-line no-alert
-                                            const confirmChange = window.confirm(`切换语言将会清空工作区，确定继续？`);
-                                            if (confirmChange) {
-                                                this.props.onChangeLanguage(locale);
-                                            }
-                                        }
-                                    }}
                                 >
                                     <img
                                         className={classNames(styles.check, {
