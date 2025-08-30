@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React , {useEffect, useState,useRef }from 'react';
+import React from 'react';
 import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
@@ -37,6 +37,7 @@ import TWRestorePointManager from '../../containers/tw-restore-point-manager.jsx
 import TWFontsModal from '../../containers/tw-fonts-modal.jsx';
 import TWUnknownPlatformModal from '../../containers/tw-unknown-platform-modal.jsx';
 import TWInvalidProjectModal from '../../containers/tw-invalid-project-modal.jsx';
+import CodeMirrorComponent from 'scratch-gui/src/components/CodeMirrorComponent/CodeMirrorComponent.jsx';
 
 import {STAGE_SIZE_MODES, FIXED_WIDTH, UNCONSTRAINED_NON_STAGE_WIDTH} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -50,8 +51,12 @@ import codeIcon from '!../../lib/tw-recolor/build!./icon--code.svg';
 import costumesIcon from '!../../lib/tw-recolor/build!./icon--costumes.svg';
 import soundsIcon from '!../../lib/tw-recolor/build!./icon--sounds.svg';
 
-import { setIsMaster ,setIsBricks,getIsBricks,setRobotIp,setCurrent, getCurrent} from 'scratch-gui/src/components/utils/utils.js';
-import TrainPage from '../TrainPage/TrainPage.jsx'
+import LoadingOverlay from '../LoadingOverlay/LoadingOverlay.jsx';
+import BurnLogs from 'scratch-gui/src/components/Burn-logs/BurnLogs.jsx';
+import TrainPage from '../TrainPage/TrainPage.jsx';
+import TabSwitcher from 'scratch-gui/src/components/TabSwitcher/TabSwitcher.jsx';
+import { useGuiLogic } from '../hooks/gui-logic.js';
+
 const messages = defineMessages({
     addExtension: {
         id: 'gui.gui.addExtension',
@@ -121,7 +126,20 @@ const GUIComponent = props => {
         onClickAccountNav,
         onCloseAccountNav,
         onClickAddonSettings,
+        onClickMaster,
+        onClickConnect,
+        onClickFirmware,
         onClickDesktopSettings,
+        clickSerialConnect,
+        download,
+        SerialDownload,
+        saveCode,
+        loadCode,
+        cancelload,
+        clickBleConnect,
+        clickDownloadCode,
+        clickEspSend,
+        clickSendWifi,
         onClickNewWindow,
         onClickPackager,
         onLogOut,
@@ -161,12 +179,73 @@ const GUIComponent = props => {
         unknownPlatformModalVisible,
         invalidProjectModalVisible,
         vm,
-        onClickMaster,
         ...componentProps
     } = omit(props, 'dispatch');
+
     if (children) {
         return <Box {...componentProps}>{children}</Box>;
     }
+
+    const {
+        selectedIndex,
+        setSelectedIndex,
+        pythonCode,
+        setPythonCode,
+        childData,
+        setChildData,
+        isTrain,
+        setIsTrain,
+        isBricks,
+        setbricks,
+        showCode,
+        setShowCode,
+        lanMode,
+        setLanMode,
+        isDown,
+        setIsDown,
+        currentExtension,
+        setCurrentExtension,
+        isLoading,
+        setIsLoading,
+        isFlashing,
+        setIsFlashing,
+        logs,
+        setLogs,
+        extensionName,
+        setExtensionName,
+        childBalls,
+        setChildBalls,
+        socket,
+        setSocket,
+        soc,
+        setSoc,
+        upload,
+        setUpload,
+        data,
+        setData,
+        selectedOption,
+        setSelectedOption,
+        modeValue,
+        setModeValue,
+        handleLoadSelectedCode,
+        handleChildData,
+        updateChildBallText,
+        handleModeChange,
+        downloadCodeTotal,
+        showToast,
+        getCurrent
+    } = useGuiLogic({
+        onExtensionButtonClick,
+        onOpenCustomExtensionModal,
+        download,
+        SerialDownload,
+        saveCode,
+        loadCode,
+        cancelload,
+        clickDownloadCode,
+        clickEspSend,
+        clickSendWifi
+    });
 
     const tabClassNames = {
         tabs: styles.tabs,
@@ -183,13 +262,6 @@ const GUIComponent = props => {
         Math.max(0, customStageSize.width - FIXED_WIDTH)
     );
 
-    const [extensionName, setExtensionName] = useState(getCurrent().length>0 ? getCurrent() :'选择设备');
-    const [isTrain, setIsTrain] = useState(false);
-
-    const channelTrain=new BroadcastChannel('channelTrain')
-    channelTrain.addEventListener('message',(event)=>{
-        setIsTrain(event.data)
-    })
     return (<MediaQuery minWidth={unconstrainedWidth}>{isUnconstrained => {
         const stageSize = resolveStageSize(stageSizeMode, isUnconstrained);
 
@@ -208,9 +280,6 @@ const GUIComponent = props => {
 
         return isPlayerOnly ? (
             <React.Fragment>
-                {/* TW: When the window is fullscreen, use an element to display the background color */}
-                {/* The default color for transparency is inconsistent between browsers and there isn't an existing */}
-                {/* element for us to style that fills the entire screen. */}
                 {isWindowFullScreen ? (
                     <div
                         className={styles.fullscreenBackground}
@@ -297,6 +366,7 @@ const GUIComponent = props => {
                         onRequestClose={onRequestCloseBackdropLibrary}
                     />
                 ) : null}
+                
                 <MenuBar
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
@@ -323,7 +393,15 @@ const GUIComponent = props => {
                     onClickAbout={onClickAbout}
                     onClickAccountNav={onClickAccountNav}
                     onClickAddonSettings={onClickAddonSettings}
+                    onClickMaster={onClickMaster}
+                    onClickConnect={onClickConnect}
+                    onClickFirmware={onClickFirmware}
                     onClickDesktopSettings={onClickDesktopSettings}
+                    clickSerialConnect={clickSerialConnect}
+                    clickBleConnect={clickBleConnect}
+                    clickDownloadCode={clickDownloadCode}
+                    clickEspSend={clickEspSend}
+                    clickSendWifi={clickSendWifi}
                     onClickNewWindow={onClickNewWindow}
                     onClickPackager={onClickPackager}
                     onClickLogo={onClickLogo}
@@ -335,7 +413,8 @@ const GUIComponent = props => {
                     onShare={onShare}
                     onStartSelectingFileUpload={onStartSelectingFileUpload}
                     onToggleLoginOpen={onToggleLoginOpen}
-                    onClickMaster={onClickMaster}
+                    onModeChange={handleModeChange}
+                    modeValue={modeValue}
                     extensionName={extensionName}
                 />
                 <Box className={styles.bodyWrapper}>
@@ -349,7 +428,10 @@ const GUIComponent = props => {
                                 selectedTabPanelClassName={tabClassNames.tabPanelSelected}
                                 onSelect={onActivateTab}
                             >
-                                <TabList className={tabClassNames.tabList}>
+                                <TabList className={tabClassNames.tabList} style={{
+                                    position: 'relative',
+                                    zIndex: 100
+                                }}>
                                     <Tab className={tabClassNames.tab}>
                                         <img
                                             draggable={false}
@@ -418,7 +500,11 @@ const GUIComponent = props => {
                                         <button
                                             className={styles.extensionButton}
                                             title={intl.formatMessage(messages.addExtension)}
-                                            onClick={onExtensionButtonClick}
+                                            onClick={(e) => {
+                                                if (!showCode) {
+                                                    onExtensionButtonClick(e);
+                                                }
+                                            }}
                                         >
                                             <img
                                                 className={styles.extensionButtonIcon}
@@ -440,26 +526,107 @@ const GUIComponent = props => {
                                     {soundsTabVisible ? <SoundTab vm={vm} /> : null}
                                 </TabPanel>
                             </Tabs>
-                            {backpackVisible ? (
+                            {/* {backpackVisible ? (
                                 <Backpack host={backpackHost} />
-                            ) : null}
+                            ) : null} */}
                         </Box>
 
+                        <LoadingOverlay isLoading={isLoading} />
+                        <BurnLogs isLoading={isFlashing} logs={logs}></BurnLogs>
                         <TrainPage isTrain={isTrain}></TrainPage>
+                        
                         <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
-                            <StageWrapper
+                            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', alignItems: 'center',paddingTop:'10px'}}>
+                                {showCode &&  <button
+                                    style={{
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    }}
+                                    onClick={()=>{
+                                        saveCode();
+                                    }}
+                                >
+                                    <svg
+                                    viewBox="0 0 24 24"
+                                    style={{ width: '20px', height: '20px', fill: '#239393' }}
+                                    >
+                                    <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-8H7V5h8v4z" />
+                                    </svg>
+                                </button>}
+
+                                {showCode && <button
+                                    style={{
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    }}
+                                    onClick={()=>{
+                                        loadCode();
+                                    }}
+                                >
+                                    <FormattedMessage
+                                        defaultMessage="导入"
+                                        description="Button to get to the code panel"
+                                        id="gui.importFile"
+                                    />
+                                </button>}
+
+                                {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
+                                {showCode && getCurrent()=='ICRobot' && 
+                                    <select
+                                        value={selectedIndex}
+                                        onChange={(e) => setSelectedIndex(Number(e.target.value))}
+                                        style={{ marginLeft: '8px', padding: '4px' }}
+                                    >
+                                        {[1, 2, 3, 4, 5].map((num) => (
+                                            <option key={num} value={num}>
+                                                {num}
+                                            </option>
+                                        ))}
+                                    </select>
+                                }
+                                {showCode && getCurrent()=='ICRobot' && <span>
+                                    <FormattedMessage
+                                        defaultMessage="号默认程序"
+                                        description="Button to get to the code panel"
+                                        id="gui.codeofnumber"
+                                    />
+                                </span>}
+
+                                {showCode && getCurrent()=='ICRobot'  &&  <button
+                                    onClick={handleLoadSelectedCode}
+                                    style={{
+                                        marginLeft: '6px',
+                                        padding: '4px 8px',
+                                        backgroundColor: '#239393',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    OK
+                                </button>}
+                            </div>
+                            
+                            {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                            {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                            {!showCode && <StageWrapper
                                 isFullScreen={isFullScreen}
                                 isRendererSupported={isRendererSupported()}
                                 isRtl={isRtl}
                                 stageSize={stageSize}
                                 vm={vm}
-                            />
-                            <Box className={styles.targetWrapper}>
+                            />}
+                            {!showCode && <Box className={styles.targetWrapper}>
                                 <TargetPane
                                     stageSize={stageSize}
                                     vm={vm}
                                 />
-                            </Box>
+                            </Box>}
                         </Box>
                     </Box>
                 </Box>
@@ -472,9 +639,9 @@ const GUIComponent = props => {
 GUIComponent.propTypes = {
     accountNavOpen: PropTypes.bool,
     activeTabIndex: PropTypes.number,
-    authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]), // can be false
+    authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     authorThumbnailUrl: PropTypes.string,
-    authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]), // can be false
+    authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     backdropLibraryVisible: PropTypes.bool,
     backpackHost: PropTypes.string,
     backpackVisible: PropTypes.bool,
@@ -516,7 +683,20 @@ GUIComponent.propTypes = {
     onActivateTab: PropTypes.func,
     onClickAccountNav: PropTypes.func,
     onClickAddonSettings: PropTypes.func,
+    onClickMaster: PropTypes.func,
+    onClickConnect:PropTypes.func,
+    onClickFirmware:PropTypes.func,
     onClickDesktopSettings: PropTypes.func,
+    clickSerialConnect: PropTypes.func,
+    download:PropTypes.func,
+    SerialDownload:PropTypes.func,
+    saveCode:PropTypes.func,
+    loadCode:PropTypes.func,
+    cancelload:PropTypes.func,
+    clickBleConnect: PropTypes.func,
+    clickDownloadCode: PropTypes.func,
+    clickEspSend: PropTypes.func,
+    clickSendWifi: PropTypes.func,
     onClickNewWindow: PropTypes.func,
     onClickPackager: PropTypes.func,
     onClickLogo: PropTypes.func,
@@ -555,8 +735,8 @@ GUIComponent.propTypes = {
     unknownPlatformModalVisible: PropTypes.bool,
     invalidProjectModalVisible: PropTypes.bool,
     vm: PropTypes.instanceOf(VM).isRequired,
-    onClickMaster: PropTypes.func,
 };
+
 GUIComponent.defaultProps = {
     backpackHost: null,
     backpackVisible: false,
@@ -578,13 +758,12 @@ GUIComponent.defaultProps = {
     isTotallyNormal: false,
     loading: false,
     showComingSoon: false,
-    stageSizeMode: STAGE_SIZE_MODES.large
+    stageSizeMode: STAGE_SIZE_MODES.large,
 };
 
 const mapStateToProps = state => ({
     customStageSize: state.scratchGui.customStageSize,
     isWindowFullScreen: state.scratchGui.tw.isWindowFullScreen,
-    // This is the button's mode, as opposed to the actual current state
     blocksId: state.scratchGui.timeTravel.year.toString(),
     stageSizeMode: state.scratchGui.stageSize.stageSize,
     theme: state.scratchGui.theme.theme
