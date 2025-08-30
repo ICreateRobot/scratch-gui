@@ -45,6 +45,17 @@ import LoadScratchBlocksHOC from '../lib/tw-load-scratch-blocks-hoc.jsx';
 import {findTopBlock} from '../lib/backpack/code-payload.js';
 import {gentlyRequestPersistentStorage} from '../lib/tw-persistent-storage.js';
 
+import codeModule from '../../../../utils/global.js';
+import { setIsCode,getIsCode } from '../../../../utils/whatModule.js';
+
+import { setBlock } from '../../../../utils/isAddMaster.js';
+
+import {setLan,getLan} from '../../../../utils/lanMode.js'
+import { getIsRobot ,getDelete,setDelete,getCurrent, getDeletedCate,setDeletedCate,delCategro,getHiddenBlocks,setHiddenBlocks,delHiddenBlocks,getShowCodeDb} from 'scratch-gui/src/components/utils/utils.js';
+import { createBlocksLogic} from './hooks/blocks-logic.js';
+// const {getCode,setCode} =codeModule;
+// const {getCode,setCode} =require('../../../../utils/global.js')
+
 // TW: Strings we add to scratch-blocks are localized here
 const messages = defineMessages({
     PROCEDURES_RETURN: {
@@ -86,20 +97,48 @@ const DroppableBlocks = DropAreaHOC([
     DragConstants.BACKPACK_CODE
 ])(BlocksComponent);
 
+
+let currentModule=false
+
+let isBlockBeingDragged = false;
+let isRunning=false
+
+
+
 class Blocks extends React.Component {
     constructor (props) {
+        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         super(props);
+        this.logic=createBlocksLogic(this)
         this.ScratchBlocks = VMScratchBlocks(props.vm, false);
 
+        this._mountedOnce=false
+        // console.log(props.vm)
         window.ScratchBlocks = this.ScratchBlocks;
         AddonHooks.blockly = this.ScratchBlocks;
         AddonHooks.blocklyCallbacks.forEach(i => i());
         AddonHooks.blocklyCallbacks.length = [];
 
+        this.dataXML
+        this.preClose=[false,false,false]
+        this.mode=!getShowCodeDb()
+        this.currentDevice=getCurrent()
+        this.channelMode=this.logic.channelMode
+        this.channelLoadExtension = this.logic.channelLoadExtension
+        this.unindentCode=(code)=>this.logic.unindentCode(code)
+        this.indentPythonFunctions=(code)=>this.logic.indentPythonFunctions(code)
+        this.arraysAreEqual=(arr1,arr2)=>this.logic.arraysAreEqual(arr1,arr2)
+        this.findSecondTopParent=(block)=>this.logic.findSecondTopParent(block)
+        this.workspaceToCode=(event)=>this.logic.workspaceToCode(event)
+        this.removeCategoryFromToolbox=(categoriesToRemove)=>this.logic.removeCategoryFromToolbox(categoriesToRemove)
+        this.restoreCategoriesToToolbox=(categoriesToRestore)=>this.logic.restoreCategoriesToToolbox(categoriesToRestore)
+        this.getToolboxXML = this.logic.getToolboxXML
         bindAll(this, [
             'attachVM',
             'detachVM',
             'getToolboxXML',
+            'removeCategoryFromToolbox',
+            'restoreCategoriesToToolbox',
             'handleCategorySelected',
             'handleConnectionModalStart',
             'handleDrop',
@@ -122,19 +161,36 @@ class Blocks extends React.Component {
             'onWorkspaceMetricsChange',
             'setBlocks',
             'setLocale',
-            'handleEnableProcedureReturns'
+            'handleEnableProcedureReturns',
+            'workspaceToCode',
+            'unindentCode',
+            'findSecondTopParent',
+            'handleRuntimeStop',
+            'arraysAreEqual'
         ]);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
+        
 
         this.state = {
             prompt: null
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
+        this.channel = this.logic.channel 
+        this.oneExtension = this.logic.oneExtension
+        this.channelMasterClose = this.logic.channelMasterClose
     }
+
+    handleRuntimeStop=()=>{
+        // console.log('程序停止')
+    }
+
     componentDidMount () {
+
+        if (this._mountedOnce) return;
+        this._mountedOnce = true;
         this.ScratchBlocks = VMScratchBlocks(this.props.vm, this.props.useCatBlocks);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
@@ -167,6 +223,9 @@ class Blocks extends React.Component {
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
         AddonHooks.blocklyWorkspace = this.workspace;
 
+        this.workspace.addChangeListener(this.workspaceToCode);
+
+       
         // Register buttons under new callback keys for creating variables,
         // lists, and procedures from extensions.
 
@@ -229,6 +288,16 @@ class Blocks extends React.Component {
         }
 
         gentlyRequestPersistentStorage();
+
+
+        // setInterval(()=>{
+        //     console.log(this.deletedCategories)
+        //     console.log(this.deletedCategoriesID)
+        // },500)
+        this.props.vm.runtime.on('PROJECT_RUN_STOP',()=>{
+            // console.log('程序停止')
+        })
+
     }
     shouldComponentUpdate (nextProps, nextState) {
         return (
@@ -285,6 +354,17 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+
+        console.log('Blocks unmounted');
+        if (this.channelMode) {
+            this.channelMode.close();
+        }
+        if (this.channel) {
+            this.channel.close();
+        }
+        if (this.oneExtension) {
+            this.oneExtension.close();
+        }
         this.detachVM();
         this.unmounted = true;
         this.workspace.dispose();
@@ -436,6 +516,39 @@ class Blocks extends React.Component {
     onVisualReport (data) {
         this.workspace.reportValue(data.id, data.value);
     }
+
+
+
+
+    createWatchedArray(arrName = 'watchedArray') {
+        const handler = {
+            get(target, prop, receiver) {
+                const value = Reflect.get(target, prop, receiver);
+                if (typeof value === 'function') {
+                    return function (...args) {
+                        const now = new Date().toISOString();
+                        const result = value.apply(target, args);
+                        console.log(`[${arrName}] 修改时间: ${now}`);
+                        console.log(`[${arrName}] 方法调用: ${prop}`);
+                        console.log(`[${arrName}] 参数:`, args);
+                        // console.trace(`[${arrName}] 修改堆栈:`);
+                        console.log(`[${arrName}] 当前值:`, [...target]); // ✅ 放在这里
+                        return result;
+                    };
+                }
+                return value;
+            },
+            set(target, prop, value, receiver) {
+                const now = new Date().toISOString();
+                console.log(`[${arrName}] 修改时间: ${now}`);
+                console.log(`[${arrName}] 属性设置: target[${prop}] =`, value);
+                // console.trace(`[${arrName}] 修改堆栈:`);
+                console.log(`[${arrName}] 当前值:`, [...target]); // ✅ 放在这里
+                return Reflect.set(target, prop, value, receiver);
+            }
+        };
+        return new Proxy([], handler);
+    }
     getToolboxXML () {
         // Use try/catch because this requires digging pretty deep into the VM
         // Code inside intentionally ignores several error situations (no stage, etc.)
@@ -462,11 +575,21 @@ class Blocks extends React.Component {
             return null;
         }
     }
+    defenCatch(toolboxXml){
+        if (!toolboxXml) return;
+        // 小技巧：加个没意义的注释防止缓存
+        const modifiedXML = toolboxXml.replace('</xml>', `<!--force update--> </xml>`);
+        // console.log(modifiedXML)
+        this.props.updateToolboxState(modifiedXML);
+        // this.props.updateToolboxState(toolboxXML);
+    }
     onWorkspaceUpdate (data) {
+        this.dataXML=data
         // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXML = this.getToolboxXML();
         if (toolboxXML) {
-            this.props.updateToolboxState(toolboxXML);
+            this.defenCatch(toolboxXML)
+            // this.props.updateToolboxState(toolboxXML);
         }
 
         if (this.props.vm.editingTarget && !this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
@@ -507,6 +630,7 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
+        // console.log('11111111111111111111')
     }
     handleMonitorsUpdate (monitors) {
         // Update the checkboxes of the relevant monitors.
@@ -841,6 +965,9 @@ const mapDispatchToProps = dispatch => ({
         dispatch(updateMetrics(metrics));
     }
 });
+
+
+
 
 export default injectIntl(errorBoundaryHOC('Blocks')(
     connect(
