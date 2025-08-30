@@ -5,14 +5,39 @@ import VM from 'scratch-vm';
 import {connect} from 'react-redux';
 
 import ControlsComponent from '../components/controls/controls.jsx';
+import { getAdd ,getBlock} from '../../../../utils/isAddMaster.js';
+import { getIsRobot ,getRobotIp} from 'scratch-gui/src/components/utils/utils.js';
+import { createControlsLogic} from './hooks/controls-logic.js';
 
+const channel = new BroadcastChannel('flag_channel');
 class Controls extends React.Component {
     constructor (props) {
         super(props);
+        this.logic=createControlsLogic(this)
+        this.handleGreenFlagClick=(e)=>this.logic.handleGreenFlagClick(e)
+        this.handleStopAllClick =(e) => this.logic.handleStopAllClick(e)
         bindAll(this, [
             'handleGreenFlagClick',
             'handleStopAllClick'
         ]);
+        this.stopAll = new BroadcastChannel('stopAll')
+        this.ip=getRobotIp()
+        this.channelSendIp=new BroadcastChannel('sendIp')
+        this.channelSendIp.addEventListener('message',(event)=>{
+            this.ip=event.data
+        })
+
+        this.whatSendFun='net'
+        this.channelPort = new BroadcastChannel('channelPort')
+        this.channelPort.addEventListener('message',(event)=>{
+            console.log(event.data)
+            if(event.data){
+                this.whatSendFun='port'
+            }else{
+                this.whatSendFun='net'
+            }
+            
+        })
     }
     handleGreenFlagClick (e) {
         e.preventDefault();
