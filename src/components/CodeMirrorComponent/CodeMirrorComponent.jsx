@@ -20,7 +20,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 
 const CodeMirrorComponent = ({ code, options }) => {
     const editorRef = useRef(null);
-    console.log(code)
+    // console.log(code)
 
     const codeMirrorRef = useRef(null);
 
