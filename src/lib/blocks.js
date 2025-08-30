@@ -1,7 +1,7 @@
 import LazyScratchBlocks from './tw-lazy-scratch-blocks';
 import 'scratch-blocks/blockly_compressed_vertical'
 import 'scratch-blocks/blockly_compressed_horizontal'
-// import 'scratch-blocks/lua_compressed'
+import 'scratch-blocks/lua_compressed'
 
 import 'scratch-blocks/python_compressed'
 /**
