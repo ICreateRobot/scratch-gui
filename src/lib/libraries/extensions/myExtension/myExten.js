@@ -99,7 +99,7 @@ const robotTeachableExtension = {
             id="gui.extension.robotteachable.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -120,7 +120,7 @@ const robotImgExtension = {
             id="gui.extension.robotimg.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -141,7 +141,7 @@ const robotApriltagExtension = {
             id="gui.extension.robotapriltag.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -162,7 +162,7 @@ const robotColordeteExtension = {
             id="gui.extension.robotcolordete.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -183,7 +183,7 @@ const robotQrExtension = {
             id="gui.extension.robotqr.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -204,7 +204,7 @@ const robotGoodExtension = {
             id="gui.extension.robotgood.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -225,7 +225,7 @@ const robotFaceExtension = {
             id="gui.extension.robotface.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -246,7 +246,7 @@ const robotColorplaceExtension = {
             id="gui.extension.robotcolorplace.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -267,7 +267,7 @@ const robotColorxyExtension = {
             id="gui.extension.robotcolorxy.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -288,7 +288,7 @@ const robotCatExtension = {
             id="gui.extension.robotcat.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
@@ -309,7 +309,7 @@ const robotTrafficExtension = {
             id="gui.extension.robottraffic.description"
         />
     ),
-    tags: ['scratch'],
+    tags: ['main'],
     featured: true
 };
 
