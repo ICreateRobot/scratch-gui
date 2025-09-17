@@ -257,35 +257,90 @@ class MenuBar extends React.Component {
             elector:-1
         };
 
-        this.channelHostPot=new BroadcastChannel('hostpot')
-        this.channelHostPot.addEventListener('message',(event)=>{
-            this.toggleVisibility(event.data)
-            setElectron(event.data)
-            if(event.data==false){
-                this.changeElector(-1)
-            }
-        })
+        // this.channelHostPot=new BroadcastChannel('hostpot')
+        // this.channelHostPot.addEventListener('message',(event)=>{
+        //     this.toggleVisibility(event.data)
+        //     setElectron(event.data)
+        //     if(event.data==false){
+        //         this.changeElector(-1)
+        //     }
+        // })
 
-         this.channelBle = new BroadcastChannel('isBle')
-        this.channelBle.addEventListener('message',(event)=>{
-            this.toggleVisibility(event.data)
-            setElectron(event.data)
-            if(event.data==false){
-                this.changeElector(-1)
-            }
-        })
-        this.channelPort = new BroadcastChannel('channelPort')
-        this.channelPort.addEventListener('message',(event)=>{
+        //  this.channelBle = new BroadcastChannel('isBle')
+        // this.channelBle.addEventListener('message',(event)=>{
+        //     this.toggleVisibility(event.data)
+        //     setElectron(event.data)
+        //     if(event.data==false){
+        //         this.changeElector(-1)
+        //     }
+        // })
+        // this.channelPort = new BroadcastChannel('channelPort')
+        // this.channelPort.addEventListener('message',(event)=>{
 
-            if (typeof event.data === 'boolean') {
-                this.toggleVisibility(event.data)
-                setElectron(event.data)
-                if(event.data==false){
-                    this.changeElector(-1)
-                }
-            }
+        //     if (typeof event.data === 'boolean') {
+        //         this.toggleVisibility(event.data)
+        //         setElectron(event.data)
+        //         if(event.data==false){
+        //             this.changeElector(-1)
+        //         }
+        //     }
             
-        })
+        // })
+
+        // 记录当前连接的模式
+        this.activeModes = []; // 0 = net, 1 = ble, 2 = port
+        // 更新显示逻辑
+        this.updateVisibility = () => {
+            if (this.activeModes.length > 0) {
+                const currentMode = this.activeModes[this.activeModes.length - 1];
+                this.changeElector(currentMode);
+                this.toggleVisibility(true);
+            } else {
+                this.changeElector(-1);
+                this.toggleVisibility(false);
+            }
+        };
+
+        // WiFi
+        this.channelHostPot = new BroadcastChannel('hostpot');
+        this.channelHostPot.addEventListener('message', (event) => {
+            this.toggleVisibility(event.data);
+            setElectron(event.data);
+            if (event.data) {
+                if (!this.activeModes.includes(0)) this.activeModes.push(0);
+            } else {
+                this.activeModes = this.activeModes.filter(m => m !== 0);
+            }
+            this.updateVisibility();
+        });
+
+        // BLE
+        this.channelBle = new BroadcastChannel('isBle');
+        this.channelBle.addEventListener('message', (event) => {
+            this.toggleVisibility(event.data);
+            setElectron(event.data);
+            if (event.data) {
+                if (!this.activeModes.includes(1)) this.activeModes.push(1);
+            } else {
+                this.activeModes = this.activeModes.filter(m => m !== 1);
+            }
+            this.updateVisibility();
+        });
+
+        // 串口
+        this.channelPort = new BroadcastChannel('channelPort');
+        this.channelPort.addEventListener('message', (event) => {
+            if (typeof event.data === 'boolean') {
+                this.toggleVisibility(event.data);
+                setElectron(event.data);
+                if (event.data) {
+                    if (!this.activeModes.includes(2)) this.activeModes.push(2);
+                } else {
+                    this.activeModes = this.activeModes.filter(m => m !== 2);
+                }
+                this.updateVisibility();
+            }
+        });
         // this.elector={
         //     message:100
         // }
@@ -889,6 +944,14 @@ class MenuBar extends React.Component {
                                 </MenuBarMenu>
                             </MenuLabel>
                         )}
+                        <div onClick={this.props.openExampleCode}>
+                            <FormattedMessage
+                                defaultMessage="Sample Program"
+                                // eslint-disable-next-line max-len
+                                description="Sample Program"
+                                id="ic.sampleProgram"
+                            />
+                        </div>
                         {/* <MenuLabel
                             open={this.props.editMenuOpen}
                             onOpen={this.props.onClickEdit}
