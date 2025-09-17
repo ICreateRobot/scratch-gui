@@ -23,6 +23,24 @@ const CodeMirrorComponent = ({ code, options }) => {
     // console.log(code)
 
     const codeMirrorRef = useRef(null);
+    const STORAGE_KEY='tw:theme'
+    const local = localStorage.getItem(STORAGE_KEY);
+     // 判断是否暗色
+    let editorTheme = "light";
+    try {
+        if (local) {
+            if (local === "dark") {
+                editorTheme = oneDark;
+            } else {
+                const parsed = JSON.parse(local);
+                if (parsed?.gui === "dark") {
+                    editorTheme = oneDark;
+                }
+            }
+        }
+    } catch (e) {
+        // 解析失败则使用默认 light
+    }
 
     useEffect(() => {
         // if (!codeMirrorRef.current) {
@@ -65,7 +83,7 @@ const CodeMirrorComponent = ({ code, options }) => {
         //      </textarea>
         // </div>
 
-        <div style={{ border: '1px solid #ccc', backgroundColor: '#f9f9f9', padding: '10px',borderRadius:'10px'}}>
+        <div style={{ border: '1px solid #ccc', backgroundColor: '#f9f9f9', padding: '10px',borderRadius:'10px',height:'60vh'}}>
           <CodeMirror
             value={code}
             height="50vh"
@@ -75,7 +93,8 @@ const CodeMirrorComponent = ({ code, options }) => {
               autocompletion(),
               EditorView.lineWrapping,
             ]}
-            theme="light"
+            // theme="light"
+            theme={editorTheme}
             // theme={oneDark}
             onChange={handleChange}
             basicSetup={{
