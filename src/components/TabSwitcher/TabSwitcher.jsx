@@ -1296,6 +1296,7 @@ const ControlPanelLayout = ({extension}) => {
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         maxWidth: '800px',
+        height:'100%'
         // margin: '20px auto'
       }}>
         {/* 左边：子标签 + 内容 */}
@@ -1469,7 +1470,8 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
         maxHeight: '40vh',           // 设置最大高度
         overflowY: 'auto',           // 超出时出现滚动条
         boxSizing: 'border-box',     // 让 padding 不额外撑高度
-        paddingTop:'10px'
+        paddingTop:'10px',
+        height:'40vh'
       }}
     >
       {/* Tabs */}
