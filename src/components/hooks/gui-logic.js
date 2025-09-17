@@ -36,6 +36,8 @@ export const useGuiLogic = (props) => {
         clickSendWifi,
     } = props;
 
+    const [open, setOpen] = useState(false);
+    const [selected, setSelected] = useState(null);
     const [selectedIndex, setSelectedIndex] = useState(1);
     const [pythonCode, setPythonCode] = useState('print("Hello, World!")');
     const [childData, setChildData] = useState(1);
@@ -81,6 +83,33 @@ export const useGuiLogic = (props) => {
     const channelMasterClose = new BroadcastChannel('master_close');
     const channelLoad = new BroadcastChannel('isLoading');
     const bleChangeMode = new BroadcastChannel('ble-change')
+    const channelLoadExample = new BroadcastChannel('load_example')
+
+    useEffect(() => {
+        const newSocket = new WebSocket('ws://localhost:8082');
+        setSocket(newSocket);
+
+        newSocket.addEventListener('open', (event) => {
+        console.log('WebSocket connection opened');
+        });
+
+        // Handle incoming WebSocket messages
+        newSocket.addEventListener('message', (event) => {
+            // console.log(event.data)
+            // console.log(JSON.parse(event.data))
+            let sensorState=JSON.parse(event.data)
+        //   let distance = event.data.split(',');
+        //   distance = distance.map(Number);
+
+        channel.postMessage(sensorState);  // 广播数据给其他页面
+
+        });
+    // Cleanup WebSocket connection when component unmounts
+    return () => {
+        console.log('Cleaning up WebSocket connection');
+        newSocket.close();
+        };
+    }, []); // Empty dependency array to run only once
     useEffect(() => {
         channelLoad.addEventListener('message',(event)=>{
             if(!event.data){
@@ -145,8 +174,10 @@ export const useGuiLogic = (props) => {
             window.removeEventListener('offline', handleOffline); // ✅ 清除绑定，防止重复
         };
     }, []); // 👈 空依赖数组，确保只绑定一次
-    const handleLoadSelectedCode = () => {
-        const code = codeArray[selectedIndex - 1];
+    const handleLoadSelectedCode = (index) => {
+        const codeIndex = index ?? selectedIndex; // 👈 如果传了参数就用参数
+        console.log('代码索引', codeIndex)
+        const code = codeArray[codeIndex - 1];
         codeModule.setCode(code);
     };
 
@@ -213,35 +244,68 @@ export const useGuiLogic = (props) => {
     }
 
     async function downloadCodeTotal(args) {
-        if(whatConnect[2]==1){
-            console.log('串口下载')
-            // let place = await new Promise(resolve => {
-            //     resolve(prompt('请输入坑位(1-5)'));
-            // });
-            console.log(SerialDownload)
-            let place=args
+        if(whatConnect[1]==1){
+            console.log('wifi下载');
+
+            setIsLoading(true);
+            let timerLoad = setTimeout(() => {
+                alert(formatMessage({
+                    id: 'gui.alert.downFailed',
+                    default: 'Download failed',
+                    description: 'gui.alert.downFailed'
+                }));
+                setIsLoading(false);
+            }, 8000);
+            let downloadCode = pythonCode;
+            // if (!downloadCode.includes('while')) {
+            //     downloadCode += '\nwhile True:\n    pass\n';
+            // }
+            downloadCode = modifyPythonCode(downloadCode);
+            console.log(downloadCode);
+
+            let place = args;
+            console.log(place);
             if (place > 0 && place < 6) {
-                SerialDownload(place);
-                setIsLoading(true)
-                if(serialDownloadTimer){
-                    clearTimeout(serialDownloadTimer)
-                }
-                serialDownloadTimer=setTimeout(()=>{
-                    setIsLoading(false)
-                    alert(formatMessage({
-                        id: 'gui.alert.downFailed',
-                        default: 'Download failed',
-                        description: 'gui.alert.downFailed'
-                    }))
-                },10000)
+                let socket = new WebSocket(`ws://${IP}:8084`);
+                socket.addEventListener('open', async () => {
+                    socket.addEventListener('message', (event) => {
+                        if (event.data === 'success') {
+                            showToast(formatMessage({
+                                id: 'gui.alert.downSuccess',
+                                default: 'Download successful',
+                                description: 'gui.alert.downSuccess'
+                            }));
+                            socket.close();
+                            clearTimeout(timerLoad);
+                            setIsLoading(false);
+                        } else if (event.data === 'failed') {
+                            showToast(formatMessage({
+                                id: 'gui.alert.downFailed',
+                                default: 'Download failed',
+                                description: 'gui.alert.downFailed'
+                            }));
+                            socket.close();
+                            clearTimeout(timerLoad);
+                            setIsLoading(false);
+                        }
+                    });
+                    const jsonData = {
+                        command: "upload_script",
+                        params: {
+                            name: `${place}.py`,
+                            script: downloadCode
+                        }
+                    };
+                    socket.send(JSON.stringify(jsonData));
+                });
             } else {
                 alert(formatMessage({
-                        id: 'gui.alert.selectplace',
-                        default: 'Please select the correct slot',
-                        description: 'gui.alert.selectplace'
-                    }));
+                    id: 'gui.alert.selectplace',
+                    default: '请选择正确坑位',
+                    description: 'gui.alert.selectplace'
+                }));
             }
-        }else if(whatConnect[2]==0 && whatConnect[0]==1){
+        }else if(whatConnect[0]==1){
             console.log('蓝牙下载')
             console.log(args)
             if(extensionName=='ICBricks'){
@@ -279,68 +343,163 @@ export const useGuiLogic = (props) => {
                     }))
                 },10000)
             }
-        } else if (whatConnect[2] == 0 && whatConnect[1] == 1) {
-            console.log('wifi下载');
-
-            setIsLoading(true);
-            let timerLoad = setTimeout(() => {
-                alert(formatMessage({
-                    id: 'gui.alert.downFailed',
-                    default: 'Download failed',
-                    description: 'gui.alert.downFailed'
-                }));
-                setIsLoading(false);
-            }, 8000);
-            let downloadCode = pythonCode;
-            if (!downloadCode.includes('while')) {
-                downloadCode += '\nwhile True:\n    pass\n';
-            }
-            downloadCode = modifyPythonCode(downloadCode);
-            console.log(downloadCode);
-
-            let place = args;
-            console.log(place);
+        }else if(whatConnect[2]==1){
+            console.log('串口下载')
+            // let place = await new Promise(resolve => {
+            //     resolve(prompt('请输入坑位(1-5)'));
+            // });
+            console.log(SerialDownload)
+            let place=args
             if (place > 0 && place < 6) {
-                let socket = new WebSocket(`ws://${IP}:8084`);
-                socket.addEventListener('open', async () => {
-                    socket.addEventListener('message', (event) => {
-                        if (event.data === 'success') {
-                            alert(formatMessage({
-                                id: 'gui.alert.downSuccess',
-                                default: 'Download successful',
-                                description: 'gui.alert.downSuccess'
-                            }));
-                            socket.close();
-                            clearTimeout(timerLoad);
-                            setIsLoading(false);
-                        } else if (event.data === 'failed') {
-                            alert(formatMessage({
-                                id: 'gui.alert.downFailed',
-                                default: 'Download failed',
-                                description: 'gui.alert.downFailed'
-                            }));
-                            socket.close();
-                            clearTimeout(timerLoad);
-                            setIsLoading(false);
-                        }
-                    });
-                    const jsonData = {
-                        command: "upload_script",
-                        params: {
-                            name: `${place}.py`,
-                            script: downloadCode
-                        }
-                    };
-                    socket.send(JSON.stringify(jsonData));
-                });
+                SerialDownload(place);
+                setIsLoading(true)
+                if(serialDownloadTimer){
+                    clearTimeout(serialDownloadTimer)
+                }
+                serialDownloadTimer=setTimeout(()=>{
+                    setIsLoading(false)
+                    alert(formatMessage({
+                        id: 'gui.alert.downFailed',
+                        default: 'Download failed',
+                        description: 'gui.alert.downFailed'
+                    }))
+                },10000)
             } else {
                 alert(formatMessage({
-                    id: 'gui.alert.selectplace',
-                    default: '请选择正确坑位',
-                    description: 'gui.alert.selectplace'
-                }));
+                        id: 'gui.alert.selectplace',
+                        default: 'Please select the correct slot',
+                        description: 'gui.alert.selectplace'
+                    }));
             }
         }
+        // if(whatConnect[2]==1){
+        //     console.log('串口下载')
+        //     // let place = await new Promise(resolve => {
+        //     //     resolve(prompt('请输入坑位(1-5)'));
+        //     // });
+        //     console.log(SerialDownload)
+        //     let place=args
+        //     if (place > 0 && place < 6) {
+        //         SerialDownload(place);
+        //         setIsLoading(true)
+        //         if(serialDownloadTimer){
+        //             clearTimeout(serialDownloadTimer)
+        //         }
+        //         serialDownloadTimer=setTimeout(()=>{
+        //             setIsLoading(false)
+        //             alert(formatMessage({
+        //                 id: 'gui.alert.downFailed',
+        //                 default: 'Download failed',
+        //                 description: 'gui.alert.downFailed'
+        //             }))
+        //         },10000)
+        //     } else {
+        //         alert(formatMessage({
+        //                 id: 'gui.alert.selectplace',
+        //                 default: 'Please select the correct slot',
+        //                 description: 'gui.alert.selectplace'
+        //             }));
+        //     }
+        // }else if(whatConnect[2]==0 && whatConnect[0]==1){
+        //     console.log('蓝牙下载')
+        //     console.log(args)
+        //     if(extensionName=='ICBricks'){
+        //         if (args==0) {
+        //             download(args);
+        //             setIsLoading(true)
+        //             if(bleDownloadTimer){
+        //                 clearTimeout(bleDownloadTimer)
+        //             }
+        //             bleDownloadTimer=setTimeout(()=>{
+        //                 setIsLoading(false)
+        //                 alert(formatMessage({
+        //                     id: 'gui.alert.downFailed',
+        //                     default: 'Download failed',
+        //                     description: 'gui.alert.downFailed'
+        //                 }))
+        //             },6000)
+                    
+        //         } else {
+        //             cancelload();
+        //         }
+        //          setIsDown(!isDown);
+        //     }else if(extensionName=='ICRobot'){
+        //         download(args);
+        //         setIsLoading(true)
+        //         if(bleDownloadTimer){
+        //             clearTimeout(bleDownloadTimer)
+        //         }
+        //         bleDownloadTimer=setTimeout(()=>{
+        //             setIsLoading(false)
+        //             alert(formatMessage({
+        //                 id: 'gui.alert.downFailed',
+        //                 default: 'Download failed',
+        //                 description: 'gui.alert.downFailed'
+        //             }))
+        //         },10000)
+        //     }
+        // } else if (whatConnect[2] == 0 && whatConnect[1] == 1) {
+        //     console.log('wifi下载');
+
+        //     setIsLoading(true);
+        //     let timerLoad = setTimeout(() => {
+        //         alert(formatMessage({
+        //             id: 'gui.alert.downFailed',
+        //             default: 'Download failed',
+        //             description: 'gui.alert.downFailed'
+        //         }));
+        //         setIsLoading(false);
+        //     }, 8000);
+        //     let downloadCode = pythonCode;
+        //     if (!downloadCode.includes('while')) {
+        //         downloadCode += '\nwhile True:\n    pass\n';
+        //     }
+        //     downloadCode = modifyPythonCode(downloadCode);
+        //     console.log(downloadCode);
+
+        //     let place = args;
+        //     console.log(place);
+        //     if (place > 0 && place < 6) {
+        //         let socket = new WebSocket(`ws://${IP}:8084`);
+        //         socket.addEventListener('open', async () => {
+        //             socket.addEventListener('message', (event) => {
+        //                 if (event.data === 'success') {
+        //                     showToast(formatMessage({
+        //                         id: 'gui.alert.downSuccess',
+        //                         default: 'Download successful',
+        //                         description: 'gui.alert.downSuccess'
+        //                     }));
+        //                     socket.close();
+        //                     clearTimeout(timerLoad);
+        //                     setIsLoading(false);
+        //                 } else if (event.data === 'failed') {
+        //                     showToast(formatMessage({
+        //                         id: 'gui.alert.downFailed',
+        //                         default: 'Download failed',
+        //                         description: 'gui.alert.downFailed'
+        //                     }));
+        //                     socket.close();
+        //                     clearTimeout(timerLoad);
+        //                     setIsLoading(false);
+        //                 }
+        //             });
+        //             const jsonData = {
+        //                 command: "upload_script",
+        //                 params: {
+        //                     name: `${place}.py`,
+        //                     script: downloadCode
+        //                 }
+        //             };
+        //             socket.send(JSON.stringify(jsonData));
+        //         });
+        //     } else {
+        //         alert(formatMessage({
+        //             id: 'gui.alert.selectplace',
+        //             default: '请选择正确坑位',
+        //             description: 'gui.alert.selectplace'
+        //         }));
+        //     }
+        // }
     }
 
     function showToast(message, duration = 3000) {
@@ -441,21 +600,8 @@ export const useGuiLogic = (props) => {
             
             if(!showCode){
                 isUpLoadMode=true
-                if(whatConnect[2]==1){
+                if(whatConnect[1]==1){
 
-                    soc?.send(JSON.stringify({
-                        type: 'port',
-                        data: { message: JSON.stringify({
-                            "command": "select_mode",
-                            "params": 
-                                {
-                                    "mode": `file`,
-                                }
-                        })}
-                    }));
-                }else if(whatConnect[2]==0 && whatConnect[0]==1){
-                    bleChangeMode.postMessage('file')
-                }else{
                     const Socket = new WebSocket(`ws://${IP}:8084`);
 
                     Socket.addEventListener('open', (event) => {
@@ -478,7 +624,58 @@ export const useGuiLogic = (props) => {
                             isRecive=true
                         }
                     })
+                }else if(whatConnect[0]==1){
+                    bleChangeMode.postMessage('file')
+                }else if(whatConnect[2]==1){
+                    soc?.send(JSON.stringify({
+                        type: 'port',
+                        data: { message: JSON.stringify({
+                            "command": "select_mode",
+                            "params": 
+                                {
+                                    "mode": `file`,
+                                }
+                        })}
+                    }));
                 }
+                // if(whatConnect[2]==1){
+
+                //     soc?.send(JSON.stringify({
+                //         type: 'port',
+                //         data: { message: JSON.stringify({
+                //             "command": "select_mode",
+                //             "params": 
+                //                 {
+                //                     "mode": `file`,
+                //                 }
+                //         })}
+                //     }));
+                // }else if(whatConnect[2]==0 && whatConnect[0]==1){
+                //     bleChangeMode.postMessage('file')
+                // }else{
+                //     const Socket = new WebSocket(`ws://${IP}:8084`);
+
+                //     Socket.addEventListener('open', (event) => {
+                //         console.log('连接成功');
+                //         let timer=setInterval(async()=>{
+                //             Socket.send('file')
+                //             if(isRecive){
+                //                 isRecive=false
+                //                 Socket.close()
+                //                 clearInterval(timer)
+                //                 await new Promise(resolve => setTimeout(resolve, 100)); 
+                //                 channel2.postMessage(true)
+                //             }
+                        
+                //         },1000)
+                //     });
+
+                //     Socket.addEventListener('message', (event) => {
+                //         if(event.data=='success'){
+                //             isRecive=true
+                //         }
+                //     })
+                // }
                 
 
                 
@@ -487,21 +684,8 @@ export const useGuiLogic = (props) => {
                     window.EditorPreload.enterReplMode()
                 }
                 isUpLoadMode=false
-                if(whatConnect[2]==1){
-                    soc?.send(JSON.stringify({
-                        type: 'port',
-                        data: { message: JSON.stringify({
-                            "command": "select_mode",
-                            "params": 
-                                {
-                                    "mode": `scratch`,
-                                }
-                        })}
-                    }));
-                }else if(whatConnect[2]==0 && whatConnect[0]==1){
-                    bleChangeMode.postMessage('scratch')
-                }else{
-                    const Socket = new WebSocket(`ws://${IP}:8084`);
+                if(whatConnect[1]==1){
+                     const Socket = new WebSocket(`ws://${IP}:8084`);
 
                     Socket.addEventListener('open', (event) => {
                         console.log('连接成功');
@@ -522,12 +706,77 @@ export const useGuiLogic = (props) => {
                             isRecive=true
                         }
                     })
+                }else if(whatConnect[0]==1){
+                    bleChangeMode.postMessage('scratch')
+                }else if(whatConnect[2]==1){
+                    soc?.send(JSON.stringify({
+                        type: 'port',
+                        data: { message: JSON.stringify({
+                            "command": "select_mode",
+                            "params": 
+                                {
+                                    "mode": `scratch`,
+                                }
+                        })}
+                    }));
                 }
+                // if(whatConnect[2]==1){
+                //     soc?.send(JSON.stringify({
+                //         type: 'port',
+                //         data: { message: JSON.stringify({
+                //             "command": "select_mode",
+                //             "params": 
+                //                 {
+                //                     "mode": `scratch`,
+                //                 }
+                //         })}
+                //     }));
+                // }else if(whatConnect[2]==0 && whatConnect[0]==1){
+                //     bleChangeMode.postMessage('scratch')
+                // }else{
+                //     const Socket = new WebSocket(`ws://${IP}:8084`);
+
+                //     Socket.addEventListener('open', (event) => {
+                //         console.log('连接成功');
+                //         let timer=setInterval(()=>{
+                //             Socket.send('scratch')
+                //             if(isRecive){
+                //                 isRecive=false
+                //                 Socket.close()
+                //                 clearInterval(timer)
+                //                 channel2.postMessage(true)
+                //             }
+                        
+                //         },1000)
+                //     });
+
+                //     Socket.addEventListener('message', (event) => {
+                //         if(event.data=='success'){
+                //             isRecive=true
+                //         }
+                //     })
+                // }
                 
                 
             }
         }
     };
+    const handleOpenExample =()=>{
+        console.log('点击了默认程序按钮')
+        setOpen(true)
+    }
+    const handleSelect=async(item)=>{
+        console.log('选择了示例程序',item)
+        if(item.mode=='py'){
+            console.log('itemid',item.id)
+            setSelectedIndex(item.id)
+            // await new Promise(resolve => setTimeout(resolve, 100));
+            handleLoadSelectedCode(item.id)
+        }else{
+            channelLoadExample.postMessage(item)
+        }
+        
+    }
 
     useEffect(() => {
         isUnMount = false;
@@ -893,6 +1142,7 @@ export const useGuiLogic = (props) => {
                     } else if (JSON.parse(event.data).type == 'espIpStatus') {
                         if (JSON.parse(event.data).data.message) {
                             channelHostPot.postMessage(false);
+                            whatConnect[1] = 0;
                             showToast(formatMessage({
                                 id: 'gui.alert.robotDisConnect',
                                 default: 'Robot disconnected',
@@ -928,6 +1178,7 @@ export const useGuiLogic = (props) => {
                             default: 'Robot disconnected',
                             description: 'gui.alert.robotDisConnect'
                         }));
+                        whatConnect[1] = 0;
                         channelHostPot.postMessage(false);
                         console.log('333333333333333333333333');
                     } else if (JSON.parse(event.data).type == 'burnLogs') {
@@ -944,7 +1195,7 @@ export const useGuiLogic = (props) => {
                             setLogs(prevLogs => [...prevLogs, ...newLines]);
                         }
 
-                        if (JSON.parse(event.data).data.message.flashing && JSON.parse(event.data).data.message.logs.includes('A serial exception error occurred:')) {
+                        if (JSON.parse(event.data).data.message.flashing && (JSON.parse(event.data).data.message.logs.includes('A serial exception error occurred:') || (JSON.parse(event.data).data.message.logs.includes('fatal error')))) {
                             setLogs([])
                             alert(formatMessage({
                                 id: 'gui.alert.espToolTimeout',
@@ -974,7 +1225,7 @@ export const useGuiLogic = (props) => {
                             channelBleIsDown.postMessage(true)
                             setIsLoading(false)
                             clearTimeout(bleDownloadTimer)
-                            alert(formatMessage({
+                            showToast(formatMessage({
                                 id: 'gui.alert.downSuccess',
                                 default: 'Download successful',
                                 description: 'gui.alert.downSuccess'
@@ -985,7 +1236,7 @@ export const useGuiLogic = (props) => {
                         if(JSON.parse(event.data).data.message){
                             setIsLoading(false)
                             clearTimeout(serialDownloadTimer)
-                            alert(formatMessage({
+                            showToast(formatMessage({
                                 id: 'gui.alert.downSuccess',
                                 default: 'Download successful',
                                 description: 'gui.alert.downSuccess'
@@ -1003,8 +1254,8 @@ export const useGuiLogic = (props) => {
         return () => {
             isUnMount = true;
             Socket?.close();
-            channelPort.close();
-            channelSerialData.close();
+            // channelPort.close();
+            // channelSerialData.close();
             if (reconnectTimer) clearTimeout(reconnectTimer);
         };
     }, []);
@@ -1056,6 +1307,12 @@ export const useGuiLogic = (props) => {
         handleModeChange,
         downloadCodeTotal,
         showToast,
-        getCurrent
+        getCurrent,
+        open,
+        setOpen,
+        selected,
+        setSelected,
+        handleOpenExample,
+        handleSelect
     };
 };
