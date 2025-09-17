@@ -56,6 +56,7 @@ import BurnLogs from 'scratch-gui/src/components/Burn-logs/BurnLogs.jsx';
 import TrainPage from '../TrainPage/TrainPage.jsx';
 import TabSwitcher from 'scratch-gui/src/components/TabSwitcher/TabSwitcher.jsx';
 import { useGuiLogic } from '../hooks/gui-logic.js';
+import ExampleModal from '../ExampleModal/ExampleModal.jsx'
 
 const messages = defineMessages({
     addExtension: {
@@ -233,7 +234,13 @@ const GUIComponent = props => {
         handleModeChange,
         downloadCodeTotal,
         showToast,
-        getCurrent
+        getCurrent,
+        open,
+        setOpen,
+        selected,
+        setSelected,
+        handleOpenExample,
+        handleSelect
     } = useGuiLogic({
         onExtensionButtonClick,
         onOpenCustomExtensionModal,
@@ -416,6 +423,7 @@ const GUIComponent = props => {
                     onModeChange={handleModeChange}
                     modeValue={modeValue}
                     extensionName={extensionName}
+                    openExampleCode={handleOpenExample}
                 />
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
@@ -574,7 +582,7 @@ const GUIComponent = props => {
                                     />
                                 </button>}
 
-                                {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
+                                {/* {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
                                 {showCode && getCurrent()=='ICRobot' && 
                                     <select
                                         value={selectedIndex}
@@ -609,7 +617,7 @@ const GUIComponent = props => {
                                     }}
                                 >
                                     OK
-                                </button>}
+                                </button>} */}
                             </div>
                             
                             {showCode && <CodeMirrorComponent code={pythonCode}/>}
@@ -627,6 +635,31 @@ const GUIComponent = props => {
                                     vm={vm}
                                 />
                             </Box>}
+                            {/* {selected && (
+                                <div
+                                style={{
+                                    marginTop: "20px",
+                                    padding: "15px",
+                                    background: "#f9f9f9",
+                                    borderRadius: "10px",
+                                }}
+                                >
+                                <h2 style={{ fontWeight: "bold", marginBottom: "10px" }}>
+                                    已选择示例：
+                                </h2>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <img src={selected.img} alt={selected.name} width={50} />
+                                    <span style={{ fontSize: "18px" }}>{selected.name}</span>
+                                </div>
+                                </div>
+                            )} */}
+
+                            {/* 弹窗 */}
+                            <ExampleModal
+                                open={open}
+                                onClose={() => setOpen(false)}
+                                onSelect={handleSelect}
+                            />
                         </Box>
                     </Box>
                 </Box>
