@@ -4,7 +4,7 @@ import { setIsCode,getIsCode } from '../../../../../utils/whatModule.js';
 import { setBlock } from '../../../../../utils/isAddMaster.js';
 
 import {setLan,getLan} from '../../../../../utils/lanMode.js'
-import { getIsRobot ,getDelete,setDelete,getCurrent, getDeletedCate,setDeletedCate,delCategro,getHiddenBlocks,setHiddenBlocks,delHiddenBlocks,getShowCodeDb} from 'scratch-gui/src/components/utils/utils.js';
+import { getIsRobot ,getDelete,setDelete,getCurrent, getDeletedCate,setDeletedCate,delCategro,getHiddenBlocks,setHiddenBlocks,delHiddenBlocks,getShowCodeDb,getAllLoaded,getLoadExtension} from 'scratch-gui/src/components/utils/utils.js';
 import {injectExtensionBlockTheme, injectExtensionCategoryTheme} from '../../lib/themes/blockHelpers';
 import makeToolboxXML from '../../lib/make-toolbox-xml';
 // ================== 核心逻辑 ==================
@@ -12,14 +12,20 @@ export function createBlocksLogic(componentInstance) {
     const self = componentInstance
 
     let downEnableCategories=['control','operators','variables','myBlocks','robot','bricks','Microbit']
+    let isChangeMode=false
     // let mode=!getShowCodeDb()
     const channelMode=new BroadcastChannel('mode')
 
     channelMode.addEventListener('message',(event)=>{
         if((self.mode==event.data) && (self.currentDevice==getCurrent())) return
+        if(self.mode!=event.data){
+            isChangeMode=true
+        }else{
+            isChangeMode=false
+        }
         console.log('改变了模式')
         self.mode=event.data
-        self.currentDevice-getCurrent()
+        self.currentDevice=getCurrent()
         if(getCurrent()=='ICRobot'){
 
             if(!self.mode){
@@ -133,70 +139,77 @@ export function createBlocksLogic(componentInstance) {
             }
         }
         
-        const toolboxDom = self.ScratchBlocks.Xml.textToDom(self.getToolboxXML())
+        const toolboxDom = self.ScratchBlocks.Xml.textToDom(getToolboxXML())
         // console.log(toolboxDom)
 
-        if(!self.mode){
-            // const children = toolboxDom.children;
-            // for (let i = 0; i < children.length; i++) {
-            //     console.log(children[i]);
-            //     if(children[i].id){
+        if(isChangeMode){
+            if(!self.mode){
+                // const children = toolboxDom.children;
+                // for (let i = 0; i < children.length; i++) {
+                //     console.log(children[i]);
+                //     if(children[i].id){
 
-            //     }
-            // }
+                //     }
+                // }
 
 
-            const children = toolboxDom.children;
-            
-
-            for (let i = 0; i < children.length; i++) {
-                const id = children[i].id;
-
-                if(id){
-                    const match = downEnableCategories.some(cat =>
-                        id === cat || id.startsWith(cat)
-                    );
-
-                    if (match) {
-                        // ✅ id 与数组中的某个值相等或以其开头
-                        // console.log('匹配：', id);
-                        // 这里写你的操作...
-                    } else {
-                        // ❌ 不匹配
-                        // console.log('不匹配：', id);
-                        setDeletedCate(id);
-
-                        // 这里写另一些操作...
-                    }
-                    if(id=='robotteachable'){
-                        setDeletedCate(id);
-                    }
-                }
+                const children = toolboxDom.children;
                 
-            }
-        }else{
 
+                for (let i = 0; i < children.length; i++) {
+                    const id = children[i].id;
 
-            const deleted = getDeletedCate();
-            console.log(deleted)
-            for (let i = deleted.length - 1; i >= 0; i--) {
-                const id = deleted[i];
-                console.log(id)
-                if(typeof id =='string'){
-                    const match = downEnableCategories.some(cat =>
-                        id === cat || id.startsWith(cat)
-                    );
-                    if (!match) {
-                        console.log('不匹配', id);
-                        delCategro(i, 1);  // 安全地删除
+                    if(getDeletedCate().includes(id)) continue
+                    if(id){
+                        const match = downEnableCategories.some(cat =>
+                            id === cat || id.startsWith(cat)
+                        );
+
+                        if (match) {
+                            // ✅ id 与数组中的某个值相等或以其开头
+                            // console.log('匹配：', id);
+                            // 这里写你的操作...
+                        } else {
+                            // ❌ 不匹配
+                            // console.log('不匹配：', id);
+                            setDeletedCate(id);
+
+                            // 这里写另一些操作...
+                        }
+                        if(id=='robotteachable'){
+                            setDeletedCate(id);
+                        }
                     }
-                    if(id=='robotteachable'){
-                        delCategro(i, 1);
-                    }
+                    
                 }
-                
-            }
+            }else{
 
+
+                const deleted = getDeletedCate();
+                console.log(deleted)
+                for (let i = deleted.length - 1; i >= 0; i--) {
+                    const id = deleted[i];
+                    if(!getLoadExtension().includes(id)) continue
+                    console.log(id)
+                    if(typeof id =='string'){
+                        const match = downEnableCategories.some(cat =>
+                            id === cat || id.startsWith(cat)
+                        );
+                        if (!match) {
+                            console.log('不匹配', id);
+                            
+                            delCategro(i, 1);  // 安全地删除
+                           
+                        }
+                        if(id=='robotteachable'){
+                            delCategro(i, 1);
+                            
+                        }
+                    }
+                    
+                }
+
+            }
         }
         
 
@@ -289,7 +302,8 @@ export function createBlocksLogic(componentInstance) {
                         'robotface',
                         'robotgood',
                         'robotqr',
-                        'robottraffic'
+                        'robottraffic',
+                        'robotextend'
                 ]);
                 self.onWorkspaceUpdate(self.dataXML)
                 self.workspace.clear()
@@ -310,6 +324,7 @@ export function createBlocksLogic(componentInstance) {
                         'robotcolorxy',
                         'robotface',
                         'robotqr',
+                        'robotextend'
                 ]);
                 self.onWorkspaceUpdate(self.dataXML)
                 self.workspace.clear()
@@ -401,7 +416,8 @@ export function createBlocksLogic(componentInstance) {
                 'robotface',
                 'robotgood',
                 'robotqr',
-                'robottraffic'
+                'robottraffic',
+                'robotextend'
                 
             ]);
             console.log(getDeletedCate())
@@ -537,7 +553,7 @@ export function createBlocksLogic(componentInstance) {
             let eventWhenBlocks = [];
             let code;
             // console.log(typeof this.workspace.blockDB_)
-            // console.log(this.workspace.blockDB_)
+            console.log(self.workspace.blockDB_)
 
             for(let child in self.workspace.blockDB_){
                 // console.log(this.workspace.blockDB_[child].type)
@@ -637,7 +653,7 @@ export function createBlocksLogic(componentInstance) {
         const runtime =self.props.vm.runtime
         // console.log(runtime)
         try {
-            const toolboxXML = self.getToolboxXML();
+            const toolboxXML = getToolboxXML();
             const toolboxDom = self.ScratchBlocks.Xml.textToDom(toolboxXML);
 
             const categories = toolboxDom.getElementsByTagName('category');
@@ -746,6 +762,7 @@ export function createBlocksLogic(componentInstance) {
                 self.props.theme
             );
             try{
+                console.log(getDeletedCate())
                 dynamicBlocksXML = dynamicBlocksXML.filter(category => {
                     // console.log(category.id)
                     return !getDeletedCate().includes(category.id); // 保留未删除的类别
