@@ -706,6 +706,29 @@ const microbitPeripheralExtension = {
     )
 };
 
+const robotExtendExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="External Microbit"
+            description="Name for the 'robotextend' extension"
+            id="gui.extension.robotextend.name"
+        />
+    ),
+    extensionId: 'robotextend',
+    iconURL: robotactuatorImage, 
+    insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="External Microbit."
+            description="Description for the 'robotextend' extension"
+            id="gui.extension.robotextend.description"
+        />
+    ),
+    tags: ['scratch'],
+    featured: true
+};
+
+
 
 export {
     robotTeachableExtension,
@@ -736,5 +759,6 @@ export {
     robotBleExtension,
     deepseekExtension,
     microbitExtension,
-    microbitPeripheralExtension
+    microbitPeripheralExtension,
+    robotExtendExtension
 };

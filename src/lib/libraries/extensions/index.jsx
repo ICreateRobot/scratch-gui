@@ -80,7 +80,8 @@ import {
     robotBleExtension,
     deepseekExtension,
     microbitExtension,
-    microbitPeripheralExtension
+    microbitPeripheralExtension,
+    robotExtendExtension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -113,6 +114,7 @@ export default [
     deepseekExtension,
     microbitExtension,
     microbitPeripheralExtension,
+    robotExtendExtension,
     {
         name: (
             <FormattedMessage

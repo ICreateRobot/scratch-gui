@@ -11,7 +11,8 @@ import {APP_NAME} from '../../../lib/brand.js';
 export const HIDDEN_EXTENSIONS = [
     'bricksmotor','brickstwomotor','brickslight','brickssensors','bricksevent',
     'robotmove','robotsensors','robotevent','robotwifi','robotemote','robotshow',
-    'robotsound','robotactuator','robotble','MicrobitIcreate','MicrobiteIcreateP'
+    'robotsound','robotactuator','robotble','MicrobitIcreate','MicrobiteIcreateP',
+    'robotextend'
 ];
 
 let preKey = null;
@@ -358,6 +359,7 @@ export function createLibraryLogic(componentInstance) {
                         self.props.onItemSelected(getHiddenData()[11]);
                         self.props.onItemSelected(getHiddenData()[12]);
                         self.props.onItemSelected(getHiddenData()[6]);
+                        self.props.onItemSelected(getHiddenData()[16]);
                         self.props.onItemSelected(getFilteredData()[1]);
                         self.props.onItemSelected(getFilteredData()[2]);
                         self.props.onItemSelected(getFilteredData()[3]);
