@@ -599,6 +599,9 @@ export const useGuiLogic = (props) => {
 
             
             if(!showCode){
+                if(extensionName=='Microbit'){
+                    window.EditorPreload.exitReplMode()
+                }
                 isUpLoadMode=true
                 if(whatConnect[1]==1){
 
