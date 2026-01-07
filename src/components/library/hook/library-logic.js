@@ -79,6 +79,18 @@ export function createLibraryLogic(componentInstance) {
         
     })
 
+    const channelProjectExtension = new BroadcastChannel('project_extension')
+    // channelProjectExtension.addEventListener('message',(event)=>{
+    //     let data=JSON.parse(event.data)
+    //     console.log(data)
+    //     if(data.type=='load'){
+    //         for(let i=0;i<data.extension.length;i++){
+    //             addLoadExtension(data.extension[i])
+    //         }
+    //     }
+        
+    // })
+
     channelClose.addEventListener('message',(event)=>{
         handleClose()
     })
@@ -266,16 +278,27 @@ export function createLibraryLogic(componentInstance) {
 
     // 选择扩展
     function handleSelect(filteredData, id) {
+        console.log('-----=======')
+        console.log(getAllLoaded())
+        console.log(filteredData[id].extensionId)
         if (getAllLoaded().includes(filteredData[id].extensionId)) {
             channelLoadExtension.postMessage({
                 op: 'restore',
                 id: filteredData[id].extensionId
             });
             addLoadExtension(filteredData[id].extensionId);
+            channelProjectExtension.postMessage(JSON.stringify({
+                type:"save",
+                extension:getLoadExtension()
+            }))
             handleClose();
         } else {
             if (filteredData[id].extensionId) {
                 addLoadExtension(filteredData[id].extensionId);
+                channelProjectExtension.postMessage(JSON.stringify({
+                    type:"save",
+                    extension:getLoadExtension()
+                }))
                 setAllLoaded(filteredData[id].extensionId);
             }
             oneExtension.postMessage(id);
@@ -380,10 +403,18 @@ export function createLibraryLogic(componentInstance) {
                                     id: self.props.data[i + 1].extensionId
                                 });
                                 addLoadExtension(self.props.data[i + 1].extensionId);
+                                channelProjectExtension.postMessage(JSON.stringify({
+                                    type:"save",
+                                    extension:getLoadExtension()
+                                }))
                                 handleClose();
                             } else {
                                 if (self.props.data[i + 1].extensionId === 'robotgood') continue;
                                 addLoadExtension(self.props.data[i + 1].extensionId);
+                                channelProjectExtension.postMessage(JSON.stringify({
+                                    type:"save",
+                                    extension:getLoadExtension()
+                                }))
                                 setAllLoaded(self.props.data[i + 1].extensionId);
                             }
                         }
