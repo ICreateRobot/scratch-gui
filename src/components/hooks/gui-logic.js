@@ -46,7 +46,14 @@ export const useGuiLogic = (props) => {
     const [showCode, setShowCode] = useState(getShowCodeDb());
     const [lanMode, setLanMode] = useState(getLan());
     const [isDown, setIsDown] = useState(true);
-    const [currentExtension, setCurrentExtension] = useState('2');
+    // const [currentExtension, setCurrentExtension] = useState('2');
+    const [currentExtension, setCurrentExtension] = useState(() => {
+        const current = getCurrent();
+        if (current === 'ICBricks') return '1';
+        if (current === 'ICRobot') return '2';
+        if (current === 'Microbit') return '3';
+        return '2'; // 包括 '' 或其他情况
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [isFlashing, setIsFlashing] = useState(false);
     const [logs, setLogs] = useState([]);
@@ -84,6 +91,27 @@ export const useGuiLogic = (props) => {
     const channelLoad = new BroadcastChannel('isLoading');
     const bleChangeMode = new BroadcastChannel('ble-change')
     const channelLoadExample = new BroadcastChannel('load_example')
+    const channelProjectExtension = new BroadcastChannel('project_extension')
+
+    useEffect(() => {
+        channelProjectExtension.addEventListener('message',(event)=>{
+            let data=JSON.parse(event.data)
+            console.log(data)
+            if(data.type=='load'){
+                for(let i=0;i<data.extension.length;i++){
+                    addLoadExtension(data.extension[i])
+                    setAllLoaded(data.extension[i])
+                }
+            }
+            
+        })
+    },[])
+    
+
+    useEffect(() => {
+        console.log('abcdefg:'+currentExtension)
+
+    }, [currentExtension]);
 
     useEffect(() => {
         const newSocket = new WebSocket('ws://localhost:8082');
@@ -255,7 +283,7 @@ export const useGuiLogic = (props) => {
                     description: 'gui.alert.downFailed'
                 }));
                 setIsLoading(false);
-            }, 8000);
+            }, 10000);
             let downloadCode = pythonCode;
             // if (!downloadCode.includes('while')) {
             //     downloadCode += '\nwhile True:\n    pass\n';
@@ -781,11 +809,18 @@ export const useGuiLogic = (props) => {
         
     }
 
+
+    const aliveRef = useRef(false);
+    const socketRef = useRef(null);
+
     useEffect(() => {
         isUnMount = false;
+        aliveRef.current = true;
         console.log(window);
         let Socket = new WebSocket('ws://localhost:8081');
+        socketRef.current = Socket;
         setSoc(Socket);
+
 
         const RECONNECT_INTERVAL = 3000;
         const MAX_RETRIES = 10;
@@ -795,7 +830,9 @@ export const useGuiLogic = (props) => {
         const channelBle = new BroadcastChannel('isBle')
         const channelPort = new BroadcastChannel('channelPort');
         channelPort.addEventListener('message', (event) => {
-            Socket?.send(JSON.stringify({
+            if (!aliveRef.current) return;
+            // console.log(event.data)
+            socketRef.current?.send(JSON.stringify({
                 type: 'port',
                 data: { message: event.data }
             }));
@@ -810,12 +847,14 @@ export const useGuiLogic = (props) => {
 
         const setupListeners = (sock) => {
             sock.addEventListener('open', () => {
+                if (!aliveRef.current) return;
                 logWithTime('WebSocket connection opened');
                 console.log('readyState:', sock.readyState);
                 retryCount = 0;
             });
 
             sock.addEventListener('close', (event) => {
+                if (!aliveRef.current) return;
                 logWithTime(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
                 console.warn('readyState:', sock.readyState);
 
@@ -823,10 +862,16 @@ export const useGuiLogic = (props) => {
                     if (retryCount < MAX_RETRIES) {
                         retryCount++;
                         reconnectTimer = setTimeout(() => {
+                            if (!aliveRef.current) return;
                             logWithTime(`Reconnecting... attempt ${retryCount}`);
-                            Socket = new WebSocket('ws://localhost:8081');
-                            setSoc(Socket);
-                            setupListeners(Socket);
+                            // Socket = new WebSocket('ws://localhost:8081');
+                            
+                            // setSoc(Socket);
+                            // setupListeners(Socket);
+                            const newSocket = new WebSocket('ws://localhost:8081');
+                            socketRef.current = newSocket;
+                            setSoc(newSocket);
+                            setupListeners(newSocket);
                         }, RECONNECT_INTERVAL);
                     } else {
                         console.error('Max reconnect attempts reached.');
@@ -835,15 +880,18 @@ export const useGuiLogic = (props) => {
             });
 
             sock.addEventListener('error', (event) => {
+                if (!aliveRef.current) return;
                 logWithTime('WebSocket error occurred!');
                 console.error(event);
                 console.warn('readyState:', sock.readyState);
             });
 
             sock.addEventListener('message', async (event) => {
+                if (!aliveRef.current) return;
                 try {
                     if (JSON.parse(event.data).type == 'bricks') {
                         setIsDown(!JSON.parse(event.data).data.message);
+                        channelBleIsDown.postMessage(false)
                     } else if (JSON.parse(event.data).type == 'wifiDown') {
                         if (JSON.parse(event.data).data.message == 'success') {
                             alert('下载成功');
@@ -853,6 +901,7 @@ export const useGuiLogic = (props) => {
                     } else if (JSON.parse(event.data).type == 'ble') {
                         if (JSON.parse(event.data).data.message) {
                             whatConnect[0] = 0;
+                            channelBleIsDown.postMessage(false)
                             channelBle.postMessage(false)
                             portArr.forEach(port => {
                                 updateChildBallText(port, '', '', false);
@@ -1256,12 +1305,205 @@ export const useGuiLogic = (props) => {
 
         return () => {
             isUnMount = true;
+
+            aliveRef.current = false;
+            socketRef.current?.close();
+            socketRef.current = null;
             Socket?.close();
             // channelPort.close();
             // channelSerialData.close();
             if (reconnectTimer) clearTimeout(reconnectTimer);
         };
     }, []);
+
+
+    
+//     useEffect(() => {
+//     aliveRef.current = true;
+//     isUnMount = false;
+
+//     let Socket = new WebSocket('ws://localhost:8081');
+//     socketRef.current = Socket;
+//     setSoc(Socket);
+
+//     const RECONNECT_INTERVAL = 3000;
+//     const MAX_RETRIES = 10;
+//     let retryCount = 0;
+//     let reconnectTimer = null;
+
+//     const channelBle = new BroadcastChannel('isBle');
+//     const channelPort = new BroadcastChannel('channelPort');
+//     const channelSerialData = new BroadcastChannel('serial-data');
+
+//     channelPort.addEventListener('message', (event) => {
+//         if (!aliveRef.current) return;
+//         socketRef.current?.send(JSON.stringify({
+//             type: 'port',
+//             data: { message: event.data }
+//         }));
+//     });
+
+//     function logWithTime(msg) {
+//         console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
+//     }
+
+//     const setupListeners = (sock) => {
+//         sock.addEventListener('open', () => {
+//             if (!aliveRef.current) return;
+//             logWithTime('WebSocket connection opened');
+//             retryCount = 0;
+//         });
+
+//         sock.addEventListener('close', (event) => {
+//             if (!aliveRef.current) return;
+
+//             logWithTime(`WebSocket closed: ${event.code}`);
+//             if (retryCount < MAX_RETRIES) {
+//                 retryCount++;
+//                 reconnectTimer = setTimeout(() => {
+//                     if (!aliveRef.current) return;
+
+//                     const newSocket = new WebSocket('ws://localhost:8081');
+//                     socketRef.current = newSocket;
+//                     setSoc(newSocket);
+//                     setupListeners(newSocket);
+//                 }, RECONNECT_INTERVAL);
+//             }
+//         });
+
+//         sock.addEventListener('error', () => {
+//             if (!aliveRef.current) return;
+//             console.warn('WebSocket error');
+//         });
+
+//         sock.addEventListener('message', async (event) => {
+//             if (!aliveRef.current) return;
+
+//             try {
+//                 const msg = JSON.parse(event.data);
+
+//                 /* =========================
+//                    ↓↓↓ 以下业务逻辑 100% 保留 ↓↓↓
+//                    ========================= */
+
+//                 if (msg.type === 'bricks') {
+//                     setIsDown(!msg.data.message);
+//                     channelBleIsDown.postMessage(false);
+
+//                 } else if (msg.type === 'wifiDown') {
+//                     alert(msg.data.message === 'success' ? '下载成功' : '下载失败');
+
+//                 } else if (msg.type === 'ble') {
+//                     if (msg.data.message) {
+//                         whatConnect[0] = 0;
+//                         channelBleIsDown.postMessage(false);
+//                         channelBle.postMessage(false);
+//                         portArr.forEach(port => {
+//                             updateChildBallText(port, '', '', false);
+//                         });
+//                         setIsDown(true);
+//                     }
+
+//                 } else if (msg.type === 'setExtension') {
+//                     stopAll.postMessage(true);
+
+//                     const extension = msg.data.message;
+
+//                     // ⭐ 核心：只要组件活着，这个 setState 一定生效
+//                     if (!aliveRef.current) return;
+//                     setCurrentExtension(String(extension));
+
+//                     if (extension === 1) {
+//                         setExtensionName('ICBricks');
+//                         setCurrent('ICBricks');
+//                         if (extensionSelect[0]) {
+//                             setIsBricks(true);
+//                             channel1.postMessage(extension);
+//                         } else {
+//                             setIsLoading(true);
+//                             setIsMaster(true);
+//                             setIsBricks(true);
+//                             setAdd(true);
+//                             onExtensionButtonClick();
+//                             extensionSelect[0] = true;
+//                         }
+//                         setLan('Lua');
+//                         setLanMode('Lua');
+//                         codeModule.setCode('');
+
+//                     } else if (extension === 2) {
+//                         setExtensionName('ICRobot');
+//                         setCurrent('ICRobot');
+//                         if (extensionSelect[1]) {
+//                             setIsBricks(false);
+//                             channel1.postMessage(extension);
+//                         } else {
+//                             setIsLoading(true);
+//                             setIsBricks(false);
+//                             setIsMaster(true);
+//                             setIsRobot(true);
+//                             setAdd(true);
+//                             onExtensionButtonClick();
+//                             extensionSelect[1] = true;
+//                         }
+//                         setLan('Python');
+//                         setLanMode('Python');
+//                         codeModule.setCode('');
+
+//                     } else if (extension === 3) {
+//                         setExtensionName('Microbit');
+//                         setCurrent('Microbit');
+//                         if (extensionSelect[2]) {
+//                             setIsBricks(false);
+//                             channel1.postMessage(extension);
+//                         } else {
+//                             setIsLoading(true);
+//                             setIsBricks(false);
+//                             setIsMaster(true);
+//                             setIsRobot(false);
+//                             setAdd(true);
+//                             onExtensionButtonClick();
+//                             extensionSelect[2] = true;
+//                         }
+//                         setLan('Python');
+//                         setLanMode('Python');
+//                         codeModule.setCode('');
+//                     }
+
+//                     channelMode.postMessage(!getShowCodeDb());
+
+//                 } else if (msg.type === 'serialData') {
+//                     channelSerialData.postMessage(msg.data.message);
+//                     setData(prev => prev + msg.data.message + '\n');
+//                 }
+
+//                 /* =========================
+//                    ↑↑↑ 业务逻辑原样结束 ↑↑↑
+//                    ========================= */
+
+//             } catch (e) {
+//                 console.log('8081 message error', e);
+//             }
+//         });
+//     };
+
+//     setupListeners(Socket);
+
+//     return () => {
+//         aliveRef.current = false;
+//         isUnMount = true;
+
+//         if (reconnectTimer) clearTimeout(reconnectTimer);
+
+//         socketRef.current?.close();
+//         socketRef.current = null;
+
+//         channelPort.close();
+//         channelBle.close();
+//         channelSerialData.close();
+//     };
+// }, []);
+
 
     return {
         selectedIndex,
