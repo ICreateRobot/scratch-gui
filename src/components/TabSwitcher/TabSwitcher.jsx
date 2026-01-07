@@ -122,6 +122,8 @@ import bot2 from './2.svg'
 import bot3 from './3.svg'
 import bot4 from './4.svg'
 import bot5 from './5.svg'
+import rightChange from './right.svg'
+import leftChange from './left.svg'
 import down from './down.svg'
 import downRun from './downRun.svg'
 
@@ -321,14 +323,16 @@ const ProgramDownload = ({onSendData,extension }) => {
       const channelBleIsDown = new BroadcastChannel('ble-download')
 
       const handleMessage = (event) => {
-        if(event.data){
-          // console.log('收到了下载返回')
-          setLongIsDown(true)
-          setIsDown(true)
-          // console.log(isDown)
-          // console.log(getLongIsDown())
+        // if(event.data){
+        //   // console.log('收到了下载返回')
+        //   setLongIsDown(true)
+        //   setIsDown(true)
+        //   // console.log(isDown)
+        //   // console.log(getLongIsDown())
           
-        }
+        // }
+          setLongIsDown(event.data)
+          setIsDown(event.data)
       };
 
       channelBleIsDown.addEventListener('message', handleMessage);
@@ -338,7 +342,11 @@ const ProgramDownload = ({onSendData,extension }) => {
         channelBleIsDown.removeEventListener('message', handleMessage);
         channelBleIsDown.close();
       };
-    }, []);
+  }, []);
+
+    // console.log('-------------------')
+    // console.log(extension)
+    // console.log('###################')
   if(extension=='2'){
     const images = [
         bot1, // 替换成你的图片路径
@@ -374,7 +382,14 @@ const ProgramDownload = ({onSendData,extension }) => {
               userSelect: 'none',
             }}
           >
-            &#8592;
+            <img
+              src={leftChange}
+              alt="prev"
+              style={{
+                width: '36px',
+                height: '36px',
+              }}
+            />
           </div>
 
           {/* 中间机器人图 */}
@@ -403,7 +418,14 @@ const ProgramDownload = ({onSendData,extension }) => {
               userSelect: 'none',
             }}
           >
-            &#8594;
+             <img
+              src={rightChange}
+              alt="prev"
+              style={{
+                width: '36px',
+                height: '36px',
+              }}
+            />
           </div>
 
           {/* 下载 & 运行按钮 */}
@@ -786,7 +808,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9))
+    setRealtimeValues(data.slice(9,14))
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -831,7 +853,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9))
+    setRealtimeValues(data.slice(9,14))
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -879,7 +901,7 @@ const ControlPanelLayout = ({extension}) => {
       // console.log(data);
 
       // 更新实时数值
-      setRealtimeValues(data.slice(9));
+      setRealtimeValues(data.slice(9,14));
 
       // 根据前两个字节判断要显示的图片
       let newImage = dynamicImageRef.current;
@@ -1471,7 +1493,7 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
         overflowY: 'auto',           // 超出时出现滚动条
         boxSizing: 'border-box',     // 让 padding 不额外撑高度
         paddingTop:'10px',
-        height:'40vh'
+        height:'40vh',
       }}
     >
       {/* Tabs */}
