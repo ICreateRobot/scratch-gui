@@ -213,6 +213,7 @@
 
     /* this will only ever be as wide as the stage */
     flex-basis: 0;
+    min-width: 500px;
 }
 
 .target-wrapper {
