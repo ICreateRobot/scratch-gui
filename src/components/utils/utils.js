@@ -16,7 +16,7 @@ let allLoaded=[]
 
 let deletedCategoriesID = ['robotwifi', 'robotcat'];
 
-let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch'];
+let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi'];
 
 let showCode=false
 
@@ -217,6 +217,8 @@ function getDelete(){
 
 function setCurrent(a){
     currentExtension=a
+    const channel = new BroadcastChannel('current-device')
+    channel.postMessage(a)
 }
 
 function getCurrent(){
