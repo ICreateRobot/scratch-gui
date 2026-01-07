@@ -13,6 +13,7 @@ import robotcolorplaceImage from '../robotcolorplace/colorplace_center.png';
 import robotcolorxyImage from '../robotcolorxy/colorxy_center.png';
 import robotcatImage from '../robotcat/cat_center.png';
 import robottrafficImage from '../robottraffic/traffic_center.png';
+import k210Image from '../k210/extension_k210.png'
 
 
 //bricks motor
@@ -81,6 +82,8 @@ import ICmicrobitIconURL from '../ICreate_Microbit/microbit.png';
 import ICmicrobitInsetIconURL from '../ICreate_Microbit/microbit-small.svg';
 import ICmicrobitConnectionIconURL from '../ICreate_Microbit/microbit-illustration.svg';
 import ICmicrobitConnectionSmallIconURL from '../ICreate_Microbit/microbit-small.svg';
+
+//k210
 
 const robotTeachableExtension = {
     name: (
@@ -706,6 +709,27 @@ const microbitPeripheralExtension = {
     )
 };
 
+const k210Extension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="k210"
+            description="Name for the 'k210' extension"
+            id="gui.extension.k210.name"
+        />
+    ),
+    extensionId: 'k210',
+    iconURL: k210Image, 
+    description: (
+        <FormattedMessage
+            defaultMessage="k210."
+            description="Description for the 'k210' extension"
+            id="gui.extension.k210.description"
+        />
+    ),
+    tags: ['scratch'],
+    featured: true
+};
+
 const robotExtendExtension = {
     name: (
         <FormattedMessage
@@ -760,5 +784,6 @@ export {
     deepseekExtension,
     microbitExtension,
     microbitPeripheralExtension,
-    robotExtendExtension
+    robotExtendExtension,
+    k210Extension
 };
