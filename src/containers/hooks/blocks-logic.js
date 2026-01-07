@@ -77,6 +77,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotimg_isOpenCamera')
                 setHiddenBlocks('robotsound_playLocalMusic')
                 setHiddenBlocks('robotimg_howStartCamera')
+                setHiddenBlocks('robotextend_startMode')
                 // setHiddenBlocks('robotsound_selectSound')
                 
                 
@@ -102,7 +103,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotimg_catPlace')
                 setHiddenBlocks('robotimg_isOpenModel')
 
-                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera']
+                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i, 1);
@@ -160,6 +161,7 @@ export function createBlocksLogic(componentInstance) {
                     const id = children[i].id;
 
                     if(getDeletedCate().includes(id)) continue
+                    if(id=='k210') continue
                     if(id){
                         const match = downEnableCategories.some(cat =>
                             id === cat || id.startsWith(cat)
@@ -190,6 +192,7 @@ export function createBlocksLogic(componentInstance) {
                 for (let i = deleted.length - 1; i >= 0; i--) {
                     const id = deleted[i];
                     if(!getLoadExtension().includes(id)) continue
+                    if(id=='k210') continue
                     console.log(id)
                     if(typeof id =='string'){
                         const match = downEnableCategories.some(cat =>
@@ -246,6 +249,60 @@ export function createBlocksLogic(componentInstance) {
             // block.setMovable(false);
         }
 
+    })
+
+    const channelDevice = new BroadcastChannel('current-device')
+    channelDevice.addEventListener('message',(event)=>{
+        if(event.data=='ICBricks'){
+            setHiddenBlocks('k210_settings')
+            setHiddenBlocks('k210_wirelessSet')
+            setHiddenBlocks('k210_wirelessConnect')
+            setHiddenBlocks('k210_lightSwitch')
+            setHiddenBlocks('k210_lightBrightness')
+            setHiddenBlocks('k210_lightGetBrightness')
+
+            let toMove=['k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi']
+            for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
+                if (toMove.includes( getHiddenBlocks()[i])) {
+                    delHiddenBlocks(i,1)
+                }
+            }
+        }else if(event.data=='Microbit' || event.data==''){
+
+            setHiddenBlocks('k210_settingsBricks')
+            setHiddenBlocks('k210_wirelessSetBricks')
+            setHiddenBlocks('k210_wirelessConnectBricks')
+            setHiddenBlocks('k210_lightSwitchBricks')
+            setHiddenBlocks('k210_lightBrightnessBricks')
+            setHiddenBlocks('k210_lightGetBrightnessBricks')
+            setHiddenBlocks('k210_xiaozhi')
+
+            let toMove=['k210_settings','k210_wirelessSet','k210_wirelessConnect','k210_lightSwitch','k210_lightBrightness','k210_lightGetBrightness']
+            for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
+                if (toMove.includes( getHiddenBlocks()[i])) {
+                    delHiddenBlocks(i,1)
+                }
+            }
+        }
+
+         // 1. 获取当前 workspace 的完整 XML DOM
+        const fullDom = self.ScratchBlocks.Xml.workspaceToDom(self.workspace);
+
+        console.log(fullDom)
+        // 2. 提取 <variables> 节点
+        const variablesTags = fullDom.getElementsByTagName('variables');
+        let variablesXml = '';
+
+        if (variablesTags.length > 0) {
+            // 3. 转为字符串
+            const wrapper = document.createElement('xml');
+            wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+            wrapper.appendChild(variablesTags[0].cloneNode(true));
+            variablesXml = wrapper.outerHTML;
+        }
+
+        // 4. 传给函数
+        self.onWorkspaceUpdate({ xml: variablesXml });
     })
 
     const channelLoadExtension = new BroadcastChannel('loadExtension')
