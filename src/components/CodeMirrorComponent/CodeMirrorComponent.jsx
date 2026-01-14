@@ -83,7 +83,7 @@ const CodeMirrorComponent = ({ code, options }) => {
         //      </textarea>
         // </div>
 
-        <div style={{ border: '1px solid #ccc', backgroundColor: '#f9f9f9', padding: '10px',borderRadius:'10px',height:'60vh'}}>
+        <div style={{ border: '1px solid #ccc', backgroundColor: '#f9f9f9', padding: '10px',borderRadius:'10px',height:'55vh'}}>
           <CodeMirror
             value={code}
             height="50vh"
