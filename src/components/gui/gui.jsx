@@ -619,9 +619,15 @@ const GUIComponent = props => {
                                     OK
                                 </button>} */}
                             </div>
+
+                            {/* {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                            {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>} */}
+                            {showCode && <div style={{minWidth:'480px',display: 'flex',flexDirection: 'column',paddingLeft: '$space',paddingRight: '$space',flexBasis: '0'}}>
+                                {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                            </div>}
                             
-                            {showCode && <CodeMirrorComponent code={pythonCode}/>}
-                            {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                            
                             {!showCode && <StageWrapper
                                 isFullScreen={isFullScreen}
                                 isRendererSupported={isRendererSupported()}
