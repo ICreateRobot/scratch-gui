@@ -1139,6 +1139,7 @@ export const useGuiLogic = (props) => {
                             setIsLoading(false);
                             socketMode.close();
                             channelSendIp.postMessage('');
+                            window.EditorPreload.disConnectWifi(true)
                             clearInterval(sendInterval);
                             clearInterval(loadTimer);
                         }, 10000);
