@@ -112,7 +112,7 @@ export default [
     robotSoundExtension,
     robotActuatorExtension,
     robotBleExtension,
-    deepseekExtension,
+    // deepseekExtension,
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
