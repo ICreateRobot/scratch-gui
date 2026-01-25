@@ -1239,6 +1239,7 @@ export const useGuiLogic = (props) => {
                         if (JSON.parse(event.data).data.message.flashing) {
                             setIsFlashing(JSON.parse(event.data).data.message.flashing);
                         } else {
+                            console.log('进入了关闭进度条')
                             await new Promise(resolve => setTimeout(resolve, 1000));
                             setIsFlashing(JSON.parse(event.data).data.message.flashing);
                         }
@@ -1255,6 +1256,7 @@ export const useGuiLogic = (props) => {
                                 default: 'Flashing timed out. Please check the port connection',
                                 description: 'gui.alert.espToolTimeout'
                             }));
+                            setIsFlashing(!JSON.parse(event.data).data.message.flashing);
                         }
                         if (!JSON.parse(event.data).data.message.flashing && JSON.parse(event.data).data.message.logs == 'success') {
                             setLogs([])
@@ -1295,6 +1297,15 @@ export const useGuiLogic = (props) => {
                                 description: 'gui.alert.downSuccess'
                             }));
                         }
+                    }else if(JSON.parse(event.data).type=='wifiDisConnect'){
+                        if (soc?.readyState === WebSocket.OPEN) {
+                            soc.send(JSON.stringify({
+                                type: 'offline',
+                                data: { message: 'true' }
+                            }));
+                        }
+                        whatConnect[1] = 0;
+                        channelHostPot.postMessage(false);
                     }
                 } catch (e) {
                     console.log('8081error' + e);
