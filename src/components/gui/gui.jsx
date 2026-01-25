@@ -50,6 +50,7 @@ import addExtensionIcon from './icon--extensions.svg';
 import codeIcon from '!../../lib/tw-recolor/build!./icon--code.svg';
 import costumesIcon from '!../../lib/tw-recolor/build!./icon--costumes.svg';
 import soundsIcon from '!../../lib/tw-recolor/build!./icon--sounds.svg';
+import importCode from './import.svg'
 
 import LoadingOverlay from '../LoadingOverlay/LoadingOverlay.jsx';
 import BurnLogs from 'scratch-gui/src/components/Burn-logs/BurnLogs.jsx';
@@ -553,12 +554,20 @@ const GUIComponent = props => {
                                     padding: '6px',
                                     }}
                                     onClick={()=>{
-                                        saveCode();
+                                        let args=[false,false]
+                                        if(getCurrent()=='ICBricks'){
+                                            args[0]=true
+                                            args[1]=false
+                                        }else{
+                                            args[0]=false
+                                            args[1]=true
+                                        }
+                                        saveCode(args);
                                     }}
                                 >
                                     <svg
                                     viewBox="0 0 24 24"
-                                    style={{ width: '20px', height: '20px', fill: '#239393' }}
+                                    style={{ width: '22px', height: '22px', fill: '#32b7a6' }}
                                     >
                                     <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-8H7V5h8v4z" />
                                     </svg>
@@ -575,11 +584,12 @@ const GUIComponent = props => {
                                         loadCode();
                                     }}
                                 >
-                                    <FormattedMessage
+                                    {/* <FormattedMessage
                                         defaultMessage="导入"
                                         description="Button to get to the code panel"
                                         id="gui.importFile"
-                                    />
+                                    /> */}
+                                    <img src={importCode} style={{ width: '18px', height: '18px' }}></img>
                                 </button>}
 
                                 {/* {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
