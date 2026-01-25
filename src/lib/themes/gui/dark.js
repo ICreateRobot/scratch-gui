@@ -43,7 +43,18 @@ const guiColors = {
     'filter-icon-gray': 'grayscale(100%) brightness(1.7)',
     'filter-icon-white': 'brightness(0) invert(100%)',
 
-    'paint-filter-icon-gray': 'brightness(1.7)'
+    'paint-filter-icon-gray': 'brightness(1.7)',
+    'mode-toggle-container':'#1f2933',
+    'tabswitcher-tabs-equles-true':'#1F1F1F',
+    'tabswitcher-tabs-noequles-false':'#2A2A2A',
+    'tabswitcher-programe-back':'#1F1F1F',
+    'tabswitcher-programe-down-lightordark':'#0D0D0D',
+    'tabswitcher-control-first-lightordark':'#1F1F1F',
+    'tabswitcher-control-second-lightordark':'#2A2A2A',
+    'tabswitcher-control-third-lightordark':'#0D0D0D',
+    'tabswitcher-control-fourth-lightordark':'#1F1F1F',
+    'tabswitcher-serial-second-lightordark':'#1F1F1F',
+    'tabswitcher-serial-first-lightordark':'#2A2A2A',
 };
 
 const blockColors = {

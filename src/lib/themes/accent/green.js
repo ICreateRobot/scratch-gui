@@ -13,7 +13,16 @@ const guiColors = {
     'extensions-transparent': 'hsla(122, 55%, 60%, 0.35)',
     'extensions-light': 'hsla(122, 45%, 85%, 1)',
 
-    'drop-highlight': '#81c784'  // 亮绿（用于高亮）
+    'drop-highlight': '#81c784',  // 亮绿（用于高亮）
+    'mode-toggle':'#78d6ac',
+
+    'tabswitcher-tabs-equles':'#32b7a6',
+    'tabswitcher-tabs-noequles':'#AEEEEE',
+    'tabswitcher-programe-down':'#c9ffef',
+    'tabswitcher-control-first':'#f8f8f8',
+    'tabswitcher-control-second':'#f0ffff',
+    'tabswitcher-control-third':'#e0f8f8',
+    'tabswitcher-serial-second':'#e0f8e8'
 };
 
 const blockColors = {

@@ -2824,6 +2824,11 @@
         "tw.viewOnScratch": "Dit project bekijken op Scratch"
     },
     "pl": {
+        "tw.accent.blue": "niebieski",
+        "tw.accent.purple": "fioletowy",
+        "tw.accent.rainbow": "tęczowy",
+        "tw.accent.red": "czerwony",
+        "tw.accent.green": "zielony",
         "tw.alerts.creatingRestorePoint": "Tworzenie punktu przywracania…",
         "tw.alerts.lostPeripheralConnection": "Utracono połączenie do {extensionName}.",
         "tw.alerts.savedToDisk": "Zapisano na twoim komputerze.",
@@ -3246,6 +3251,7 @@
         "tw.accent.purple": "Фиолетовый",
         "tw.accent.rainbow": "Радуга",
         "tw.accent.red": "Красный",
+        "tw.accent.green": "зелёный",
         "tw.alerts.creatingRestorePoint": "Создание точку восстановления...",
         "tw.alerts.lostPeripheralConnection": "Потеря соединения с {extensionName}.",
         "tw.alerts.restorePointError": "Не удалось создать точку восстановления",
@@ -4506,6 +4512,7 @@
         "tw.accent.purple": "紫色",
         "tw.accent.rainbow": "彩虹色",
         "tw.accent.red": "红色",
+        "tw.accent.green": "绿色",
         "tw.alerts.creatingRestorePoint": "新建还原点中...",
         "tw.alerts.lostPeripheralConnection": "与 {extensionName} 的连接中断了。",
         "tw.alerts.restorePointError": "无法创建还原点",
@@ -4763,6 +4770,11 @@
         "tw.viewOnScratch": "在 Scratch 网站上查看作品"
     },
     "zh-tw": {
+        "tw.accent.blue": "藍色",
+        "tw.accent.purple": "紫色",
+        "tw.accent.rainbow": "彩虹色",
+        "tw.accent.red": "紅色",
+        "tw.accent.green": "綠色",
         "tw.backpack.rename": "新名稱:",
         "tw.blocks.addons": "擴充功能",
         "tw.blocks.buttonIsDown": "[MOUSE_BUTTON] 被按下？",
