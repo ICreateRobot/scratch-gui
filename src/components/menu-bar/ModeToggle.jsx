@@ -89,11 +89,12 @@
 
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
+import styles from './ModeToggle.css'
 
 const ModeToggle = ({ value, onChange }) => {
     const isInteractive = (value === 'interactive');
 
-    const handleToggle = () => {
+    const handleToggle = async() => {
         const newMode = isInteractive ? 'upload' : 'interactive';
         onChange(newMode); // 不改原有逻辑
     };
@@ -123,12 +124,13 @@ const ModeToggle = ({ value, onChange }) => {
             </span>
 
             <div
+                className={styles.container}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
                     height: '30px',
                     borderRadius: '10px',
-                    backgroundColor: '#78d6ac',
+                    // backgroundColor: '#78d6ac',
                     cursor: 'pointer',
                     position: 'relative',
                     padding: '3px',
@@ -143,7 +145,7 @@ const ModeToggle = ({ value, onChange }) => {
                         top: '3px',
                         left: isInteractive
                             ? '3px'
-                            : sizes.online + 6 + 'px',
+                            : sizes.online + 10 + 'px',
                         width: isInteractive
                             ? sizes.online + 'px'
                             : sizes.download + 'px',
