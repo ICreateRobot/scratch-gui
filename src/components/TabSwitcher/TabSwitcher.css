@@ -1,0 +1,32 @@
+
+@import "../../css/colors.css";
+.tabswitcher-tabs-equles{
+    background-color: $tabswitcher-tabs-equles-true;
+}
+.tabswitcher-tabs-noequles{
+    background-color: $tabswitcher-tabs-noequles-false;
+}
+.tabswitcher-programe-back{
+    background-color: $tabswitcher-programe-back;
+}
+.tabswitcher-programe-down{
+    background-color: $tabswitcher-programe-down-lightordark;
+}
+.tabswitcher-control-first{
+    background-color: $tabswitcher-control-first-lightordark;
+}
+.tabswitcher-control-second{
+    background-color: $tabswitcher-control-second-lightordark;
+}
+.tabswitcher-control-third{
+    background-color: $tabswitcher-control-third-lightordark;
+}
+.tabswitcher-control-fourth{
+    background-color: $tabswitcher-control-fourth-lightordark;
+}
+.tabswitcher-serial-first{
+    background-color: $tabswitcher-serial-first-lightordark;
+}
+.tabswitcher-serial-second{
+    background-color: $tabswitcher-serial-second-lightordark;
+}

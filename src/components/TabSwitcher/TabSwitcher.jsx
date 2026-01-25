@@ -157,15 +157,20 @@ import codeModule from '../../../../../utils/global.js'
 import runStop from './run_stop.svg'
 
 import { setLongIsDown,getLongIsDown } from 'scratch-gui/src/components/utils/utils.js';
+import styles from './TabSwitcher.css'
 
 // 串口监视器
 // 串口监视器组件
-const SerialMonitor = ({ serialData }) => {
+const SerialMonitor = ({ serialData,isDark }) => {
   const scrollRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
   const [baudRate, setBaudRate] = useState('115200');
-  const [appendNewline, setAppendNewline] = useState(true);
+  // const [appendNewline, setAppendNewline] = useState(true);
 
+   // 使用 useState 来管理 displayData
+   const [displayData, setDisplayData] = useState([]);
+
+   const channelPort = new BroadcastChannel('channelPort');
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -177,22 +182,36 @@ const SerialMonitor = ({ serialData }) => {
       // 这里可以添加发送数据的逻辑
       console.log('发送数据:', inputValue);
       setInputValue('');
+      channelPort.postMessage(inputValue)
     }
   };
 
   const handleClear = () => {
     // 这里可以添加清除数据的逻辑
     console.log('清除数据');
+    setDisplayData([]); 
   };
 
-  const displayData = Array.isArray(serialData)
-    ? serialData
-    : typeof serialData === 'string'
-    ? serialData.split('\n')
-    : [];
+  // const displayData = Array.isArray(serialData)
+  //   ? serialData
+  //   : typeof serialData === 'string'
+  //   ? serialData.split('\n')
+  //   : [];
 
+  useEffect(() => {
+    // 模拟串口数据的更新（你可以替换成实际的数据更新逻辑）
+    if (Array.isArray(serialData)) {
+      setDisplayData(serialData); // 假设 serialData 来自某个地方并设置它
+    } else if (typeof serialData === 'string') {
+      setDisplayData(serialData.split('\n')); // 如果是字符串，按行分割并显示
+    }
+  }, [serialData]); // 当 serialData 改变时，更新 displayData
   return (
-    <div style={{ padding: '10px' }}>
+    <div className={styles.tabswitcherSerialFirst} style={{
+       padding: '10px',
+      //  backgroundColor:isDark?'#2A2A2A':'white',
+       height:'100%' 
+       }}>
       {/* 输入控制行 */}
       <div style={{ 
         display: 'flex', 
@@ -243,7 +262,7 @@ const SerialMonitor = ({ serialData }) => {
                 id="clearMonitior"
             />
           </button>
-        <select 
+        {/* <select 
           value={baudRate}
           onChange={(e) => setBaudRate(e.target.value)}
           style={{
@@ -256,8 +275,8 @@ const SerialMonitor = ({ serialData }) => {
           <option value="115200">115200</option>
           <option value="230400">230400</option>
           <option value="460800">460800</option>
-        </select>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        </select> */}
+        {/* <div style={{ display: 'flex', alignItems: 'center' }}>
           <input 
             type="checkbox" 
             id="enterCheck" 
@@ -271,14 +290,15 @@ const SerialMonitor = ({ serialData }) => {
                 id="gui.enter"
             />
           </label>
-        </div>
+        </div> */}
       </div>
 
       {/* 数据展示区域 */}
       <div
+        className={styles.tabswitcherSerialSecond}
         ref={scrollRef}
         style={{
-          backgroundColor: '#e0f8e8', // 浅绿色背景
+          // backgroundColor:isDark? '#1F1F1F': '#e0f8e8', // 浅绿色背景
           color: '#000',
           height: '16vh',
           overflowY: 'auto',
@@ -312,7 +332,7 @@ const SerialMonitor = ({ serialData }) => {
   );
 };
 // 程序下载页面（包含机器人图和切换）
-const ProgramDownload = ({onSendData,extension }) => {
+const ProgramDownload = ({onSendData,extension,isDark }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDown, setIsDown] = useState(getLongIsDown());
   useEffect(() => {
@@ -369,7 +389,7 @@ const ProgramDownload = ({onSendData,extension }) => {
       }
 
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%' }}>
+        <div className={styles.tabswitcherProgrameBack} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%' }}>
           {/* 左箭头 */}
           <div
             onClick={handlePrev}
@@ -430,13 +450,14 @@ const ProgramDownload = ({onSendData,extension }) => {
 
           {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -496,20 +517,21 @@ const ProgramDownload = ({onSendData,extension }) => {
      
 
      return (
-      <div style={{
+      <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
         <img draggable={false} style={{height:'150px',position:'relative',top:'10px',right:'30px'}} src={bricksPlace}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -557,20 +579,21 @@ const ProgramDownload = ({onSendData,extension }) => {
         console.log(result)
       }
      return (
-      <div style={{
+      <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
         <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={microbitPlace}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -777,7 +800,7 @@ const throttle = (func, limit) => {
   }
 };
 
-const ControlPanelLayout = ({extension}) => {
+const ControlPanelLayout = ({extension,isDark}) => {
 
   const [innerTab, setInnerTab] = useState(0);
   const [dynamicImage, setDynamicImage] = useState(bn1);
@@ -799,6 +822,14 @@ const ControlPanelLayout = ({extension}) => {
   const dynamicImageRef = useRef(dynamicImage);
   dynamicImageRef.current = dynamicImage;
 
+
+  const safeSetRealtimeValues = (data) => {
+    if (Array.isArray(data)) {
+      setRealtimeValues(data.slice(9, 14));
+    } else {
+      setRealtimeValues([0, 0, 0, 0, 0]);
+    }
+  };
   // 处理BroadcastChannel消息的优化函数
   const handleMessage = useCallback(throttle((event) => {
     const now = Date.now();
@@ -808,7 +839,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9,14))
+    safeSetRealtimeValues(data)
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -853,7 +884,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9,14))
+    safeSetRealtimeValues(data)
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -901,7 +932,7 @@ const ControlPanelLayout = ({extension}) => {
       // console.log(data);
 
       // 更新实时数值
-      setRealtimeValues(data.slice(9,14));
+      safeSetRealtimeValues(data)
 
       // 根据前两个字节判断要显示的图片
       let newImage = dynamicImageRef.current;
@@ -1309,12 +1340,12 @@ const ControlPanelLayout = ({extension}) => {
     });
 
     return (
-      <div style={{ 
+      <div className={styles.tabswitcherControlFirst} style={{ 
         display: 'flex', 
         // padding: '10px', 
         gap: '10px',
         fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f8f8f8',
+        // backgroundColor:isDark? '#1F1F1F' : '#f8f8f8',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         maxWidth: '800px',
@@ -1322,23 +1353,23 @@ const ControlPanelLayout = ({extension}) => {
         // margin: '20px auto'
       }}>
         {/* 左边：子标签 + 内容 */}
-        <div style={{
+        <div className={styles.tabswitcherControlSecond} style={{
           width: '100%',
-          backgroundColor: '#f0ffff',
+          // backgroundColor:isDark?'#2A2A2A': '#f0ffff',
           border: '1px solid #00ced1',
           borderRadius: '8px',
           padding: '10px',
           boxShadow: '0 2px 6px rgba(0,206,209,0.2)'
         }}>
           {/* 子标签按钮 */}
-          <div style={{ 
+          <div className={styles.tabswitcherControlThird} style={{ 
             display: 'flex', 
             // justifyContent: 'space-around', 
             //  justifyContent: 'center',  // 原来是 space-around，改成 center
               gap: '15px',                // 加上 gap 控制图标间距
             marginBottom: '10px',
             padding: '5px',
-            backgroundColor: '#e0f8f8',
+            // backgroundColor:isDark?'#0D0D0D': '#e0f8f8',
             borderRadius: '6px'
           }}>
             {tabIcons.map((icon, idx) => (
@@ -1376,7 +1407,10 @@ const ControlPanelLayout = ({extension}) => {
           }} />
           
           {/* 当前子标签内容 */}
-          <div style={{ minHeight: '100px' }}>
+          <div style={{ 
+            minHeight: '100px',
+            // backgroundColor:isDark? '#1F1F1F':'white' 
+            }}>
             {renderTabContent()}
           </div>
         </div>
@@ -1456,12 +1490,14 @@ const ControlPanelLayout = ({extension}) => {
       );
     });
     return (
-       <div style={{
+       <div  className={styles.tabswitcherControlFourth} style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '12px',
           flexGrow: 1,
-          alignContent: 'start'
+          alignContent: 'start',
+          height:'100%',
+          // backgroundColor:isDark ? '#1F1F1F':'white'
         }}>
           {portContent.map((label, num) => (
             <GridItem key={num} label={label} num={num} />
@@ -1470,7 +1506,10 @@ const ControlPanelLayout = ({extension}) => {
     );
   }else if(extension == '3'){
     return (
-      <div>
+      <div className={styles.tabswitcherControlFourth} style={{
+        // backgroundColor:isDark ? '#1F1F1F':'white',
+        height:'100%'
+        }}>
         {/* 占位 */}
       </div>
     )
@@ -1482,6 +1521,21 @@ const ControlPanelLayout = ({extension}) => {
 const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
   const [activeTab, setActiveTab] = useState('download');
 
+  // 读取本地主题
+  const local = localStorage.getItem("tw:theme");
+  let isDark = false;
+  try {
+    if (local === "dark") {
+      isDark = true;
+    } else {
+      const parsed = JSON.parse(local);
+      if (parsed?.gui === "dark") {
+        isDark = true;
+      }
+    }
+  } catch (e) {
+    isDark = false;
+  }
   return (
     <div
       style={{
@@ -1506,9 +1560,10 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
           <div
             key={key}
             onClick={() => setActiveTab(key)}
+            className={activeTab === key ? styles.tabswitcherTabsEqules : styles.tabswitcherTabsNoequles}
             style={{
               padding: '10px 20px',
-              backgroundColor: activeTab === key ? '#32b7a6' : '#AEEEEE',
+              // backgroundColor: isDark ? (activeTab === key ? '#1F1F1F' : '#2A2A2A'): (activeTab === key ? '#32b7a6' : '#AEEEEE'),
               cursor: 'pointer',
               borderTopLeftRadius: '8px',
               borderTopRightRadius: '8px',
@@ -1536,9 +1591,9 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
           height: '26vh',
         }}
       >
-        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension}/>}
-        {activeTab === 'control' && <ControlPanelLayout extension={extension} />}
-        {activeTab === 'monitor' && <SerialMonitor serialData={serialData} extension={extension} />}
+        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} isDark={isDark}/>}
+        {activeTab === 'control' && <ControlPanelLayout extension={extension} isDark={isDark} />}
+        {activeTab === 'monitor' && <SerialMonitor serialData={serialData} extension={extension} isDark={isDark} />}
       </div>
     </div>
   );
