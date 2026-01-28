@@ -134,7 +134,7 @@ const ModeToggle = ({ value, onChange }) => {
                     cursor: 'pointer',
                     position: 'relative',
                     padding: '3px',
-                    width: sizes.online + sizes.download + 12, // 根据文字自动撑开
+                    width: sizes.online + sizes.download + 12-8, // 根据文字自动撑开
                 }}
                 onClick={handleToggle}
             >
@@ -145,7 +145,7 @@ const ModeToggle = ({ value, onChange }) => {
                         top: '3px',
                         left: isInteractive
                             ? '3px'
-                            : sizes.online + 10 + 'px',
+                            : sizes.online + 6 + 'px',
                         width: isInteractive
                             ? sizes.online + 'px'
                             : sizes.download + 'px',
