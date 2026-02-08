@@ -122,10 +122,38 @@ import bot2 from './2.svg'
 import bot3 from './3.svg'
 import bot4 from './4.svg'
 import bot5 from './5.svg'
+import bot1red from './1red.svg'
+import bot2red from './2red.svg'
+import bot3red from './3red.svg'
+import bot4red from './4red.svg'
+import bot5red from './5red.svg'
+import bot1blue from './1blue.svg'
+import bot2blue from './2blue.svg'
+import bot3blue from './3blue.svg'
+import bot4blue from './4blue.svg'
+import bot5blue from './5blue.svg'
+import bot1purple from './1purple.svg'
+import bot2purple from './2purple.svg'
+import bot3purple from './3purple.svg'
+import bot4purple from './4purple.svg'
+import bot5purple from './5purple.svg'
+
+import rightChangeRed from './rightRed.svg'
+import rightChangeBlue from './rightBlue.svg'
+import rightChangePurple from './rightPurple.svg'
 import rightChange from './right.svg'
 import leftChange from './left.svg'
+import leftChangeRed from './leftRed.svg'
+import leftChangeBlue from './leftBlue.svg'
+import leftChangePurple from './leftPurple.svg'
 import down from './down.svg'
+import downRed from './downRed.svg'
+import downBlue from './downBlue.svg'
+import downPurple from './downPurple.svg'
 import downRun from './downRun.svg'
+import downRunRed from './downRunRed.svg'
+import downRunBlue from './downRunBlue.svg'
+import downRunPurple from './downRunPurple.svg'
 
 import lineSenor from './lineSenor.svg'
 
@@ -138,8 +166,14 @@ import bn5 from './button5.svg'
 
 
 import bricksPlace from './bricksPlace.svg'
+import bricksPlaceRed from './bricksPlaceRed.svg'
+import bricksPlaceBlue from './bricksPlaceBlue.svg'
+import bricksPlacePurple from './bricksPlacePurple.svg'
 
 import microbitPlace from './microbit.svg'
+import microbitPlaceRed from './microbitRed.svg'
+import microbitPlaceBlue from './microbitBlue.svg'
+import microbitPlacePurple from './microbitPurple.svg'
 
 
 // import mainCon from './conn_main_con.svg'
@@ -155,6 +189,9 @@ import consoleLed from './conn_led.svg'
 import codeModule from '../../../../../utils/global.js'
 
 import runStop from './run_stop.svg'
+import runStopRed from './run_stopRed.svg'
+import runStopBlue from './run_stopBlue.svg'
+import runStopPurple from './run_stopPurple.svg'
 
 import { setLongIsDown,getLongIsDown } from 'scratch-gui/src/components/utils/utils.js';
 import styles from './TabSwitcher.css'
@@ -364,18 +401,105 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
       };
   }, []);
 
+
+  const getAccent = () => {
+    const themeStr = localStorage.getItem('tw:theme');
+  
+    // 没有主题 → 绿色
+    if (!themeStr) return 'green';
+  
+    try {
+      const theme = JSON.parse(themeStr);
+      const accent = theme?.accent;
+  
+      // 只允许这三种
+      if (['blue', 'red', 'purple'].includes(accent)) {
+        return accent;
+      }
+  
+      // 其它全部兜底绿色
+      return 'green';
+    } catch {
+      return 'green';
+    }
+  };
+
+  const downMap={
+    green:down,
+    red:downRed,
+    blue:downBlue,
+    purple:downPurple
+  }
+
+  const downRunMap={
+    green:downRun,
+    red:downRunRed,
+    blue:downRunBlue,
+    purple:downRunPurple
+  }
+  const runStopMap={
+    green:runStop,
+    red:runStopRed,
+    blue:runStopBlue,
+    purple:runStopPurple
+  }
+
+  const bricksMap={
+    green:bricksPlace,
+    red:bricksPlaceRed,
+    blue:bricksPlaceBlue,
+    purple:bricksPlacePurple
+  }
+
+  const microbitMap={
+    green:microbitPlace,
+    red:microbitPlaceRed,
+    blue:microbitPlaceBlue,
+    purple:microbitPlacePurple
+  }
+
+  const bricksHand=bricksMap[getAccent()]
+  const microbitHand=microbitMap[getAccent()]
     // console.log('-------------------')
     // console.log(extension)
     // console.log('###################')
   if(extension=='2'){
-    const images = [
-        bot1, // 替换成你的图片路径
-        bot2,
-        bot3,
-        bot4,
-        bot5,
-      ];
-      
+
+   
+    const botImages={
+      green:[bot1,bot2,bot3,bot4,bot5],
+      red:[bot1red,bot2red,bot3red,bot4red,bot5red],
+      blue:[bot1blue,bot2blue,bot3blue,bot4blue,bot5blue],
+      purple:[bot1purple,bot2purple,bot3purple,bot4purple,bot5purple]
+    }
+    const leftMap={
+      green:leftChange,
+      red:leftChangeRed,
+      blue:leftChangeBlue,
+      purple:leftChangePurple
+    }
+
+    const rightMap={
+      green:rightChange,
+      red:rightChangeRed,
+      blue:rightChangeBlue,
+      purple:rightChangePurple
+    }
+
+   
+
+    const leftHand=leftMap[getAccent()]
+    const rightHand=rightMap[getAccent()]
+    const downHand=downMap[getAccent()]
+    // const images = [
+    //     bot1, // 替换成你的图片路径
+    //     bot2,
+    //     bot3,
+    //     bot4,
+    //     bot5,
+    //   ];
+    const images=botImages[getAccent()]
+      console.log(images)
 
       const handlePrev = () => {
         setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
@@ -403,7 +527,7 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
             }}
           >
             <img
-              src={leftChange}
+              src={leftHand}
               alt="prev"
               style={{
                 width: '36px',
@@ -439,7 +563,7 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
             }}
           >
              <img
-              src={rightChange}
+              src={rightHand}
               alt="prev"
               style={{
                 width: '36px',
@@ -475,7 +599,7 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
               }}
               onClick={postDataToParent}
             >
-              <img draggable={false} src={down}></img>
+              <img draggable={false} src={downHand}></img>
             </button>
             {/* <button
               style={{
@@ -514,13 +638,17 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
       }
 
 
+      const downRunHand=downRunMap[getAccent()]
+
+      const runStopHand=runStopMap[getAccent()]
+
      
 
      return (
       <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
-        <img draggable={false} style={{height:'150px',position:'relative',top:'10px',right:'30px'}} src={bricksPlace}></img>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'10px',right:'30px'}} src={bricksHand}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
@@ -564,8 +692,8 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
               }}
               onClick={postDataToParent}
             >
-              {isDown && <img draggable={false} src={runStop}></img>}
-              {!isDown && <img draggable={false} src={downRun}></img>}
+              {isDown && <img draggable={false} src={runStopHand}></img>}
+              {!isDown && <img draggable={false} src={downRunHand}></img>}
 
               {/* <img src={downRun}></img> */}
             </button>
@@ -578,11 +706,13 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
         const result = await window.EditorPreload.downloadCode(import_code+codeModule.getCode());
         console.log(result)
       }
+
+      const downHand=downMap[getAccent()]
      return (
       <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
-        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={microbitPlace}></img>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={microbitHand}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
@@ -626,7 +756,7 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
               }}
               onClick={postDataToParent}
             >
-              <img draggable={false} src={down}></img>
+              <img draggable={false} src={downHand}></img>
             </button>
           </div>
       </div>
