@@ -51,6 +51,9 @@ import codeIcon from '!../../lib/tw-recolor/build!./icon--code.svg';
 import costumesIcon from '!../../lib/tw-recolor/build!./icon--costumes.svg';
 import soundsIcon from '!../../lib/tw-recolor/build!./icon--sounds.svg';
 import importCode from './import.svg'
+import importCodeRed from './importRed.svg'
+import importCodeBlue from './importBlue.svg'
+import importCodePurple from './importPurple.svg'
 
 import LoadingOverlay from '../LoadingOverlay/LoadingOverlay.jsx';
 import BurnLogs from 'scratch-gui/src/components/Burn-logs/BurnLogs.jsx';
@@ -270,6 +273,42 @@ const GUIComponent = props => {
         Math.max(0, customStageSize.width - FIXED_WIDTH)
     );
 
+    const getAccent = () => {
+        const themeStr = localStorage.getItem('tw:theme');
+      
+        // 没有主题 → 绿色
+        if (!themeStr) return 'green';
+      
+        try {
+          const theme = JSON.parse(themeStr);
+          const accent = theme?.accent;
+      
+          // 只允许这三种
+          if (['blue', 'red', 'purple'].includes(accent)) {
+            return accent;
+          }
+      
+          // 其它全部兜底绿色
+          return 'green';
+        } catch {
+          return 'green';
+        }
+      };
+
+      const importCodeMap={
+        green:importCode,
+        red:importCodeRed,
+        blue:importCodeBlue,
+        purple:importCodePurple
+      }
+      const saveCodeMap={
+        green:'#32b7a6',
+        red:'#ff4c4c',
+        blue:'#4c97ff',
+        purple:'#8b5cd6'
+      }
+      const importImg=importCodeMap[getAccent()]
+      const saveImg=saveCodeMap[getAccent()]
     return (<MediaQuery minWidth={unconstrainedWidth}>{isUnconstrained => {
         const stageSize = resolveStageSize(stageSizeMode, isUnconstrained);
 
@@ -567,7 +606,7 @@ const GUIComponent = props => {
                                 >
                                     <svg
                                     viewBox="0 0 24 24"
-                                    style={{ width: '22px', height: '22px', fill: '#32b7a6' }}
+                                    style={{ width: '22px', height: '22px', fill: saveImg }}
                                     >
                                     <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-8H7V5h8v4z" />
                                     </svg>
@@ -589,7 +628,7 @@ const GUIComponent = props => {
                                         description="Button to get to the code panel"
                                         id="gui.importFile"
                                     /> */}
-                                    <img src={importCode} style={{ width: '18px', height: '18px' }}></img>
+                                    <img src={importImg} style={{ width: '18px', height: '18px' }}></img>
                                 </button>}
 
                                 {/* {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
