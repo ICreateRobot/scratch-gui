@@ -42,7 +42,7 @@ const TrainPage = ({ isTrain }) => {
   const oneLevelUp = currentURL.substring(0, currentURL.lastIndexOf('/'));
   // 获取前两级路径
   const twoLevelsUp = oneLevelUp.substring(0, oneLevelUp.lastIndexOf('/'));
-  const modelPath =twoLevelsUp+'/static/aiModel/ai_choice.html';  // 你的模型路径
+  const modelPath =oneLevelUp+'/static/aiModel/ai_choice.html';  // 你的模型路径
   console.log(modelPath)
   console.log(window.location.href)
 
@@ -277,8 +277,6 @@ const TrainPage = ({ isTrain }) => {
         id='myIframe'
         ref={iframeRef}
         src={modelPath}
-        width="100%"
-        height="600px"
         className={styles.total}
         allow="camera *; microphone *"
         sandbox="allow-scripts allow-same-origin allow-popups allow-modals allow-downloads"

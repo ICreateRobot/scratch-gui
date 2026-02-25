@@ -1217,7 +1217,7 @@ class MenuBar extends React.Component {
                             {remixButton}
                         </div>
                     )}
-                    <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
+                    {/* <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
                         {this.props.enableCommunity ? (
                             (this.props.isShowingProject || this.props.isUpdating) && (
                                 <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
@@ -1225,11 +1225,11 @@ class MenuBar extends React.Component {
                                         waitForUpdate => (
                                             <CommunityButton
                                                 className={styles.menuBarButton}
-                                                /* eslint-disable react/jsx-no-bind */
+                                                
                                                 onClick={() => {
                                                     this.handleClickSeeCommunity(waitForUpdate);
                                                 }}
-                                                /* eslint-enable react/jsx-no-bind */
+                                                
                                             />
                                         )
                                     }
@@ -1245,7 +1245,7 @@ class MenuBar extends React.Component {
                                 onClick={this.handleClickSeeInside}
                             />
                         ) : []))}
-                    </div>
+                    </div> */}
                     {/* tw: add a feedback button */}
                     {/* <div className={styles.menuBarItem}>
                         <a

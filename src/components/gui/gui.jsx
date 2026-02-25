@@ -57,6 +57,14 @@ import TrainPage from '../TrainPage/TrainPage.jsx';
 import TabSwitcher from 'scratch-gui/src/components/TabSwitcher/TabSwitcher.jsx';
 import { useGuiLogic } from '../hooks/gui-logic.js';
 import ExampleModal from '../ExampleModal/ExampleModal.jsx'
+import MasterModal from '../master-modal/MasterModal.jsx'
+import ConnectTabs from 'scratch-gui/src/components/connect-modal/connectModal.jsx';
+import FirmwareFlasher from "scratch-gui/src/components/FirmwareFlasher/FirmwareFlasher.jsx"
+import importCode from './import.svg'
+import importCodeRed from './importRed.svg'
+import importCodeBlue from './importBlue.svg'
+import importCodePurple from './importPurple.svg'
+import codeModule from '../../../../../utils/global.js';
 
 const messages = defineMessages({
     addExtension: {
@@ -187,11 +195,14 @@ const GUIComponent = props => {
         return <Box {...componentProps}>{children}</Box>;
     }
 
+    let PROPS=props
     const {
         selectedIndex,
         setSelectedIndex,
         pythonCode,
         setPythonCode,
+        portData,
+        setPortData,
         childData,
         setChildData,
         isTrain,
@@ -240,7 +251,10 @@ const GUIComponent = props => {
         selected,
         setSelected,
         handleOpenExample,
-        handleSelect
+        handleSelect,
+        handledata,
+        handleConnectData,
+        handleFirmwareData
     } = useGuiLogic({
         onExtensionButtonClick,
         onOpenCustomExtensionModal,
@@ -251,7 +265,9 @@ const GUIComponent = props => {
         cancelload,
         clickDownloadCode,
         clickEspSend,
-        clickSendWifi
+        clickSendWifi,
+        PROPS,
+        onClickConnect
     });
 
     const tabClassNames = {
@@ -269,6 +285,43 @@ const GUIComponent = props => {
         Math.max(0, customStageSize.width - FIXED_WIDTH)
     );
 
+
+    const getAccent = () => {
+        const themeStr = localStorage.getItem('tw:theme');
+      
+        // 没有主题 → 绿色
+        if (!themeStr) return 'green';
+      
+        try {
+          const theme = JSON.parse(themeStr);
+          const accent = theme?.accent;
+      
+          // 只允许这三种
+          if (['blue', 'red', 'purple'].includes(accent)) {
+            return accent;
+          }
+      
+          // 其它全部兜底绿色
+          return 'green';
+        } catch {
+          return 'green';
+        }
+      };
+
+      const importCodeMap={
+        green:importCode,
+        red:importCodeRed,
+        blue:importCodeBlue,
+        purple:importCodePurple
+      }
+      const saveCodeMap={
+        green:'#32b7a6',
+        red:'#ff4c4c',
+        blue:'#4c97ff',
+        purple:'#8b5cd6'
+      }
+      const importImg=importCodeMap[getAccent()]
+      const saveImg=saveCodeMap[getAccent()]
     return (<MediaQuery minWidth={unconstrainedWidth}>{isUnconstrained => {
         const stageSize = resolveStageSize(stageSizeMode, isUnconstrained);
 
@@ -553,12 +606,16 @@ const GUIComponent = props => {
                                     padding: '6px',
                                     }}
                                     onClick={()=>{
-                                        saveCode();
+                                        let args={
+                                            code:codeModule.getCode(),
+                                            device:getCurrent()
+                                        }
+                                        saveCode(args);
                                     }}
                                 >
                                     <svg
                                     viewBox="0 0 24 24"
-                                    style={{ width: '20px', height: '20px', fill: '#239393' }}
+                                    style={{ width: '22px', height: '22px', fill: saveImg }}
                                     >
                                     <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-8H7V5h8v4z" />
                                     </svg>
@@ -575,13 +632,16 @@ const GUIComponent = props => {
                                         loadCode();
                                     }}
                                 >
-                                    <FormattedMessage
+                                    {/* <FormattedMessage
                                         defaultMessage="导入"
                                         description="Button to get to the code panel"
                                         id="gui.importFile"
-                                    />
+                                    /> */}
+                                    <img src={importImg} style={{ width: '18px', height: '18px' }}></img>
                                 </button>}
 
+
+                            
                                 {/* {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
                                 {showCode && getCurrent()=='ICRobot' && 
                                     <select
@@ -620,8 +680,14 @@ const GUIComponent = props => {
                                 </button>} */}
                             </div>
                             
-                            {showCode && <CodeMirrorComponent code={pythonCode}/>}
-                            {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                            {/* {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                            {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension} isDown={isDown}/>} */}
+
+                            {showCode && <div className={styles.codeAndTab}>
+                                {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                            </div>}
+
                             {!showCode && <StageWrapper
                                 isFullScreen={isFullScreen}
                                 isRendererSupported={isRendererSupported()}
@@ -660,6 +726,15 @@ const GUIComponent = props => {
                                 onClose={() => setOpen(false)}
                                 onSelect={handleSelect}
                             />
+                            {props.masterModalVisible && (
+                                <MasterModal onRequestClose={props.onRequestCloseMasterModal} handleData={handledata} />
+                            )}
+                            {props.connectModalVisible && (
+                                <ConnectTabs onRequestClose={props.onRequestCloseConnectModal} handleConnectData={handleConnectData} portData={portData} />
+                            )}
+                            {props.firmwareModalVisible && (
+                                <FirmwareFlasher onRequestClose={props.onRequestCloseFirmwareModal} handleFirmwareData={handleFirmwareData} />
+                            )}
                         </Box>
                     </Box>
                 </Box>

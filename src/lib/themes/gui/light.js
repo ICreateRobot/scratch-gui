@@ -92,7 +92,18 @@ const guiColors = {
     'paint-looks-transparent': 'var(--looks-transparent)',
     'paint-input-background': 'var(--input-background)',
     'paint-popover-background': 'var(--popover-background)',
-    'paint-filter-icon-gray': 'none'
+    'paint-filter-icon-gray': 'none',
+    'mode-toggle-container':'var(--mode-toggle)',
+    'tabswitcher-tabs-equles-true':'var(--tabswitcher-tabs-equles)',
+    'tabswitcher-tabs-noequles-false':'var(--tabswitcher-tabs-noequles)',
+    'tabswitcher-programe-back':'white',
+    'tabswitcher-programe-down-lightordark':'var(--tabswitcher-programe-down)',
+    'tabswitcher-control-first-lightordark':'var(--tabswitcher-control-first)',
+    'tabswitcher-control-second-lightordark':'var(--tabswitcher-control-second)',
+    'tabswitcher-control-third-lightordark':'var(--tabswitcher-control-third)',
+    'tabswitcher-control-fourth-lightordark':'white',
+    'tabswitcher-serial-second-lightordark':'var(--tabswitcher-serial-second)',
+    'tabswitcher-serial-first-lightordark':'white',
 };
 
 const blockColors = {};

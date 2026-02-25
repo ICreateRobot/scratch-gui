@@ -24,6 +24,8 @@ import {
     closeTelemetryModal,
     openExtensionLibrary
 } from '../reducers/modals';
+import {openMasterModal} from '../reducers/modals';
+import {closeMasterModal} from '../reducers/modals';
 
 import FontLoaderHOC from '../lib/font-loader-hoc.jsx';
 import LocalizationHOC from '../lib/localization-hoc.jsx';
@@ -40,7 +42,7 @@ import GUIComponent from '../components/gui/gui.jsx';
 import {setIsScratchDesktop} from '../lib/isScratchDesktop.js';
 import TWFullScreenResizerHOC from '../lib/tw-fullscreen-resizer-hoc.jsx';
 import TWThemeManagerHOC from './tw-theme-manager-hoc.jsx';
-
+import DesktopAPI from '../lib/DesktopAPI';
 const {RequestMetadata, setMetadata, unsetMetadata} = storage.scratchFetch;
 
 const setProjectIdMetadata = projectId => {
@@ -177,10 +179,14 @@ const mapStateToProps = state => {
         fontsModalVisible: state.scratchGui.modals.fontsModal,
         unknownPlatformModalVisible: state.scratchGui.modals.unknownPlatformModal,
         invalidProjectModalVisible: state.scratchGui.modals.invalidProjectModal,
-        vm: state.scratchGui.vm
+        vm: state.scratchGui.vm,
+        masterModalVisible: state.scratchGui.modals.masterModal,
+        connectModalVisible: state.scratchGui.modals.connectModal,
+        firmwareModalVisible: state.scratchGui.modals.firmwareModal,
     };
 };
 
+const isElectron = !!(window && window.process && window.process.type);
 const mapDispatchToProps = dispatch => ({
     onExtensionButtonClick: () => dispatch(openExtensionLibrary()),
     onActivateTab: tab => dispatch(activateTab(tab)),
@@ -188,7 +194,9 @@ const mapDispatchToProps = dispatch => ({
     onActivateSoundsTab: () => dispatch(activateTab(SOUNDS_TAB_INDEX)),
     onRequestCloseBackdropLibrary: () => dispatch(closeBackdropLibrary()),
     onRequestCloseCostumeLibrary: () => dispatch(closeCostumeLibrary()),
-    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal())
+    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal()),
+    _initDesktopDispatch: DesktopAPI.registerDispatch(dispatch),
+    ...( !isElectron ? DesktopAPI : {} )
 });
 
 const ConnectedGUI = injectIntl(connect(

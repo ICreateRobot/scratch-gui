@@ -16,6 +16,7 @@ import { EditorView } from '@codemirror/view';
 import { autocompletion } from '@codemirror/autocomplete';
 import { oneDark } from '@codemirror/theme-one-dark';
 
+import styles from './CodeMirrorComponent.css'
 
 
 const CodeMirrorComponent = ({ code, options }) => {
@@ -83,11 +84,11 @@ const CodeMirrorComponent = ({ code, options }) => {
         //      </textarea>
         // </div>
 
-        <div style={{ border: '1px solid #ccc', backgroundColor: '#f9f9f9', padding: '10px',borderRadius:'10px',height:'60vh'}}>
+        <div className={styles.Content}>
           <CodeMirror
             value={code}
-            height="50vh"
-            width='460px'
+            height="100%"
+            // width='400px'
             extensions={[
               python(),
               autocompletion(),
@@ -104,7 +105,7 @@ const CodeMirrorComponent = ({ code, options }) => {
               autocompletion: true,
               syntaxHighlighting: true,
             }}
-            style={{borderRadius:'10px'}}
+            style={{borderRadius:'10px',height:'100%'}}
           />
         </div>
        

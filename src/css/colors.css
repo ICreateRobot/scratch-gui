@@ -78,3 +78,16 @@ $project-title-inactive: var(--project-title-inactive);
 $project-title-hover: var(--project-title-hover);
 
 $link-color: var(--link-color);
+
+
+$mode-toggle-container:var(--mode-toggle-container);
+$tabswitcher-tabs-equles-true:var(--tabswitcher-tabs-equles-true);
+$tabswitcher-tabs-noequles-false:var(--tabswitcher-tabs-noequles-false);
+$tabswitcher-programe-back:var(--tabswitcher-programe-back);
+$tabswitcher-programe-down-lightordark:var(--tabswitcher-programe-down-lightordark);
+$tabswitcher-control-first-lightordark:var(--tabswitcher-control-first-lightordark);
+$tabswitcher-control-second-lightordark:var(--tabswitcher-control-second-lightordark);
+$tabswitcher-control-third-lightordark:var(--tabswitcher-control-third-lightordark);
+$tabswitcher-control-fourth-lightordark:var(--tabswitcher-control-fourth-lightordark);
+$tabswitcher-serial-first-lightordark:var(--tabswitcher-serial-first-lightordark);
+$tabswitcher-serial-second-lightordark:var(--tabswitcher-serial-second-lightordark);

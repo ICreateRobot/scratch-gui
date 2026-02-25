@@ -8,21 +8,38 @@ export function createControlsLogic(componentInstance) {
         e.preventDefault();
         e.persist(); // 保留事件对象
         console.log('小绿旗')
-        fetch(`http://localhost:3000/get-ble`,{
-            method: 'GET'
-        })
-        .then(response => {
-            if (response.ok) {
-            return response.text();
-            } else {
-            throw new Error('请求失败，状态码：' + response.status);
-            }
-        })
-        .then(isble => {
-            console.log('蓝牙是否连接', isble);
-            console.log(getAdd())
-            if(isble!='0' && getAdd() && getBlock()){
-                alert('请先连接蓝牙')
+        // fetch(`http://localhost:3000/get-ble`,{
+        //     method: 'GET'
+        // })
+        // .then(response => {
+        //     if (response.ok) {
+        //     return response.text();
+        //     } else {
+        //     throw new Error('请求失败，状态码：' + response.status);
+        //     }
+        // })
+        // .then(isble => {
+        //     console.log('蓝牙是否连接', isble);
+        //     console.log(getAdd())
+            if(window.__bluetoothDevice && getAdd() && getBlock()){
+                // alert('请先连接蓝牙')
+                if (e.shiftKey || e.altKey || e.type === 'contextmenu') {
+                    if (e.shiftKey) {
+                        self.props.vm.setTurboMode(!self.props.turbo);
+                    }
+                    if (e.altKey || e.type === 'contextmenu') {
+                        if (self.props.framerate === 30) {
+                            self.props.vm.setFramerate(60);
+                        } else {
+                            self.props.vm.setFramerate(30);
+                        }
+                    }
+                } else {
+                    if (!self.props.isStarted) {
+                        self.props.vm.start();
+                    }
+                    self.props.vm.greenFlag();
+                }
             }else{
                 if(getIsRobot()){
                    
@@ -46,10 +63,10 @@ export function createControlsLogic(componentInstance) {
                     self.props.vm.greenFlag();
                 }
             }
-        })
-        .catch(error => {
-            console.error('发生错误：', error);
-        });
+        // })
+        // .catch(error => {
+        //     console.error('发生错误：', error);
+        // });
         
         
     }

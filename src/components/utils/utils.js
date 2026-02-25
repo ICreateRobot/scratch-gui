@@ -16,7 +16,7 @@ let allLoaded=[]
 
 let deletedCategoriesID = ['robotwifi', 'robotcat'];
 
-let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch'];
+let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi'];
 
 let showCode=false
 
@@ -158,6 +158,35 @@ while True:
     time.sleep(0.3)`
     ];
 
+
+let currentMicrobitUrl=''
+
+let masterVersion={
+    icbricks:'',
+    icrobot:'',
+    microbit:''
+}
+
+function getVersion(){
+    return masterVersion
+  }
+  
+const channelVersion = new BroadcastChannel('channel-version')
+function setVersion(a){
+    masterVersion[a[0]]=a[1]
+    channelVersion.postMessage(masterVersion.microbit ||
+        masterVersion.icrobot ||
+        masterVersion.icbricks ||
+      '')
+}
+
+function setMicrobitUrl(a){
+    currentMicrobitUrl=a
+}
+
+function getMicrobitUrl(){
+    return currentMicrobitUrl
+}
 function setIsMaster(a){
     isMaster=a
 }
@@ -217,6 +246,8 @@ function getDelete(){
 
 function setCurrent(a){
     currentExtension=a
+    const channel = new BroadcastChannel('current-device')
+    channel.postMessage(a)
 }
 
 function getCurrent(){
@@ -298,6 +329,16 @@ function setElectron(a){
 function getElectron(){
     return electronVisable
 }
+
+let time=Date.now();
+
+function getLastTime(){
+    return time
+}
+
+function setLastTime(a){
+    time=a
+}
 export {
     setIsMaster,
     getIsMaster,
@@ -332,5 +373,11 @@ export {
     getLongIsDown,
     setElectron,
     getElectron,
-    codeArray
+    codeArray,
+    setMicrobitUrl,
+    getMicrobitUrl,
+    getVersion,
+    setVersion,
+    getLastTime,
+    setLastTime
 }

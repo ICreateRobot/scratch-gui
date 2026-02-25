@@ -115,15 +115,45 @@
 
 import {FormattedMessage} from 'react-intl';
 
-
+import formatMessage  from 'format-message';
 import React, { useState, useRef, useEffect, useCallback  } from 'react';
 import bot1 from './1.svg'
 import bot2 from './2.svg'
 import bot3 from './3.svg'
 import bot4 from './4.svg'
 import bot5 from './5.svg'
+import bot1red from './1red.svg'
+import bot2red from './2red.svg'
+import bot3red from './3red.svg'
+import bot4red from './4red.svg'
+import bot5red from './5red.svg'
+import bot1blue from './1blue.svg'
+import bot2blue from './2blue.svg'
+import bot3blue from './3blue.svg'
+import bot4blue from './4blue.svg'
+import bot5blue from './5blue.svg'
+import bot1purple from './1purple.svg'
+import bot2purple from './2purple.svg'
+import bot3purple from './3purple.svg'
+import bot4purple from './4purple.svg'
+import bot5purple from './5purple.svg'
+
+import rightChangeRed from './rightRed.svg'
+import rightChangeBlue from './rightBlue.svg'
+import rightChangePurple from './rightPurple.svg'
+import rightChange from './right.svg'
+import leftChange from './left.svg'
+import leftChangeRed from './leftRed.svg'
+import leftChangeBlue from './leftBlue.svg'
+import leftChangePurple from './leftPurple.svg'
 import down from './down.svg'
+import downRed from './downRed.svg'
+import downBlue from './downBlue.svg'
+import downPurple from './downPurple.svg'
 import downRun from './downRun.svg'
+import downRunRed from './downRunRed.svg'
+import downRunBlue from './downRunBlue.svg'
+import downRunPurple from './downRunPurple.svg'
 
 import lineSenor from './lineSenor.svg'
 
@@ -136,8 +166,14 @@ import bn5 from './button5.svg'
 
 
 import bricksPlace from './bricksPlace.svg'
+import bricksPlaceRed from './bricksPlaceRed.svg'
+import bricksPlaceBlue from './bricksPlaceBlue.svg'
+import bricksPlacePurple from './bricksPlacePurple.svg'
 
 import microbitPlace from './microbit.svg'
+import microbitPlaceRed from './microbitRed.svg'
+import microbitPlaceBlue from './microbitBlue.svg'
+import microbitPlacePurple from './microbitPurple.svg'
 
 
 // import mainCon from './conn_main_con.svg'
@@ -153,8 +189,178 @@ import consoleLed from './conn_led.svg'
 import codeModule from '../../../../../utils/global.js'
 
 import runStop from './run_stop.svg'
-
+import runStopRed from './run_stopRed.svg'
+import runStopBlue from './run_stopBlue.svg'
+import runStopPurple from './run_stopPurple.svg'
 import { setLongIsDown,getLongIsDown } from 'scratch-gui/src/components/utils/utils.js';
+
+import {MicropythonFsHex }  from '@microbit/microbit-fs';
+import { microbitBoardId } from '@microbit/microbit-universal-hex';
+
+import styles from './TabSwitcher.css'
+
+import {getMicrobitUrl} from '../utils/utils.js'
+
+import {getLatestMicrobitHexUrlWithFallback} from './microbitLatest'
+
+import { DAPLink, WebUSB } from 'dapjs';
+
+const currentURL = window.location.href;
+const oneLevelUp = currentURL.substring(0, currentURL.lastIndexOf("/"));
+const modelPath = oneLevelUp + "/static/model";
+const MICRO_PATH = `${modelPath}/MICROBIT.hex`
+
+
+
+//进度条显示
+let progressBar = null;
+let progressBarContainer = null;
+let progressText=null
+
+function showProgress(msg) {
+    // 确保msg在0-100范围内
+    const progress = Math.min(100, Math.max(0, msg));
+    
+    // 如果进度条不存在则创建
+    if (!progressBar) {
+        createProgressBar();
+    }
+    
+    // 更新进度显示
+    progressBar.style.width = `${progress}%`;
+    progressBar.setAttribute('data-progress', progress);
+    progressText.textContent = `${progress}%`;
+    
+    // 自动隐藏逻辑（当进度完成时）
+    if (progress >= 100) {
+        setTimeout(() => {
+            if (progressBarContainer) {
+                progressBarContainer.style.opacity = '0';
+                setTimeout(() => {
+                    progressBarContainer.remove();
+                    progressBar = null;
+                    progressBarContainer = null;
+                    progressText=null
+                }, 500);
+            }
+        }, 1000);
+    }
+}
+
+function createProgressBar() {
+    // 创建容器
+    progressBarContainer = document.createElement('div');
+    Object.assign(progressBarContainer.style, {
+        position: 'fixed',
+        top: '30%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '300px',
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        borderRadius: '4px',
+        padding: '10px',
+        zIndex: '1001',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+        transition: 'opacity 0.5s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+    });
+
+    // 创建文本标签
+    progressText = document.createElement('div');
+    // progressText.textContent = '下载中...';
+    progressText.style.color = 'white';
+    progressText.style.marginBottom = '8px';
+    progressText.style.fontSize = '14px';
+    progressText.id = 'progress-text';
+
+    // 创建进度条背景
+    const progressTrack = document.createElement('div');
+    Object.assign(progressTrack.style, {
+        width: '100%',
+        height: '6px',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: '3px',
+        overflow: 'hidden'
+    });
+
+    // 创建进度条前景
+    progressBar = document.createElement('div');
+    Object.assign(progressBar.style, {
+        height: '100%',
+        width: '0%',
+        backgroundColor: '#4CAF50',
+        borderRadius: '3px',
+        transition: 'width 0.3s ease',
+        position: 'relative'
+    });
+
+    // 添加百分比标签
+    const percentLabel = document.createElement('span');
+    percentLabel.style.position = 'absolute';
+    percentLabel.style.right = '4px';
+    percentLabel.style.top = '50%';
+    percentLabel.style.transform = 'translateY(-50%)';
+    percentLabel.style.color = 'white';
+    percentLabel.style.fontSize = '10px';
+    //percentLabel.textContent = '0%';
+    progressBar.appendChild(percentLabel);
+
+    // 组装元素
+    progressTrack.appendChild(progressBar);
+    progressBarContainer.appendChild(progressText);
+    progressBarContainer.appendChild(progressTrack);
+    document.body.appendChild(progressBarContainer);
+
+    // 添加鼠标悬停效果
+    progressBarContainer.addEventListener('mouseenter', () => {
+        progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.9)';
+    });
+    
+    progressBarContainer.addEventListener('mouseleave', () => {
+        progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    });
+
+    // 动态更新百分比标签
+    const observer = new MutationObserver(() => {
+        const progress = progressBar.getAttribute('data-progress') || '0';
+        //percentLabel.textContent = `${progress}%`;
+        
+        // 根据进度改变颜色
+        if (progress < 30) {
+            progressBar.style.backgroundColor = '#FF5722';
+        } else if (progress < 70) {
+            progressBar.style.backgroundColor = '#FFC107';
+        } else {
+            progressBar.style.backgroundColor = '#4CAF50';
+        }
+    });
+    
+    observer.observe(progressBar, { 
+        attributes: true, 
+        attributeFilter: ['data-progress'] 
+    });
+}
+
+//添加进度条动画样式
+if (!document.getElementById('progress-bar-styles')) {
+    const style = document.createElement('style');
+    style.id = 'progress-bar-styles';
+    style.textContent = `
+        @keyframes progress-pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        .progress-complete {
+            animation: progress-pulse 1.5s infinite;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 
 // 串口监视器
 // 串口监视器组件
@@ -162,7 +368,11 @@ const SerialMonitor = ({ serialData }) => {
   const scrollRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
   const [baudRate, setBaudRate] = useState('115200');
-  const [appendNewline, setAppendNewline] = useState(true);
+  // const [appendNewline, setAppendNewline] = useState(true);
+  // 使用 useState 来管理 displayData
+  const [displayData, setDisplayData] = useState([]);
+
+  const channelPort = new BroadcastChannel('channelPort');
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -175,22 +385,33 @@ const SerialMonitor = ({ serialData }) => {
       // 这里可以添加发送数据的逻辑
       console.log('发送数据:', inputValue);
       setInputValue('');
+      channelPort.postMessage(inputValue)
     }
   };
 
   const handleClear = () => {
     // 这里可以添加清除数据的逻辑
     console.log('清除数据');
+    setDisplayData([]); 
   };
 
-  const displayData = Array.isArray(serialData)
-    ? serialData
-    : typeof serialData === 'string'
-    ? serialData.split('\n')
-    : [];
+  // const displayData = Array.isArray(serialData)
+  //   ? serialData
+  //   : typeof serialData === 'string'
+  //   ? serialData.split('\n')
+  //   : [];
 
+
+  useEffect(() => {
+    // 模拟串口数据的更新（你可以替换成实际的数据更新逻辑）
+    if (Array.isArray(serialData)) {
+      setDisplayData(serialData); // 假设 serialData 来自某个地方并设置它
+    } else if (typeof serialData === 'string') {
+      setDisplayData(serialData.split('\n')); // 如果是字符串，按行分割并显示
+    }
+  }, [serialData]); // 当 serialData 改变时，更新 displayData
   return (
-    <div style={{ padding: '10px' }}>
+    <div className={styles.tabswitcherSerialFirst} style={{ padding: '10px' }}>
       {/* 输入控制行 */}
       <div style={{ 
         display: 'flex', 
@@ -241,7 +462,7 @@ const SerialMonitor = ({ serialData }) => {
                 id="clearMonitior"
             />
           </button>
-        <select 
+        {/* <select 
           value={baudRate}
           onChange={(e) => setBaudRate(e.target.value)}
           style={{
@@ -269,14 +490,15 @@ const SerialMonitor = ({ serialData }) => {
                 id="gui.enter"
             />
           </label>
-        </div>
+        </div> */}
       </div>
 
       {/* 数据展示区域 */}
       <div
+        className={styles.tabswitcherSerialSecond}
         ref={scrollRef}
         style={{
-          backgroundColor: '#e0f8e8', // 浅绿色背景
+          // backgroundColor: '#e0f8e8', // 浅绿色背景
           color: '#000',
           height: '16vh',
           overflowY: 'auto',
@@ -310,9 +532,67 @@ const SerialMonitor = ({ serialData }) => {
   );
 };
 // 程序下载页面（包含机器人图和切换）
-const ProgramDownload = ({onSendData,extension }) => {
+const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDown, setIsDown] = useState(getLongIsDown());
+
+  const channelLoading = new BroadcastChannel('channel-loading-tabSwitcher')
+
+
+  function showToast(message, duration = 3000) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          Object.assign(container.style, {
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              zIndex: 9999,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+          });
+          document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.textContent = message;
+
+      Object.assign(toast.style, {
+          background: '#333',
+          color: '#fff',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          opacity: '0',
+          transform: 'translateY(-20px)',
+          transition: 'opacity 0.3s ease, transform 0.3s ease',
+          maxWidth: '300px'
+      });
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+      });
+
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-20px)';
+          setTimeout(() => {
+              toast.remove();
+              if (container.children.length === 0) {
+                  container.remove();
+              }
+          }, 300);
+      }, duration);
+  }
+  useEffect(() => {
+    setIsDown(parentIsDown)
+    setLongIsDown(parentIsDown)
+  }, [parentIsDown]);
   useEffect(() => {
     // console.log('下载界面初始化了一次')
     // console.log(isDown)
@@ -339,14 +619,100 @@ const ProgramDownload = ({onSendData,extension }) => {
         channelBleIsDown.close();
       };
     }, []);
+
+    const getAccent = () => {
+      const themeStr = localStorage.getItem('tw:theme');
+    
+      // 没有主题 → 绿色
+      if (!themeStr) return 'green';
+    
+      try {
+        const theme = JSON.parse(themeStr);
+        const accent = theme?.accent;
+    
+        // 只允许这三种
+        if (['blue', 'red', 'purple'].includes(accent)) {
+          return accent;
+        }
+    
+        // 其它全部兜底绿色
+        return 'green';
+      } catch {
+        return 'green';
+      }
+    };
+  
+    const downMap={
+      green:down,
+      red:downRed,
+      blue:downBlue,
+      purple:downPurple
+    }
+  
+    const downRunMap={
+      green:downRun,
+      red:downRunRed,
+      blue:downRunBlue,
+      purple:downRunPurple
+    }
+    const runStopMap={
+      green:runStop,
+      red:runStopRed,
+      blue:runStopBlue,
+      purple:runStopPurple
+    }
+  
+    const bricksMap={
+      green:bricksPlace,
+      red:bricksPlaceRed,
+      blue:bricksPlaceBlue,
+      purple:bricksPlacePurple
+    }
+  
+    const microbitMap={
+      green:microbitPlace,
+      red:microbitPlaceRed,
+      blue:microbitPlaceBlue,
+      purple:microbitPlacePurple
+    }
+  
+    const bricksHand=bricksMap[getAccent()]
+    const microbitHand=microbitMap[getAccent()]
   if(extension=='2'){
-    const images = [
-        bot1, // 替换成你的图片路径
-        bot2,
-        bot3,
-        bot4,
-        bot5,
-      ];
+    const botImages={
+      green:[bot1,bot2,bot3,bot4,bot5],
+      red:[bot1red,bot2red,bot3red,bot4red,bot5red],
+      blue:[bot1blue,bot2blue,bot3blue,bot4blue,bot5blue],
+      purple:[bot1purple,bot2purple,bot3purple,bot4purple,bot5purple]
+    }
+    const leftMap={
+      green:leftChange,
+      red:leftChangeRed,
+      blue:leftChangeBlue,
+      purple:leftChangePurple
+    }
+
+    const rightMap={
+      green:rightChange,
+      red:rightChangeRed,
+      blue:rightChangeBlue,
+      purple:rightChangePurple
+    }
+
+   
+
+    const leftHand=leftMap[getAccent()]
+    const rightHand=rightMap[getAccent()]
+    const downHand=downMap[getAccent()]
+    // const images = [
+    //     bot1, // 替换成你的图片路径
+    //     bot2,
+    //     bot3,
+    //     bot4,
+    //     bot5,
+    //   ];
+    const images=botImages[getAccent()]
+      console.log(images)
       
 
       const handlePrev = () => {
@@ -361,60 +727,89 @@ const ProgramDownload = ({onSendData,extension }) => {
       }
 
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%' }}>
-          {/* 左箭头 */}
+        <div className={styles.tabswitcherProgrameBack} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%' }}>
+          
           <div
-            onClick={handlePrev}
             style={{
-              position: 'absolute',
-              left: '50px',
-              fontSize: '36px',
-              color: '#00CED1',
-              cursor: 'pointer',
-              userSelect: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              paddingLeft: '50px',
+              paddingRight: '80px',
+              boxSizing: 'border-box',
             }}
           >
-            &#8592;
-          </div>
+            {/* 左箭头 */}
+            <div
+              onClick={handlePrev}
+              style={{
+                // position: 'absolute',
+                // left: '50px',
+                fontSize: '36px',
+                color: '#00CED1',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <img
+                src={leftHand}
+                alt="prev"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                }}
+              />
+            </div>
 
-          {/* 中间机器人图 */}
-          <img
-            src={images[currentIndex]}
-            alt="机器人图"
-            draggable={false}
-            style={{
-              width: '170px',
-              height: '150px',
-              objectFit: 'contain',
-              position:'absolute',
-              left:'135px'
-            }}
-          />
+            {/* 中间机器人图 */}
+            <img
+              src={images[currentIndex]}
+              alt="机器人图"
+              draggable={false}
+              style={{
+                width: '170px',
+                height: '150px',
+                objectFit: 'contain',
+                // position:'absolute',
+                // left:'135px'
+              }}
+            />
 
-          {/* 右箭头 */}
-          <div
-            onClick={handleNext}
-            style={{
-              position: 'absolute',
-              right: '80px',
-              fontSize: '36px',
-              color: '#00CED1',
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-          >
-            &#8594;
+            {/* 右箭头 */}
+            <div
+              onClick={handleNext}
+              style={{
+                // position: 'absolute',
+                // right: '80px',
+                fontSize: '36px',
+                color: '#00CED1',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <img
+                src={rightHand}
+                alt="prev"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                }}
+              />
+            </div>
           </div>
+          
 
           {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:'#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -432,7 +827,7 @@ const ProgramDownload = ({onSendData,extension }) => {
               }}
               onClick={postDataToParent}
             >
-              <img draggable={false} src={down}></img>
+              <img draggable={false} src={downHand}></img>
             </button>
             {/* <button
               style={{
@@ -471,23 +866,27 @@ const ProgramDownload = ({onSendData,extension }) => {
       }
 
 
-     
+      const downRunHand=downRunMap[getAccent()]
+
+      const runStopHand=runStopMap[getAccent()]
+
 
      return (
-      <div style={{
+      <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
-        <img draggable={false} style={{height:'150px',position:'relative',top:'10px',right:'30px'}} src={bricksPlace}></img>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'10px',right:'30px'}} src={bricksHand}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:'#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -520,8 +919,8 @@ const ProgramDownload = ({onSendData,extension }) => {
               }}
               onClick={postDataToParent}
             >
-              {isDown && <img draggable={false} src={runStop}></img>}
-              {!isDown && <img draggable={false} src={downRun}></img>}
+              {isDown && <img draggable={false} src={runStopHand}></img>}
+              {!isDown && <img draggable={false} src={downRunHand}></img>}
 
               {/* <img src={downRun}></img> */}
             </button>
@@ -529,26 +928,145 @@ const ProgramDownload = ({onSendData,extension }) => {
       </div>
     );
   }else if(extension == '3'){
+
+    const downHand=downMap[getAccent()]
      const postDataToParent = async() =>{
+        channelLoading.postMessage(true)
         let import_code='from microbit import *\nfrom ICreate import *\n';
-        const result = await window.EditorPreload.downloadCode(import_code+codeModule.getCode());
-        console.log(result)
+        // const result = await window.EditorPreload.downloadCode(import_code+codeModule.getCode());
+        let code=import_code+codeModule.getCode()
+        try {
+          // Step 1: 读取基础 HEX 文件（从服务器或 public 路径加载）
+          // Step 4: 让用户保存文件 —— 使用 File System Access API
+          let baseResponse
+          let baseHex
+
+
+          try {
+            const hexUrl = await getLatestMicrobitHexUrlWithFallback();
+            console.log('最新 microbit hex:', hexUrl);
+            if (
+              hexUrl.startsWith("https://raw.githubusercontent.com") ||
+              hexUrl.startsWith("https://github.com") ||
+              hexUrl.endsWith(".hex")
+            ) {
+              console.log('本地/github')
+              baseResponse = await fetch(hexUrl);
+              baseHex = await baseResponse.text();
+            }
+            // ✅ 情况 2：Gitee contents API（base64）
+            else {
+              console.log('gitee固件')
+              baseResponse = await fetch(hexUrl);
+              const json = await baseResponse.json();
+              baseHex = atob(json.content.replace(/\n/g, ''));
+            }
+          } catch (e) {
+            if (e.message === 'MICROBIT_FIRMWARE_UNAVAILABLE') {
+              // alert('网络异常，无法获取 micro:bit 固件，请检查网络连接');
+              baseResponse = await fetch(MICRO_PATH);
+              baseHex = await baseResponse.text();
+              console.log('网络错误，获取本地')
+            }
+          }
+          // Step 2: 用 micropython-fs-hex 将 Python 代码写入 main.py
+          const fsHex = new MicropythonFsHex([{
+          hex: baseHex,
+          boardId: microbitBoardId.V2, // 或 V1
+          }]);
+
+          if (code && code.trim() !== '') {
+          fsHex.write('main.py', code);
+          } else if (fsHex.exists('main.py')) {
+          fsHex.remove('main.py');
+          }
+
+          // Step 3: 生成带 main.py 的新 HEX 内容
+          const boardHex = fsHex.getIntelHex();
+
+          // if (!boardHex.endsWith('\n')) {
+          //   boardHex += '\n';
+          // }
+          const hexBlob = new Blob([boardHex], { type: 'text/plain' });
+          channelLoading.postMessage(false)
+          try {
+
+              const usbDevice = window.__microbitUSB;
+              if (!usbDevice) throw new Error('未连接 Micro:bit USB');
+
+              const transport = new WebUSB(usbDevice);
+              const daplink = new DAPLink(transport);
+
+              await daplink.connect();
+              console.log('DAPLink 已连接，开始烧录...');
+
+              let lastPercent = -1;
+              daplink.on(DAPLink.EVENT_PROGRESS, (pct) => {
+                const percent = Math.round(pct * 100);
+                if (percent !== lastPercent) {
+                  lastPercent = percent;
+                  // console.log(`烧录进度: ${percent}%`);
+                  showProgress(percent)
+                  
+                  // channelLoading.postMessage({ flashing: true, progress: percent });
+                }
+              });
+
+              await daplink.flash(new Uint8Array(boardHex.split('').map(c => c.charCodeAt(0))));
+              console.log('烧录完成！');
+
+              await daplink.disconnect();
+              console.log('DAPLink 已断开');
+
+              showToast(formatMessage({
+                  id: 'gui.alert.downSuccess',
+                  default: 'download success',
+                  description: 'gui.alert.downSuccess'
+              }));
+              channelLoading.postMessage(false)
+              return { success: true };
+          } catch (err) {
+            channelLoading.postMessage(false)
+            showToast(formatMessage({
+                id: 'gui.alert.downFailed',
+                default: 'download failed',
+                description: 'gui.alert.downFailed'
+            }));
+              if (err.name === 'AbortError') {
+              return { success: false, error: '用户取消了保存操作' };
+              }
+              throw err;
+          }
+
+
+      } catch (err) {
+          console.error('生成 HEX 文件失败:', err);
+          showToast(formatMessage({
+              id: 'gui.alert.downFailed',
+              default: 'download failed',
+              description: 'gui.alert.downFailed'
+          }));
+          channelLoading.postMessage(false)
+          return { success: false, error: `生成 HEX 文件失败: ${err.message}` };
+      }
+        // console.log(result)
       }
      return (
-      <div style={{
+      <div className={styles.tabswitcherProgrameBack} style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
       }}>
-        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={microbitPlace}></img>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={microbitHand}></img>
 
          {/* 下载 & 运行按钮 */}
           <div
+            className={styles.tabswitcherProgrameDown}
             style={{
               position: 'absolute',
               right: '0',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              backgroundColor:'#c9ffef',
+              // backgroundColor:'#c9ffef',
               height:'100%',
               width:'70px'
             }}
@@ -581,7 +1099,7 @@ const ProgramDownload = ({onSendData,extension }) => {
               }}
               onClick={postDataToParent}
             >
-              <img draggable={false} src={down}></img>
+              <img draggable={false} src={downHand}></img>
             </button>
           </div>
       </div>
@@ -777,6 +1295,15 @@ const ControlPanelLayout = ({extension}) => {
   const dynamicImageRef = useRef(dynamicImage);
   dynamicImageRef.current = dynamicImage;
 
+
+  const safeSetRealtimeValues = (data) => {
+    if (Array.isArray(data)) {
+      setRealtimeValues(data.slice(9, 14));
+    } else {
+      setRealtimeValues([0, 0, 0, 0, 0]);
+    }
+  };
+
   // 处理BroadcastChannel消息的优化函数
   const handleMessage = useCallback(throttle((event) => {
     const now = Date.now();
@@ -786,7 +1313,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9))
+    safeSetRealtimeValues(data)
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -831,7 +1358,7 @@ const ControlPanelLayout = ({extension}) => {
     
     const data = event.data;
     // console.log(data)
-    setRealtimeValues(data.slice(9))
+    safeSetRealtimeValues(data)
     let newImage = dynamicImageRef.current;
     
     if (data[0] === 1 && data[1] === 1) {
@@ -879,7 +1406,7 @@ const ControlPanelLayout = ({extension}) => {
       // console.log(data);
 
       // 更新实时数值
-      setRealtimeValues(data.slice(9));
+      safeSetRealtimeValues(data)
 
       // 根据前两个字节判断要显示的图片
       let newImage = dynamicImageRef.current;
@@ -1157,7 +1684,7 @@ const ControlPanelLayout = ({extension}) => {
               draggable={false}
               src={lineSenor}
               alt="Line Sensor"
-              style={{ maxWidth: '100%', height: '60px' }}
+              style={{ maxWidth: '100%', height: '30px' }}
             />
 
             <br />
@@ -1170,7 +1697,7 @@ const ControlPanelLayout = ({extension}) => {
             }}>
               {realtimeValues.map((value, index) => (
                 <div key={index} style={{
-                  width: '36px', // ✅ 固定宽度，保证对齐
+                  width: '28px', // ✅ 固定宽度，保证对齐
                   textAlign: 'center',
                   padding: '4px 0',
                   backgroundColor: '#e0ffff',
@@ -1287,12 +1814,12 @@ const ControlPanelLayout = ({extension}) => {
     });
 
     return (
-      <div style={{ 
+      <div className={styles.tabswitcherControlFirst} style={{ 
         display: 'flex', 
         // padding: '10px', 
         gap: '10px',
         fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f8f8f8',
+        // backgroundColor: '#f8f8f8',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         maxWidth: '800px',
@@ -1300,23 +1827,23 @@ const ControlPanelLayout = ({extension}) => {
         // margin: '20px auto'
       }}>
         {/* 左边：子标签 + 内容 */}
-        <div style={{
+        <div  className={styles.tabswitcherControlSecond} style={{
           width: '100%',
-          backgroundColor: '#f0ffff',
+          // backgroundColor: '#f0ffff',
           border: '1px solid #00ced1',
           borderRadius: '8px',
           padding: '10px',
           boxShadow: '0 2px 6px rgba(0,206,209,0.2)'
         }}>
           {/* 子标签按钮 */}
-          <div style={{ 
+          <div className={styles.tabswitcherControlThird} style={{ 
             display: 'flex', 
             // justifyContent: 'space-around', 
             //  justifyContent: 'center',  // 原来是 space-around，改成 center
               gap: '15px',                // 加上 gap 控制图标间距
             marginBottom: '10px',
             padding: '5px',
-            backgroundColor: '#e0f8f8',
+            // backgroundColor: '#e0f8f8',
             borderRadius: '6px'
           }}>
             {tabIcons.map((icon, idx) => (
@@ -1434,12 +1961,13 @@ const ControlPanelLayout = ({extension}) => {
       );
     });
     return (
-       <div style={{
+       <div  className={styles.tabswitcherControlFourth} style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '12px',
           flexGrow: 1,
-          alignContent: 'start'
+          alignContent: 'start',
+          height:'100%'
         }}>
           {portContent.map((label, num) => (
             <GridItem key={num} label={label} num={num} />
@@ -1448,7 +1976,7 @@ const ControlPanelLayout = ({extension}) => {
     );
   }else if(extension == '3'){
     return (
-      <div>
+      <div className={styles.tabswitcherControlFourth}>
         {/* 占位 */}
       </div>
     )
@@ -1457,22 +1985,12 @@ const ControlPanelLayout = ({extension}) => {
 
 
 // 主组件
-const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
+const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
   const [activeTab, setActiveTab] = useState('download');
 
   return (
     <div
-      style={{
-        width: '100%',
-        // background: '#98F5FF',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        maxHeight: '40vh',           // 设置最大高度
-        overflowY: 'auto',           // 超出时出现滚动条
-        boxSizing: 'border-box',     // 让 padding 不额外撑高度
-        paddingTop:'10px',
-        height:'40vh'
-      }}
+      className={styles.total}
     >
       {/* Tabs */}
       <div style={{ display: 'flex' }}>
@@ -1484,9 +2002,10 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
           <div
             key={key}
             onClick={() => setActiveTab(key)}
+            className={activeTab === key ? styles.tabswitcherTabsEqules : styles.tabswitcherTabsNoequles}
             style={{
               padding: '10px 20px',
-              backgroundColor: activeTab === key ? '#32b7a6' : '#AEEEEE',
+              // backgroundColor: activeTab === key ? '#32b7a6' : '#AEEEEE',
               cursor: 'pointer',
               borderTopLeftRadius: '8px',
               borderTopRightRadius: '8px',
@@ -1495,11 +2014,32 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
             }}
           >
             {/* {label} */}
-            <FormattedMessage
+            {/* <FormattedMessage
                 defaultMessage={label}
                 description="Button in menu bar under settings to open desktop app settings"
                 id={key}
-            />
+            /> */}
+            {key === 'download' && (
+              <FormattedMessage
+                id="download"
+                defaultMessage="下载"
+                description="Button for download tab"
+              />
+            )}
+            {key === 'control' && (
+              <FormattedMessage
+                id="control"
+                defaultMessage="控制台"
+                description="Button for control tab"
+              />
+            )}
+            {key === 'monitor' && (
+              <FormattedMessage
+                id="monitor"
+                defaultMessage="串口监视器"
+                description="Button for monitor tab"
+              />
+            )}
           </div>
         ))}
       </div>
@@ -1511,10 +2051,10 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
           // padding: '20px',
           borderRadius: '0 0 8px 8px',
           border: '1px solid #17a934', 
-          height: '26vh',
+          height: '80%',
         }}
       >
-        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension}/>}
+        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} parentIsDown={isDown}/>}
         {activeTab === 'control' && <ControlPanelLayout extension={extension} />}
         {activeTab === 'monitor' && <SerialMonitor serialData={serialData} extension={extension} />}
       </div>

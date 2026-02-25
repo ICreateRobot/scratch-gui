@@ -196,23 +196,70 @@
     position: relative;
 }
 
-.stage-and-target-wrapper {
-    /*
-        Makes rows for children:
-          1) stage menu
-          2) stage
-          3) sprite/stage selectors
-        Only reason we need this, is so .targetWrapper, which holds the selectors,
-        goes to full vertical height of the window
-    */
-    display: flex;
-    flex-direction: column;
-    /* pad entire wrapper to the left and right; allow children to fill width */
-    padding-left: $space;
-    padding-right: $space;
 
-    /* this will only ever be as wide as the stage */
-    flex-basis: 0;
+@media (min-width: 768px) and (max-width: 1024px) {
+  .stage-and-target-wrapper {
+        /*
+            Makes rows for children:
+            1) stage menu
+            2) stage
+            3) sprite/stage selectors
+            Only reason we need this, is so .targetWrapper, which holds the selectors,
+            goes to full vertical height of the window
+        */
+        display: flex;
+        flex-direction: column;
+        /* pad entire wrapper to the left and right; allow children to fill width */
+        padding-left: $space;
+        padding-right: $space;
+
+        /* this will only ever be as wide as the stage */
+        flex-basis: 0;
+        /* min-width: 500px; */
+    }
+    .code-and-tab{
+         display: flex;
+        flex-direction: column;
+        /* pad entire wrapper to the left and right; allow children to fill width */
+        padding-left: $space;
+        padding-right: $space;
+
+        /* this will only ever be as wide as the stage */
+        flex-basis: 0;
+    }
+}
+
+@media (min-width: 1025px) {
+  .stage-and-target-wrapper {
+        /*
+            Makes rows for children:
+            1) stage menu
+            2) stage
+            3) sprite/stage selectors
+            Only reason we need this, is so .targetWrapper, which holds the selectors,
+            goes to full vertical height of the window
+        */
+        display: flex;
+        flex-direction: column;
+        /* pad entire wrapper to the left and right; allow children to fill width */
+        padding-left: $space;
+        padding-right: $space;
+
+        /* this will only ever be as wide as the stage */
+        flex-basis: 0;
+        /* min-width: 500px; */
+    }
+    .code-and-tab{
+        display: flex;
+        flex-direction: column;
+        /* pad entire wrapper to the left and right; allow children to fill width */
+        padding-left: $space;
+        padding-right: $space;
+
+        /* this will only ever be as wide as the stage */
+        flex-basis: 0;
+        min-width: 478px;
+    }
 }
 
 .target-wrapper {

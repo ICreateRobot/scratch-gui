@@ -1,7 +1,7 @@
 // library-logic-handler.js
 import { 
     getIsMaster, setIsMaster, addLoadExtension, delLoadExtension,
-    getLoadExtension, getAllLoaded, setAllLoaded, setIsLoad 
+    getLoadExtension, getAllLoaded, setAllLoaded, setIsLoad, getCurrent 
 } from 'scratch-gui/src/components/utils/utils.js';
 import { setContent } from '../../../../../../utils/updataExtension.js';
 import axios from 'axios';
@@ -79,6 +79,7 @@ export function createLibraryLogic(componentInstance) {
         
     })
 
+    const channelProjectExtension = new BroadcastChannel('project_extension')
     channelClose.addEventListener('message',(event)=>{
         handleClose()
     })
@@ -272,10 +273,18 @@ export function createLibraryLogic(componentInstance) {
                 id: filteredData[id].extensionId
             });
             addLoadExtension(filteredData[id].extensionId);
+            channelProjectExtension.postMessage(JSON.stringify({
+                type:"save",
+                extension:getLoadExtension()
+            }))
             handleClose();
         } else {
             if (filteredData[id].extensionId) {
                 addLoadExtension(filteredData[id].extensionId);
+                    channelProjectExtension.postMessage(JSON.stringify({
+                    type:"save",
+                    extension:getLoadExtension()
+                }))
                 setAllLoaded(filteredData[id].extensionId);
             }
             oneExtension.postMessage(id);
@@ -333,7 +342,9 @@ export function createLibraryLogic(componentInstance) {
     // 初始化定时器逻辑（原来在 componentDidMount 里）
     function initExtensionLoader(getFilteredData, getHiddenData) {
         setTimeout(() => {
-            fetch('http://localhost:3000/get-extension')
+            if (window && window.process && window.process.type) {
+                console.log("当前运行在 Electron 环境");
+                fetch('http://localhost:3000/get-extension')
                 .then(response => {
                     if (response.ok) return response.text();
                     throw new Error('请求失败，状态码：' + response.status);
@@ -380,10 +391,18 @@ export function createLibraryLogic(componentInstance) {
                                     id: self.props.data[i + 1].extensionId
                                 });
                                 addLoadExtension(self.props.data[i + 1].extensionId);
+                                channelProjectExtension.postMessage(JSON.stringify({
+                                    type:"save",
+                                    extension:getLoadExtension()
+                                }))
                                 handleClose();
                             } else {
                                 if (self.props.data[i + 1].extensionId === 'robotgood') continue;
                                 addLoadExtension(self.props.data[i + 1].extensionId);
+                                channelProjectExtension.postMessage(JSON.stringify({
+                                    type:"save",
+                                    extension:getLoadExtension()
+                                }))
                                 setAllLoaded(self.props.data[i + 1].extensionId);
                             }
                         }
@@ -411,10 +430,74 @@ export function createLibraryLogic(componentInstance) {
                     }
                 })
                 .catch(console.error);
-        }, 500);
+            } else {
+                console.log("当前运行在浏览器环境");
+                if (getCurrent() == 'ICBricks' && getIsMaster()) {
+                        self.props.onItemSelected(getHiddenData()[0]);
+                        self.props.onItemSelected(getHiddenData()[1]);
+                        self.props.onItemSelected(getHiddenData()[2]);
+                        self.props.onItemSelected(getHiddenData()[3]);
+                        oneExtension.postMessage(3);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        
+                    } else if (getCurrent() == 'ICRobot' && getIsMaster()) {
+                        console.log(getHiddenData()[5])
+                        self.props.onItemSelected(getHiddenData()[5]);
+                        self.props.onItemSelected(getHiddenData()[10]);
+                        self.props.onItemSelected(getHiddenData()[11]);
+                        self.props.onItemSelected(getHiddenData()[12]);
+                        self.props.onItemSelected(getHiddenData()[6]);
+                        self.props.onItemSelected(getHiddenData()[16]);
+                        self.props.onItemSelected(getFilteredData()[1]);
+                        self.props.onItemSelected(getFilteredData()[2]);
+                        self.props.onItemSelected(getFilteredData()[3]);
+                        self.props.onItemSelected(getFilteredData()[4]);
+                        self.props.onItemSelected(getFilteredData()[6]);
+                        self.props.onItemSelected(getFilteredData()[7]);
+                        self.props.onItemSelected(getFilteredData()[8]);
+                        self.props.onItemSelected(getFilteredData()[9]);
+                        self.props.onItemSelected(getFilteredData()[10]);
+
+                        for (let i = 0; i < 10; i++) {
+                            console.log(self.props)
+                            console.log(self.props.data)
+                            if (getAllLoaded().includes(self.props.data[i + 1].extensionId)) {
+                                if (self.props.data[i + 1].extensionId === 'robotgood') continue;
+                                channelLoadExtension.postMessage({
+                                    op: 'restore',
+                                    id: self.props.data[i + 1].extensionId
+                                });
+                                addLoadExtension(self.props.data[i + 1].extensionId);
+                                handleClose();
+                            } else {
+                                if (self.props.data[i + 1].extensionId === 'robotgood') continue;
+                                addLoadExtension(self.props.data[i + 1].extensionId);
+                                setAllLoaded(self.props.data[i + 1].extensionId);
+                            }
+                        }
+                        oneExtension.postMessage(8);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        
+                    } else if (getCurrent() == 'Microbit' && getIsMaster()) {
+                        self.props.onItemSelected(getHiddenData()[14]);
+                        self.props.onItemSelected(getHiddenData()[15]);
+                        oneExtension.postMessage(15);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        
+                    }
+            }
+            
+        }, 1000);
     }
 
     function getHiddenData() {
+        console.log(self.props.data)
         const filteredData = self.props.data.filter(item => 
             item === '---' ||  // 保留分隔符
             (typeof item === 'object' && 

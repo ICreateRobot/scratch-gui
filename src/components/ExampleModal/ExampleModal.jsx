@@ -12,6 +12,8 @@ import voiceCon from "./voiceCon.png";
 import imgControl from "./imgControl.png";
 import xiaofang from "./xiaofang.png";
 import subway from "./subway.png";
+import onlineAuto from "./onlineAutoLine.png"
+import onlineVOice from "./onlineVoice.png"
 
 const ExampleModal = ({ open, onClose, onSelect }) => {
   const [tab, setTab] = useState("sb3");
@@ -53,22 +55,22 @@ const ExampleModal = ({ open, onClose, onSelect }) => {
       mode: "sb3",
       device: "ICRobot",
       name: formatMessage({
-        id: "ic.sampleProgram.fire",
-        default: "Firefighting Guardian",
-        description: "Firefighting Guardian",
+        id: "ic.sampleProgram.onlineVoice",
+        default: "Voice-controlled robot",
+        description: "Voice-controlled robot",
       }),
-      img: xiaofang,
+      img: onlineVOice,
     },
     {
       id: 3,
       mode: "sb3",
       device: "ICRobot",
       name: formatMessage({
-        id: "ic.sampleProgram.subway",
-        default: "Subway Simulation",
-        description: "Subway Simulation",
+        id: "ic.sampleProgram.onlineAuto",
+        default: "Automatic line following",
+        description: "Automatic line following",
       }),
-      img: subway,
+      img: onlineAuto,
     },
   ];
 
@@ -157,7 +159,7 @@ const ExampleModal = ({ open, onClose, onSelect }) => {
             onClick={() => setTab("sb3")}
           >
             <FormattedMessage
-              defaultMessage="SB3 Sample Program"
+              defaultMessage="Block Sample Program"
               description="SB3 Sample Program"
               id="ic.sampleProgram.sb3"
             />

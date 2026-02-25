@@ -18,6 +18,9 @@ const MODAL_RESTORE_POINTS = 'restorePointModal';
 const MODAL_FONTS = 'fontsModal';
 const MODAL_UNKNOWN_PLATFORM = 'unknownPlatformModal';
 const MODAL_INVALID_PROJECT = 'invalidProjectModal';
+const MODAL_MASTER = 'masterModal';
+const MODAL_CONNECT='connectModal'
+const MODAL_FIRMWARE='firmwareModal'
 
 const initialState = {
     [MODAL_BACKDROP_LIBRARY]: false,
@@ -36,7 +39,10 @@ const initialState = {
     [MODAL_RESTORE_POINTS]: false,
     [MODAL_FONTS]: false,
     [MODAL_UNKNOWN_PLATFORM]: false,
-    [MODAL_INVALID_PROJECT]: false
+    [MODAL_INVALID_PROJECT]: false,
+    [MODAL_MASTER]: false,
+    [MODAL_CONNECT]:false,
+    [MODAL_FIRMWARE]:false
 };
 
 const reducer = function (state, action) {
@@ -168,6 +174,24 @@ const closeUnknownPlatformModal = function () {
 const closeInvalidProjectModal = function () {
     return closeModal(MODAL_INVALID_PROJECT);
 };
+const openMasterModal = function () {
+    return openModal(MODAL_MASTER);
+};
+const closeMasterModal = function () {
+    return closeModal(MODAL_MASTER);
+};
+const openConnectModal = function () {
+    return openModal(MODAL_CONNECT);
+};
+const closeConnectModal = function () {
+    return closeModal(MODAL_CONNECT);
+};
+const openFirmwareModal = function(){
+    return openModal(MODAL_FIRMWARE);
+}
+const closeFirmwareModal = function(){
+    return closeModal(MODAL_FIRMWARE)
+}
 export {
     reducer as default,
     initialState as modalsInitialState,
@@ -204,5 +228,11 @@ export {
     closeRestorePointModal,
     closeFontsModal,
     closeUnknownPlatformModal,
-    closeInvalidProjectModal
+    closeInvalidProjectModal,
+    openMasterModal,
+    closeMasterModal,
+    openConnectModal,
+    closeConnectModal,
+    openFirmwareModal,
+    closeFirmwareModal
 };

@@ -55,9 +55,15 @@ class Storage extends ScratchStorage {
         this.assetHost = assetHost;
     }
     getAssetGetConfig (asset) {
+         const currentURL = window.location.href;
+
+        // 获取前一级路径
+        const oneLevelUp = currentURL.substring(0, currentURL.lastIndexOf('/'));
+        const modelPath =oneLevelUp+'/assets/';  // 你的模型路径
         console.log(`${this.assetHost}/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`)
         // return `${this.assetHost}/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`;
-        return `${this.assetHost}/${asset.assetId}.${asset.dataFormat}`;
+        // return `${this.assetHost}/${asset.assetId}.${asset.dataFormat}`;
+        return `${modelPath}${asset.assetId}.${asset.dataFormat}`
     }
     getAssetCreateConfig (asset) {
         return {

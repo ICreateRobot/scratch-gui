@@ -1,4 +1,4 @@
-.loadingOverlay {
+/* .loadingOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -28,4 +28,187 @@
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: 4px;
+} */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  z-index: 9999;
 }
+
+.box {
+  width: 400px;
+  background: #1b1f26;
+  padding: 26px 24px;
+  border-radius: 16px;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+  color: #e8f3ff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.title {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.percent {
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.barOuter {
+  width: 100%;
+  height: 12px;
+  background: #2a2e36;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barInner {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+  transition: width 0.25s ease-out;
+}
+
+
+.logBox {
+  margin-top: 18px;
+  max-height: 160px;
+  padding: 10px 14px;
+  background: #0f1318;
+  border-radius: 10px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  color: #9fffd6;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* 单行日志 */
+.logLine {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  opacity: 0.95;
+}
+
+/* 无日志占位 */
+.logEmpty {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* 滚动条美化（WebKit） */
+.logBox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logBox::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4ade80, #22d3ee);
+  border-radius: 6px;
+}
+
+/* 新增样式 */
+.percentWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.spinner {
+  margin-left: 10px; /* 控制数字和圆圈之间的距离 */
+  margin-bottom:15px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #4ade80; /* 动态颜色匹配进度条 */
+  border-radius: 50%;
+  width: 34px; /* 设置与进度数字相同的大小 */
+  height: 34px; /* 设置与进度数字相同的大小 */
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle; /* 让圆圈和文字对齐 */
+}
+
+/* 旋转动画 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.barOuter {
+  width: 100%;
+  height: 12px;
+  background: #2a2e36;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barInner {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+  transition: width 0.25s ease-out;
+}
+
+.logBox {
+  margin-top: 18px;
+  max-height: 160px;
+  padding: 12px 14px;
+  background: #0f1318;
+  border-radius: 10px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  color: #9fffd6;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.logLine {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  opacity: 0.95;
+}
+
+.logEmpty {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* 滚动条美化（WebKit） */
+.logBox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logBox::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4ade80, #22d3ee);
+  border-radius: 6px;
+}
+
+

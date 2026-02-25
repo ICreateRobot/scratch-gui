@@ -6,6 +6,15 @@ import addAdditionalTranslations from '../lib/tw-translations/index.js';
 
 import {LANGUAGE_KEY} from '../lib/detect-locale.js';
 
+import formatMessage from 'format-message';
+
+const setLocale = (locale) => {
+  formatMessage.setup({
+    locale,
+    translations: editorMessages
+  });
+};
+
 addAdditionalTranslations(editorMessages);
 addLocaleData(localeData);
 
@@ -42,6 +51,7 @@ const reducer = function (state, action) {
 };
 
 const selectLocale = function (locale) {
+    setLocale(locale)
     // tw: store language in localStorage
     try {
         localStorage.setItem(LANGUAGE_KEY, locale);
@@ -59,6 +69,7 @@ const setLocales = function (localesMessages) {
     };
 };
 const initLocale = function (currentState, locale) {
+    setLocale(locale)
     if (Object.prototype.hasOwnProperty.call(currentState.messagesByLocale, locale)) {
         return Object.assign(
             {},

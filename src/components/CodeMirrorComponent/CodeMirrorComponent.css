@@ -1,0 +1,21 @@
+@media (min-width: 768px) and (max-width: 1024px) {
+    .Content{
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius:10px;
+        height:300px;
+        width:410px;
+    }
+}
+
+@media (min-width: 1025px) {
+   .Content{
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius:10px;
+        height:55vh;
+    }
+}
+
