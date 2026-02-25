@@ -13,6 +13,7 @@ const postcssImport = require('postcss-import');
 
 const STATIC_PATH = process.env.STATIC_PATH || '/static';
 const {APP_NAME} = require('./src/lib/brand');
+const express = require('express');
 
 const root = process.env.ROOT || '';
 if (root.length > 0 && !root.endsWith('/')) {
@@ -33,7 +34,15 @@ const base = {
     devtool: process.env.SOURCEMAP || (process.env.NODE_ENV === 'production' ? false : 'cheap-module-source-map'),
     devServer: {
         contentBase: path.resolve(__dirname, 'build'),
+        before (app) {
+            app.use('/assets', express.static(path.resolve(__dirname, '../../assets')));
+            app.use('/static/model', express.static(path.resolve(__dirname, '../../static/model')));
+            app.use('/static/aiModel', express.static(path.resolve(__dirname, '../../static/aiModel')));
+            app.use('/js', express.static(path.resolve(__dirname, '../../js')));
+            app.use('/img', express.static(path.resolve(__dirname, '../../img')));
+        },
         host: '0.0.0.0',
+        https: true,
         disableHostCheck: true,
         compress: true,
         port: process.env.PORT || 8601,
@@ -61,9 +70,18 @@ const base = {
     resolve: {
         symlinks: false,
         alias: {
+            '../../../../../../../utils': path.resolve(__dirname, '../../utils'),
+            '../../../../../../utils': path.resolve(__dirname, '../../utils'),
+            '../../../../../utils': path.resolve(__dirname, '../../utils'),
+            '../../../../utils': path.resolve(__dirname, '../../utils'),
             'text-encoding$': path.resolve(__dirname, 'src/lib/tw-text-encoder'),
             'scratch-render-fonts$': path.resolve(__dirname, 'src/lib/tw-scratch-render-fonts')
         }
+    },
+    node: {
+        fs: 'empty',
+        path: 'empty',
+        os: 'empty'
     },
     module: {
         rules: [{
@@ -143,7 +161,7 @@ module.exports = [
     defaultsDeep({}, base, {
         entry: {
             'editor': './src/playground/editor.jsx',
-            'player': './src/playground/player.jsx',
+            'player': './src/playground/editor.jsx',
             'fullscreen': './src/playground/fullscreen.jsx',
             'embed': './src/playground/embed.jsx',
             'addon-settings': './src/playground/addon-settings.jsx',
@@ -185,7 +203,8 @@ module.exports = [
                 chunks: ['editor'],
                 template: 'src/playground/index.ejs',
                 filename: 'editor.html',
-                title: `${APP_NAME} - Run Scratch projects faster`,
+                // title: `${APP_NAME} - Run Scratch projects faster`,
+                title: `${APP_NAME} web 0.1.0 Beta`,
                 isEditor: true,
                 ...htmlWebpackPluginCommon
             }),
@@ -193,14 +212,16 @@ module.exports = [
                 chunks: ['player'],
                 template: 'src/playground/index.ejs',
                 filename: 'index.html',
-                title: `${APP_NAME} - Run Scratch projects faster`,
+                // title: `${APP_NAME} - Run Scratch projects faster`,
+                title: `${APP_NAME} web 0.1.0 Beta`,
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
                 chunks: ['fullscreen'],
                 template: 'src/playground/index.ejs',
                 filename: 'fullscreen.html',
-                title: `${APP_NAME} - Run Scratch projects faster`,
+                // title: `${APP_NAME} - Run Scratch projects faster`,
+                title: `${APP_NAME} web 0.1.0 Beta`,
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
@@ -229,6 +250,30 @@ module.exports = [
                     {
                         from: 'static',
                         to: ''
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../assets'),
+                        to: 'assets'
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../static/model'),
+                        to: 'static/model'
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../static/aiModel'),
+                        to: 'static/aiModel'
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../js'),
+                        to: 'js'
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../img'),
+                        to: 'img'
+                    },
+                    {
+                        from: path.resolve(__dirname, '../../utils'),
+                        to: 'utils'
                     }
                 ]
             }),
