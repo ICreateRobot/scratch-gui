@@ -500,22 +500,40 @@ export const useGuiLogic = (props) => {
                 data[0] === 0xCC &&
                 data[1] === 0x03;
 
-                const hasOtherWriteChar =
-                window.__bluetoothCharacteristicWrite2nd &&
-                  typeof window.__bluetoothCharacteristicWrite2nd.writeValue === 'function';
+                // const hasOtherWriteChar =
+                // window.__bluetoothCharacteristicWrite2nd &&
+                //   typeof window.__bluetoothCharacteristicWrite2nd.writeValue === 'function';
+
+                // const writeChar =
+                //   isCC03 && hasOtherWriteChar
+                //     ? window.__bluetoothCharacteristicWrite2nd
+                //     : window.__bluetoothCharacteristicWrite;
+                // console.log(isCC03)
+                // console.log(hasOtherWriteChar)
+                // console.log(writeChar)
+                // if(hasOtherWriteChar && isCC03){
+                //     window.__bluetoothCharacteristicWrite2nd.writeValue(packet.buffer)
+                // }else{
+                //     await safeWrite(window.__bluetoothCharacteristicWrite, packet.buffer);
+                // }
 
                 const writeChar =
-                  isCC03 && hasOtherWriteChar
-                    ? window.__bluetoothCharacteristicWrite2nd
-                    : window.__bluetoothCharacteristicWrite;
-                console.log(isCC03)
-                console.log(hasOtherWriteChar)
-                console.log(writeChar)
-                if(hasOtherWriteChar && isCC03){
-                    window.__bluetoothCharacteristicWrite2nd.writeValue(packet.buffer)
-                }else{
-                    await safeWrite(window.__bluetoothCharacteristicWrite, packet.buffer);
-                }
+                isCC03
+                ? window.__bluetoothCharacteristicWrite2nd
+                : window.__bluetoothCharacteristicWrite;
+
+                ble.write(
+                    window.__deviceId,
+                    window.__bluetoothServer,
+                    writeChar,
+                    packet.buffer,
+                    function () {
+                        console.log("发送成功:", packet);
+                    },
+                    function (err) {
+                        console.error("发送失败", err);
+                    }
+                );
                 
             }
 
@@ -2284,6 +2302,7 @@ export const useGuiLogic = (props) => {
         }else if(dataJson.type=='MicroSerialData'){
             window.EditorPreload.setMicroData(dataJson.data.message);
         }else if(dataJson.type=='wifiIp'){
+            let loadTimer
             setIsLoading(true);
             await new Promise(resolve => setTimeout(resolve, 500));
 

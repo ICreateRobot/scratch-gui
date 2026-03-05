@@ -405,6 +405,12 @@ import {safeSerialWrite} from '../utils/safeSerialWrite'
 let isCheckMicrobit=false
 let heartTime;
 let timeSpace;
+
+ // 当前选择的设备
+ let currentDeviceId = null;
+
+ // 扫描到的设备列表
+ let deviceMap = {};
 /** 串口全局监听（保持不变） */
 if (!window.__serialDisconnectBound) {
   window.__serialDisconnectBound = true;
@@ -1156,7 +1162,95 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
     });
   }
 
+  const requestAndroidPermissions=()=>{
+    if (cordova.platformId !== 'android') return;
+
+    const permissions = cordova.plugins.permissions;
+
+    let list = [
+        permissions.ACCESS_FINE_LOCATION
+    ];
+
+    if (window.device && parseInt(device.version) >= 12) {
+        list.push(permissions.BLUETOOTH_SCAN);
+        list.push(permissions.BLUETOOTH_CONNECT);
+    }
+
+    permissions.requestPermissions(
+        list,
+        function (status) {
+            if (!status.hasPermission) {
+                alert("未获取蓝牙相关权限");
+            }
+        },
+        function () {
+            alert("权限请求失败");
+        }
+    );
+  }
+
+  function ensureBlePermissions(onGranted, onDenied) {
+
+      if (cordova.platformId !== 'android') {
+          onGranted && onGranted();
+          return;
+      }
+
+      const permissions = cordova.plugins.permissions;
+
+      // 这里建议你用 device.version（你前面代码里已经用了）
+      const isAndroid12Plus =
+          window.device && parseInt(device.version, 10) >= 12;
+
+      let needPermissions = [];
+
+      if (isAndroid12Plus) {
+          needPermissions = [
+              permissions.BLUETOOTH_SCAN,
+              permissions.BLUETOOTH_CONNECT
+          ];
+      } else {
+          needPermissions = [
+              permissions.ACCESS_FINE_LOCATION
+          ];
+      }
+
+      // 先检查
+      permissions.hasPermission(needPermissions, function (status) {
+
+          if (status.hasPermission) {
+              // 已经全部有权限
+              onGranted && onGranted();
+          } else {
+
+              // 没有 → 再去申请
+              permissions.requestPermissions(
+                  needPermissions,
+                  function (reqStatus) {
+
+                      if (reqStatus.hasPermission) {
+                          onGranted && onGranted();
+                      } else {
+                          onDenied && onDenied();
+                      }
+
+                  },
+                  function () {
+                      onDenied && onDenied();
+                  }
+              );
+          }
+
+      }, function () {
+          onDenied && onDenied();
+      });
+  }
+
+
+
   const handleBluetoothConnect = async () => {
+    // requestAndroidPermissions()
+    
     if(getCurrent()=='ICBricks'){
          try {
           let device
@@ -1375,192 +1469,449 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
             
         }
     }else if(getCurrent()=='ICRobot'){
-      try{
-        if(window.__serialPort){
-          handleDisconnect()
-        }
-         let deviceRobot
-        if(filterMode=='filter'){
-          deviceRobot = await navigator.bluetooth.requestDevice({
-            filters: [{ services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }],
-            optionalServices: ['00001800-0000-1000-8000-00805f9b34fb', '0000fff0-0000-1000-8000-00805f9b34fb'],
-          }).catch(e=>{
-            console.log(e);
-            
-          })
-        }else{
-          deviceRobot = await navigator.bluetooth.requestDevice({
-            // filters: [{ services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }],
-            optionalServices: ['00001800-0000-1000-8000-00805f9b34fb', '0000fff0-0000-1000-8000-00805f9b34fb'],
-            acceptAllDevices:true
-          }).catch(e=>{
-            console.log(e);
-            
-          })
-        }
-        
 
-        
-        // 写入全局 device
-        window.__bluetoothDevice = deviceRobot;
-        let serverRobot;
-        // serverRobot = await deviceRobot.gatt.connect();
-        if (!deviceRobot.gatt.connected) {
-          serverRobot = await deviceRobot.gatt.connect();
-        }
+      const SERVICE_UUID='0000fff0-0000-1000-8000-00805f9b34fb'
+      const CHARATERIST_WRITE_NEW='0000fff4-0000-1000-8000-00805f9b34fb'
+      const CHARATERIST_WRITE_OLD='0000fff1-0000-1000-8000-00805f9b34fb'
+      const CHARATERIST_WRITE_STOP='0000fff5-0000-1000-8000-00805f9b34fb'
+      const CHARATERIST_READ='0000fff2-0000-1000-8000-00805f9b34fb'
+      const CHARATERIST_READ_SENSOR='0000fff3-0000-1000-8000-00805f9b34fb'
+       
+      function startScanBle() {
 
-        
-        setBluetoothServer(serverRobot);
-        window.__bluetoothServer = serverRobot;
-        
+          deviceMap = {};
+          document.getElementById("bleList").innerHTML = "";
 
-        
-        //1551BBE8-2765-11EE-BE56-0242AC120002
-        //1551bbe8-2765-11ee-be56-0242ac120002
-        console.log(serverRobot)
-        console.log(serverRobot.connected)
-        try{
-          console.log(serverRobot.connected)
-          let serviceRobot = await serverRobot.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
-          console.log('-------------------')
-
-          let characteristicWriteRobot
-          let characteristicWriteStopRobot
-          try{
-            characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff4-0000-1000-8000-00805f9b34fb');
-          }catch(e){
-            characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
-          }
-
-          try{
-            characteristicWriteStopRobot=await serviceRobot.getCharacteristic('0000fff5-0000-1000-8000-00805f9b34fb');
-          }catch(e){
-            console.log(e)
-          }
-          // let characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
-          let characteristicReadRobot = await serviceRobot.getCharacteristic('0000fff2-0000-1000-8000-00805f9b34fb');
-          let characteristicReadSensorRobot=await serviceRobot.getCharacteristic('0000fff3-0000-1000-8000-00805f9b34fb');
-
-
-          // 同步到组件 state 与全局
-          setBluetoothCharacteristicWrite(characteristicWriteRobot);
-          setBluetoothCharacteristicWrite2nd(characteristicWriteStopRobot)
-          setBluetoothCharacteristicRead(characteristicReadRobot);
-          setBluetoothCharacteristicRead2nd(characteristicReadSensorRobot);
-
-          window.__bluetoothCharacteristicWrite = characteristicWriteRobot;
-          window.__bluetoothCharacteristicWrite2nd=characteristicWriteStopRobot
-          window.__bluetoothCharacteristicRead = characteristicReadRobot;
-          window.__bluetoothCharacteristicRead2nd = characteristicReadSensorRobot;
-
-          deviceRobot.addEventListener('gattserverdisconnected', onBluetoothDisconnect);
-          await characteristicReadRobot.startNotifications()
-          await characteristicReadSensorRobot.startNotifications()
-
-          characteristicReadRobot.addEventListener('characteristicvaluechanged',globalEventListener)
-          
-          characteristicReadSensorRobot.addEventListener('characteristicvaluechanged',(event)=>{
-            let value = event.target.value;
-            let sensor = new Uint8Array(value.buffer);
-
-            // 把字节数组转成字符串
-            let jsonStr = new TextDecoder("utf-8").decode(sensor);
-            // console.log(" 收到 JSON 字符串:", jsonStr);
-
-            let sensorArray = [];
-            try {
-              // 解析 JSON
-              sensorArray = JSON.parse(jsonStr);
-              // console.log("解析后的数组:", sensorArray);
-            } catch (e) {
-              console.error("JSON 解析失败:", e);
-            }
-            // console.log(sensorArray)
-            // window.bleAPI.sendRobotSenor({
-            //   type:'senor',
-            //   data:sensorArray
-            // })
-            if(!getVersion().icrobot && JSON.parse(sensorArray)[30]){
-              setVersion(['icrobot',parseVersion(JSON.parse(sensorArray)[30])])
-            }
-            handleConnectData({
-              type:'robotSensor',
-              data:sensorArray
-            })
-          })
-
-          
-          // console.log(window.bleAPI.getCurrentMode())
-          // 转成 Uint8Array
-          let raw;
-          if(!getShowCodeDb()){
-            raw = new Uint8Array([0xcc,0x01]);
-          }else{
-            raw = new Uint8Array([0xcc,0x02]);
-          }
-
-          // 计算 CRC16
-          let crc = crc16(raw);
-
-          // 新建数组，长度 = 原始数据 + 2
-          let packet = new Uint8Array(raw.length + 2);
-          packet.set(raw, 0);
-          packet[raw.length] = (crc >> 8) & 0xFF;  // 高字节
-          packet[raw.length + 1] = crc & 0xFF;     // 低字节
-          console.log(packet)
-
-          // await characteristicWriteRobot.writeValue(packet.buffer)
-          await writeWithTimeout(characteristicWriteRobot, packet.buffer, 3000);
-
-          setBluetoothDevice(deviceRobot);
-          handleConnectData({ type: "isOpenBluetooth", data: { message: true } });
-          console.log(deviceRobot.name)
-
-        }catch(err){
-          console.log(err)
-
-          if (String(err).includes('WriteTimeout')) {
-            showToast(formatMessage({
-              id: 'gui.connect.bleCatchfailedDevice',
-              default: 'Bluetooth connection error.',
-              description: 'gui.connect.bleCatchfailedDevice'
-            }));
-
-            handleBluetoothDisconnect();
-          }
-
-          if(String(err).includes('NetworkError')){
-            showToast(formatMessage({
-              id: 'gui.connect.bleCatchRecon',
-              default: 'Bluetooth connection error. Please restart Bluetooth settings and reconnect.',
-              description: 'gui.connect.bleCatchRecon'
-            }))
-
-            handleBluetoothDisconnect()
-            // deviceRobot=null
-          }
-
-          if(String(err).includes('NotFoundError')){
-            showToast(formatMessage({
-              id: 'gui.connect.bleCatchfailedDevice',
-              default: 'Bluetooth connection error.',
-              description: 'gui.connect.bleCatchfailedDevice'
-            }))
-
-            handleBluetoothDisconnect()
-            // deviceRobot=null
-          }
-          // await new Promise(resolve => setTimeout(resolve, 1000))
-          // handleBluetoothDisconnect()
-        }
-      }catch(e){
-        showToast(formatMessage({
-          id: 'gui.connect.bleCatchfailedDevice',
-          default: 'Bluetooth connection error.',
-          description: 'gui.connect.bleCatchfailedDevice'
-        }))
-        handleBluetoothDisconnect()
+          ble.scan([], 5, onDiscoverDevice, onScanError);
       }
+
+      function onDiscoverDevice(device) {
+
+          // 有些设备没有 name
+          if (!device.name) return;
+
+          // 只保留以 ICRobot 开头的设备
+          if (!device.name.startsWith("ICRobot")) return;
+
+          // 用 id 去重
+          if (deviceMap[device.id]) return;
+
+          deviceMap[device.id] = device;
+
+          addDeviceToList(device.id, device.name);
+          console.log(device.name)
+      }
+
+      function onScanError(err) {
+          console.error("扫描失败", err);
+      }
+
+      /* ---------- 渲染到列表 ---------- */
+
+      function addDeviceToList(id, name) {
+
+          let ul = document.getElementById("bleList");
+          let li = document.createElement("li");
+
+          li.style.padding = "10px";
+          li.style.borderBottom = "1px solid #ccc";
+          li.style.cursor = "pointer";
+
+          li.innerHTML = name + "<br/><small>" + id + "</small>";
+
+          li.onclick = function () {
+              connectDevice(id);
+          };
+
+          ul.appendChild(li);
+      }
+
+      /* ---------- 连接 ---------- */
+
+      async function connectDevice(deviceId) {
+
+          ble.stopScan();
+
+          console.log("开始连接：", deviceId);
+
+          ble.connect(
+              deviceId,
+              async function (peripheral) {
+
+
+                
+                ble.requestMtu(deviceId, 512,
+                  mtu => {
+                    console.log('mtu ok', mtu);
+                    console.log("连接成功", JSON.stringify(peripheral));
+
+                    currentDeviceId = deviceId;
+                    window.__deviceId=deviceId
+                    window.__bluetoothDevice=peripheral
+  
+
+                    setBluetoothServer(SERVICE_UUID)
+
+                    window.__bluetoothServer=SERVICE_UUID
+
+                    setBluetoothCharacteristicWrite(CHARATERIST_WRITE_NEW);
+                    setBluetoothCharacteristicWrite2nd(CHARATERIST_WRITE_STOP)
+                    setBluetoothCharacteristicRead(CHARATERIST_READ);
+                    setBluetoothCharacteristicRead2nd(CHARATERIST_READ_SENSOR);
+
+                    window.__bluetoothCharacteristicWrite = CHARATERIST_WRITE_NEW;
+                    window.__bluetoothCharacteristicWrite2nd=CHARATERIST_WRITE_STOP
+                    window.__bluetoothCharacteristicRead = CHARATERIST_READ;
+                    window.__bluetoothCharacteristicRead2nd = CHARATERIST_READ_SENSOR;
+
+                    document.getElementById("bleList").innerHTML = "";
+  
+  
+                    let raw;
+                    if(!getShowCodeDb()){
+                      raw = new Uint8Array([0xcc,0x01]);
+                    }else{
+                      raw = new Uint8Array([0xcc,0x02]);
+                    }
+  
+                    // 计算 CRC16
+                    let crc = crc16(raw);
+  
+                    // 新建数组，长度 = 原始数据 + 2
+                    let packet = new Uint8Array(raw.length + 2);
+                    packet.set(raw, 0);
+                    packet[raw.length] = (crc >> 8) & 0xFF;  // 高字节
+                    packet[raw.length + 1] = crc & 0xFF;     // 低字节
+                    console.log(packet)
+  
+                    sendPacket(packet)
+
+                    setBluetoothDevice(peripheral);
+                    handleConnectData({ type: "isOpenBluetooth", data: { message: true } });
+                    startNotify(deviceId);
+                  },
+                  err => {
+                    console.error('mtu error', err);
+                  }
+                );
+                 
+
+                  
+              },
+              function (err) {
+                  console.error("连接失败或断开", err);
+                  alert("连接失败");
+              }
+          );
+      }
+
+      /* ---------- 监听通知 ---------- */
+
+
+      function startNotify(deviceId) {
+
+          ble.startNotification(
+              deviceId,
+              SERVICE_UUID,
+              CHARATERIST_READ_SENSOR,
+              function (buffer) {
+
+                  let sensor = new Uint8Array(buffer);
+
+                  // console.log("收到原始数据:", sensor);
+
+                  // 如果是字符串协议
+                  // let str = bytesToString(data);
+                  // console.log("收到字符串:", str);
+
+                  let jsonStr = new TextDecoder("utf-8").decode(sensor);
+                  // console.log(" 收到 JSON 字符串:", jsonStr);
+
+                  let sensorArray = [];
+                  try {
+                    // 解析 JSON
+                    sensorArray = JSON.parse(jsonStr);
+                    // console.log("解析后的数组:", sensorArray);
+                  } catch (e) {
+                    console.error("JSON 解析失败:", e);
+                  }
+
+                  if(!getVersion().icrobot && JSON.parse(sensorArray)[30]){
+                    setVersion(['icrobot',parseVersion(JSON.parse(sensorArray)[30])])
+                  }
+                  handleConnectData({
+                    type:'robotSensor',
+                    data:sensorArray
+                  })
+
+              },
+              function (err) {
+                  console.error("开启通知失败", err);
+              }
+          );
+
+
+          ble.startNotification(
+            deviceId,
+            SERVICE_UUID,
+            CHARATERIST_READ,
+            globalEventListenerCordova,
+            function (err) {
+                console.error("开启通知失败", err);
+            }
+        );
+      }
+
+      /* ---------- 发送数据 ---------- */
+
+      function sendPacket(packet) {
+
+          if (!currentDeviceId) {
+              alert("请先连接设备");
+              return;
+          }
+
+          // packet 必须是 Uint8Array
+          ble.write(
+              currentDeviceId,
+              SERVICE_UUID,
+              CHARATERIST_WRITE_NEW,
+              packet.buffer,
+              function () {
+                  console.log("发送成功:", packet);
+              },
+              function (err) {
+                  console.error("发送失败", err);
+              }
+          );
+      }
+
+      /* ---------- 断开 ---------- */
+
+      function disconnect() {
+
+          if (!currentDeviceId) return;
+
+          ble.disconnect(currentDeviceId, function () {
+              console.log("已断开");
+              currentDeviceId = null;
+          });
+      }
+
+      /* ---------- 工具方法 ---------- */
+
+      function stringToBytes(str) {
+          let array = new Uint8Array(str.length);
+          for (let i = 0; i < str.length; i++) {
+              array[i] = str.charCodeAt(i);
+          }
+          return array;
+      }
+
+      function bytesToString(bytes) {
+          let result = "";
+          for (let i = 0; i < bytes.length; i++) {
+              result += String.fromCharCode(bytes[i]);
+          }
+          return result;
+      }
+
+      ensureBlePermissions(function () {
+
+          // 有权限，才开始扫描
+          startScanBle();
+      
+      }, function () {
+      
+        requestAndroidPermissions()
+      
+      });
+      // try{
+      //   if(window.__serialPort){
+      //     handleDisconnect()
+      //   }
+      //    let deviceRobot
+      //   if(filterMode=='filter'){
+      //     deviceRobot = await navigator.bluetooth.requestDevice({
+      //       filters: [{ services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }],
+      //       optionalServices: ['00001800-0000-1000-8000-00805f9b34fb', '0000fff0-0000-1000-8000-00805f9b34fb'],
+      //     }).catch(e=>{
+      //       console.log(e);
+            
+      //     })
+      //   }else{
+      //     deviceRobot = await navigator.bluetooth.requestDevice({
+      //       // filters: [{ services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }],
+      //       optionalServices: ['00001800-0000-1000-8000-00805f9b34fb', '0000fff0-0000-1000-8000-00805f9b34fb'],
+      //       acceptAllDevices:true
+      //     }).catch(e=>{
+      //       console.log(e);
+            
+      //     })
+      //   }
+        
+
+        
+      //   // 写入全局 device
+      //   window.__bluetoothDevice = deviceRobot;
+      //   let serverRobot;
+      //   // serverRobot = await deviceRobot.gatt.connect();
+      //   if (!deviceRobot.gatt.connected) {
+      //     serverRobot = await deviceRobot.gatt.connect();
+      //   }
+
+        
+      //   setBluetoothServer(serverRobot);
+      //   window.__bluetoothServer = serverRobot;
+        
+
+        
+      //   //1551BBE8-2765-11EE-BE56-0242AC120002
+      //   //1551bbe8-2765-11ee-be56-0242ac120002
+      //   console.log(serverRobot)
+      //   console.log(serverRobot.connected)
+      //   try{
+      //     console.log(serverRobot.connected)
+      //     let serviceRobot = await serverRobot.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      //     console.log('-------------------')
+
+      //     let characteristicWriteRobot
+      //     let characteristicWriteStopRobot
+      //     try{
+      //       characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff4-0000-1000-8000-00805f9b34fb');
+      //     }catch(e){
+      //       characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
+      //     }
+
+      //     try{
+      //       characteristicWriteStopRobot=await serviceRobot.getCharacteristic('0000fff5-0000-1000-8000-00805f9b34fb');
+      //     }catch(e){
+      //       console.log(e)
+      //     }
+      //     // let characteristicWriteRobot = await serviceRobot.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
+      //     let characteristicReadRobot = await serviceRobot.getCharacteristic('0000fff2-0000-1000-8000-00805f9b34fb');
+      //     let characteristicReadSensorRobot=await serviceRobot.getCharacteristic('0000fff3-0000-1000-8000-00805f9b34fb');
+
+
+      //     // 同步到组件 state 与全局
+      //     setBluetoothCharacteristicWrite(characteristicWriteRobot);
+      //     setBluetoothCharacteristicWrite2nd(characteristicWriteStopRobot)
+      //     setBluetoothCharacteristicRead(characteristicReadRobot);
+      //     setBluetoothCharacteristicRead2nd(characteristicReadSensorRobot);
+
+      //     window.__bluetoothCharacteristicWrite = characteristicWriteRobot;
+      //     window.__bluetoothCharacteristicWrite2nd=characteristicWriteStopRobot
+      //     window.__bluetoothCharacteristicRead = characteristicReadRobot;
+      //     window.__bluetoothCharacteristicRead2nd = characteristicReadSensorRobot;
+
+      //     deviceRobot.addEventListener('gattserverdisconnected', onBluetoothDisconnect);
+      //     await characteristicReadRobot.startNotifications()
+      //     await characteristicReadSensorRobot.startNotifications()
+
+      //     characteristicReadRobot.addEventListener('characteristicvaluechanged',globalEventListener)
+          
+          // characteristicReadSensorRobot.addEventListener('characteristicvaluechanged',(event)=>{
+          //   let value = event.target.value;
+          //   let sensor = new Uint8Array(value.buffer);
+
+          //   // 把字节数组转成字符串
+          //   let jsonStr = new TextDecoder("utf-8").decode(sensor);
+          //   // console.log(" 收到 JSON 字符串:", jsonStr);
+
+          //   let sensorArray = [];
+          //   try {
+          //     // 解析 JSON
+          //     sensorArray = JSON.parse(jsonStr);
+          //     // console.log("解析后的数组:", sensorArray);
+          //   } catch (e) {
+          //     console.error("JSON 解析失败:", e);
+          //   }
+          //   // console.log(sensorArray)
+          //   // window.bleAPI.sendRobotSenor({
+          //   //   type:'senor',
+          //   //   data:sensorArray
+          //   // })
+          //   if(!getVersion().icrobot && JSON.parse(sensorArray)[30]){
+          //     setVersion(['icrobot',parseVersion(JSON.parse(sensorArray)[30])])
+          //   }
+          //   handleConnectData({
+          //     type:'robotSensor',
+          //     data:sensorArray
+          //   })
+          // })
+
+          
+      //     // console.log(window.bleAPI.getCurrentMode())
+      //     // 转成 Uint8Array
+      //     let raw;
+      //     if(!getShowCodeDb()){
+      //       raw = new Uint8Array([0xcc,0x01]);
+      //     }else{
+      //       raw = new Uint8Array([0xcc,0x02]);
+      //     }
+
+      //     // 计算 CRC16
+      //     let crc = crc16(raw);
+
+      //     // 新建数组，长度 = 原始数据 + 2
+      //     let packet = new Uint8Array(raw.length + 2);
+      //     packet.set(raw, 0);
+      //     packet[raw.length] = (crc >> 8) & 0xFF;  // 高字节
+      //     packet[raw.length + 1] = crc & 0xFF;     // 低字节
+      //     console.log(packet)
+
+      //     // await characteristicWriteRobot.writeValue(packet.buffer)
+      //     await writeWithTimeout(characteristicWriteRobot, packet.buffer, 3000);
+
+      //     setBluetoothDevice(deviceRobot);
+      //     handleConnectData({ type: "isOpenBluetooth", data: { message: true } });
+      //     console.log(deviceRobot.name)
+
+      //   }catch(err){
+      //     console.log(err)
+
+      //     if (String(err).includes('WriteTimeout')) {
+      //       showToast(formatMessage({
+      //         id: 'gui.connect.bleCatchfailedDevice',
+      //         default: 'Bluetooth connection error.',
+      //         description: 'gui.connect.bleCatchfailedDevice'
+      //       }));
+
+      //       handleBluetoothDisconnect();
+      //     }
+
+      //     if(String(err).includes('NetworkError')){
+      //       showToast(formatMessage({
+      //         id: 'gui.connect.bleCatchRecon',
+      //         default: 'Bluetooth connection error. Please restart Bluetooth settings and reconnect.',
+      //         description: 'gui.connect.bleCatchRecon'
+      //       }))
+
+      //       handleBluetoothDisconnect()
+      //       // deviceRobot=null
+      //     }
+
+      //     if(String(err).includes('NotFoundError')){
+      //       showToast(formatMessage({
+      //         id: 'gui.connect.bleCatchfailedDevice',
+      //         default: 'Bluetooth connection error.',
+      //         description: 'gui.connect.bleCatchfailedDevice'
+      //       }))
+
+      //       handleBluetoothDisconnect()
+      //       // deviceRobot=null
+      //     }
+      //     // await new Promise(resolve => setTimeout(resolve, 1000))
+      //     // handleBluetoothDisconnect()
+      //   }
+      // }catch(e){
+      //   showToast(formatMessage({
+      //     id: 'gui.connect.bleCatchfailedDevice',
+      //     default: 'Bluetooth connection error.',
+      //     description: 'gui.connect.bleCatchfailedDevice'
+      //   }))
+      //   handleBluetoothDisconnect()
+      // }
        
     }
    
@@ -1572,6 +1923,42 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   function globalEventListener(event) {
     const value = event.target.value;
     const arr = new Uint8Array(value.buffer);
+    // console.log("收到数据:", arr);
+
+    const state1 = arr[0]; // 第一个字节（硬件返回）
+
+    // 新增：无论是否队列匹配，都把 state 发出去
+    // if (window.bleAPI && typeof window.bleAPI.sendRobotSenor === "function") {
+    //   // console.log('发送了')
+    //   window.bleAPI.sendRobotSenor({
+    //     type: "state",
+    //     data: state1
+    //   });
+
+    // }
+    handleConnectData({
+       type: "robotState",
+        data: state1
+    })
+
+    // 如果队列里有等待的 promise，取出处理
+    if (window.__responseQueue.length > 0) {
+      const { resolve, reject } = window.__responseQueue.shift();
+      const state = arr[0]; // 第一个字节
+      console.log(state)
+
+      if (state === 0x00) {  // 48 十进制
+        resolve(true);
+      } else {
+        reject(new Error(`收到错误状态码: ${state}`));
+      }
+    } else {
+      // console.warn("⚠️ 收到未匹配的响应:", arr);
+    }
+  }
+
+  function globalEventListenerCordova(buffer) {
+    const arr = new Uint8Array(buffer);
     // console.log("收到数据:", arr);
 
     const state1 = arr[0]; // 第一个字节（硬件返回）
@@ -1669,8 +2056,15 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   const handleBluetoothDisconnect = async () => {
     setVersion(['icrobot',''])
     try {
-      console.log(window.__bluetoothDevice?.gatt.connected)
-      if (window.__bluetoothDevice?.gatt.connected) window.__bluetoothDevice.gatt.disconnect();
+      // console.log(window.__bluetoothDevice?.gatt.connected)
+      console.log(currentDeviceId)
+      // if (window.__bluetoothDevice?.gatt.connected) window.__bluetoothDevice.gatt.disconnect();
+      if (!currentDeviceId) return;
+
+      ble.disconnect(currentDeviceId, function () {
+          console.log("已断开");
+          currentDeviceId = null;
+      });
       setBluetoothDevice(null);
       setBluetoothServer(null);
       setBluetoothCharacteristicRead(null);
@@ -1919,7 +2313,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
             </div>
           ))} */}
 
-          {["serial", "bluetooth"].map((key) => {
+          {["serial", "bluetooth","wifi"].map((key) => {
             const disabled = isTabDisabled(key);
 
             return (
@@ -1944,6 +2338,11 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                     id: 'gui.connect.bleName',
                     default: 'Bluetooth',
                     description: 'gui.connect.bleName'
+                  }),
+                  wifi: formatMessage({
+                    id: 'gui.connect.wifiName',
+                    default: 'wifi',
+                    description: 'gui.connect.wifiName'
                   })
                 }[key]}
               </div>
@@ -2012,7 +2411,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
           {activeTab === "bluetooth" && (
             <div className={styles.serialPanel}>
               <div className={`${styles.serialCard} ${styles.bluetoothCard}`}>
-                <div className={styles.serialStatus}>
+                {/* <div className={styles.serialStatus}>
                   <div
                     className={`${styles.statusDot} ${
                       bluetoothDevice ? styles.connectedBluetooth : styles.disconnected
@@ -2043,7 +2442,20 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                       {noFilter}
                     </option>
                   </select>
-                </div>
+                </div> */}
+
+
+                <span className={styles.deviceText}>
+                  {bluetoothDevice
+                    ? `device: ${bluetoothDevice.name || "unknown"}`
+                    : formatMessage({
+                              id: 'gui.connect.noDevice',
+                              default: 'no device',
+                              description: 'gui.connect.noDevice'
+                          })}
+                </span>
+                <ul id="bleList">
+                </ul>
 
                 <div className={styles.serialButtons}>
                   <button
@@ -2075,6 +2487,12 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'wifi' && (
+            <div>
+              <button onClick={handleConnectWifi}>链接</button>
             </div>
           )}
 

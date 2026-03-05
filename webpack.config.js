@@ -42,7 +42,7 @@ const base = {
             app.use('/img', express.static(path.resolve(__dirname, '../../img')));
         },
         host: '0.0.0.0',
-        https: true,
+        https: false,
         disableHostCheck: true,
         compress: true,
         port: process.env.PORT || 8601,
@@ -168,7 +168,8 @@ module.exports = [
             'credits': './src/playground/credits/credits.jsx'
         },
         output: {
-            path: path.resolve(__dirname, 'build')
+            // path: path.resolve(__dirname, 'build')
+            path: path.resolve(__dirname, '../../../ICreateCode-mobile/icreatecode/www')
         },
         module: {
             rules: base.module.rules.concat([
