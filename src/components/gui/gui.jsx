@@ -61,6 +61,8 @@ import TrainPage from '../TrainPage/TrainPage.jsx';
 import TabSwitcher from 'scratch-gui/src/components/TabSwitcher/TabSwitcher.jsx';
 import { useGuiLogic } from '../hooks/gui-logic.js';
 import ExampleModal from '../ExampleModal/ExampleModal.jsx'
+import ChatAi from '../ChatAi/ChatAI.jsx'
+import IotEditor from '../iot-editor/iot-editor.jsx'
 
 const messages = defineMessages({
     addExtension: {
@@ -242,9 +244,13 @@ const GUIComponent = props => {
         open,
         setOpen,
         selected,
+        aiMode,
         setSelected,
         handleOpenExample,
-        handleSelect
+        handleSelect,
+        handleOpenAiMode,
+        showIot,
+        setShowIot
     } = useGuiLogic({
         onExtensionButtonClick,
         onOpenCustomExtensionModal,
@@ -464,6 +470,7 @@ const GUIComponent = props => {
                     modeValue={modeValue}
                     extensionName={extensionName}
                     openExampleCode={handleOpenExample}
+                    openAiMode={handleOpenAiMode}
                 />
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
@@ -583,7 +590,21 @@ const GUIComponent = props => {
                         <BurnLogs isLoading={isFlashing} logs={logs}></BurnLogs>
                         <TrainPage isTrain={isTrain}></TrainPage>
                         
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
+                        {aiMode && (
+                                <div style={{
+                                position: 'absolute',
+                                top: '3rem',
+                                right: '0',
+                                // width: '30vw',
+                                width:'490px',
+                                height:'calc(100% - 3rem)',
+                                zIndex: '100'
+                                }}>
+                                <ChatAi />
+                                </div>
+                        )}
+                        {/* <ChatAi></ChatAi> */}
+                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])} style={{ position: 'relative' }}>
                             <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', alignItems: 'center',paddingTop:'10px'}}>
                                 {showCode &&  <button
                                     style={{
@@ -623,57 +644,15 @@ const GUIComponent = props => {
                                         loadCode();
                                     }}
                                 >
-                                    {/* <FormattedMessage
-                                        defaultMessage="导入"
-                                        description="Button to get to the code panel"
-                                        id="gui.importFile"
-                                    /> */}
                                     <img src={importImg} style={{ width: '18px', height: '18px' }}></img>
                                 </button>}
-
-                                {/* {showCode && getCurrent()=='ICRobot' &&<span style={{color:'#ccc',fontSize:'14px'}}>丨</span>}
-                                {showCode && getCurrent()=='ICRobot' && 
-                                    <select
-                                        value={selectedIndex}
-                                        onChange={(e) => setSelectedIndex(Number(e.target.value))}
-                                        style={{ marginLeft: '8px', padding: '4px' }}
-                                    >
-                                        {[1, 2, 3, 4, 5].map((num) => (
-                                            <option key={num} value={num}>
-                                                {num}
-                                            </option>
-                                        ))}
-                                    </select>
-                                }
-                                {showCode && getCurrent()=='ICRobot' && <span>
-                                    <FormattedMessage
-                                        defaultMessage="号默认程序"
-                                        description="Button to get to the code panel"
-                                        id="gui.codeofnumber"
-                                    />
-                                </span>}
-
-                                {showCode && getCurrent()=='ICRobot'  &&  <button
-                                    onClick={handleLoadSelectedCode}
-                                    style={{
-                                        marginLeft: '6px',
-                                        padding: '4px 8px',
-                                        backgroundColor: '#239393',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    OK
-                                </button>} */}
                             </div>
 
                             {/* {showCode && <CodeMirrorComponent code={pythonCode}/>}
                             {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>} */}
                             {showCode && <div style={{minWidth:'480px',display: 'flex',flexDirection: 'column',paddingLeft: '$space',paddingRight: '$space',flexBasis: '0'}}>
                                 {showCode && <CodeMirrorComponent code={pythonCode}/>}
-                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension} isDown={isDown}/>}
                             </div>}
                             
                             
@@ -715,6 +694,9 @@ const GUIComponent = props => {
                                 onClose={() => setOpen(false)}
                                 onSelect={handleSelect}
                             />
+
+                            {showIot && <IotEditor></IotEditor>}
+                            
                         </Box>
                     </Box>
                 </Box>
