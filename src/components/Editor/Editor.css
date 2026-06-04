@@ -1,0 +1,432 @@
+.editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #F0F0F0;
+    position: relative;
+    overflow: hidden;
+    user-select: none !important;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #2c3e50;
+    border-bottom: 1px solid #4a6572;
+    align-items: center;
+    flex-wrap: wrap;
+    
+}
+
+.editor-toolbar button,
+.alignment-buttons button,
+.guide-toggle,
+.guide-action-btn,
+.guide-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background-color: #4a6572;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.editor-toolbar button:hover:not(:disabled),
+.alignment-buttons button:hover:not(:disabled),
+.guide-toggle:hover,
+.guide-action-btn:hover:not(:disabled),
+.guide-dropdown-toggle:hover {
+    background-color: #556f7c;
+}
+
+.editor-toolbar button:disabled,
+.alignment-buttons button:disabled,
+.guide-action-btn:disabled {
+    background-color: #34495e;
+    color: #7f8c8d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.alignment-buttons {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.alignment-buttons button {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 40px;
+    justify-content: center;
+}
+
+.guide-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+    
+}
+
+.guide-toggle.active {
+    background-color: #e74c3c;
+}
+
+.guide-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.guide-dropdown-toggle {
+    padding: 6px 8px;
+    justify-content: center;
+}
+
+.guide-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #2c3e50;
+    border: 1px solid #4a6572;
+    border-radius: 4px;
+    padding: 5px;
+    z-index: 1000;
+    min-width: 150px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.guide-dropdown-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.guide-dropdown-menu button:hover {
+    background-color: #4a6572;
+}
+
+.guide-dropdown-menu button:disabled {
+    color: #7f8c8d;
+    cursor: not-allowed;
+    background: none;
+}
+
+/* 编辑器内容区域 */
+.editor-content {
+    flex: 1;
+    overflow: auto;
+    background-color: #f5f6fa;
+    position: relative;
+}
+
+/* 网格背景 */
+.grid-background {
+    position: relative;
+    background-color: #f0f0f0;
+
+}
+
+/* 屏幕区域轮廓 */
+.screen-area-outline {
+    box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.3) inset;
+
+}
+
+/* 更新网格布局容器 */
+.react-grid-layout {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-app-region: no-drag;
+}
+
+/* 网格项样式调整 */
+.grid-item {
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    position: relative;
+    pointer-events: auto !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* transition: all 0.2s ease; */
+}
+
+.grid-item:hover {
+    border: 1px dashed rgba(52, 152, 219, 0.5);
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.grid-item.selected {
+    border: 1px solid #3498db !important;
+    box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.3);
+    background-color: rgba(52, 152, 219, 0.1);
+    z-index: 10;
+}
+
+.grid-item.outside-screen {
+    opacity: 0.7;
+}
+
+/* 拖拽占位符 */
+.react-grid-item.react-grid-placeholder {
+    background: rgba(52, 152, 219, 0.3);
+    border: 2px dashed #3498db;
+    border-radius: 4px;
+    transition: all 200ms ease;
+}
+:global(.react-grid-item.react-grid-placeholder) {
+    background: rgba(52, 152, 219, 0.3);
+    border: 2px dashed #3498db;
+    border-radius: 4px;
+    transition: all 200ms ease;
+}
+/* 拖拽中 */
+.react-grid-item.react-draggable-dragging {
+    transition: none;
+    z-index: 1000 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    cursor: grabbing !important;
+}
+
+/* 调整大小中 */
+.react-grid-item.resizing {
+    z-index: 1000 !important;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+/* 调整大小手柄 */
+.react-resizable-handle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    bottom: 0;
+    right: 0;
+    background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2IDYiIHN0eWxlPSJiYWNrZ3JvdW5kLWNvbG9yOiNmZmZmZmYwMCIgeD0iMHB4IiB5PSIwcHgiIHdpZHRoPSI2cHgiIGhlaWdodD0iNnB4Ij48cGF0aCBkPSJNIDYgNiBMIDAgNiBMIDAgNC4yIEwgNCA0LjIgTCA0LjIgNC4yIEwgNC4yIDAgTCA2IDAgTCA2IDYgWiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==') no-repeat;
+    background-position: bottom right;
+    padding: 0 0px 0px 0;
+    background-repeat: no-repeat;
+    background-origin: content-box;
+    box-sizing: border-box;
+    cursor: se-resize;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+/* 默认隐藏拖拽手柄 */
+.react-grid-item .react-resizable-handle {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* 当组件被选中时显示拖拽手柄 */
+.react-grid-item.selected .react-resizable-handle {
+    opacity: 1;
+}
+
+/* 鼠标悬停时也显示 */
+.react-grid-item:hover .react-resizable-handle {
+    opacity: 1;
+}
+
+/* 调整大小或拖拽时保持手柄可见 */
+.react-grid-item.resizing .react-resizable-handle,
+.react-grid-item.react-draggable-dragging .react-resizable-handle {
+    opacity: 1;
+}
+
+.guide {
+    position: absolute;
+    z-index: 100;
+    pointer-events: auto;
+    cursor: move;
+}
+
+.guide.vertical {
+    width: 1px;
+    height: 100%;
+    background-color: #ff0000;
+    border-left: 1px dashed #ff0000;
+}
+
+.guide.horizontal {
+    height: 1px;
+    width: 100%;
+    background-color: #ff0000;
+    border-top: 1px dashed #ff0000;
+}
+
+.guide.active {
+    background-color: #ff6b6b;
+}
+
+.guide.vertical.active {
+    border-left: 2px solid #ff6b6b;
+}
+
+.guide.horizontal.active {
+    border-top: 2px solid #ff6b6b;
+}
+
+.guide.fixed {
+    cursor: default;
+    background-color: #ff9999;
+}
+
+.guide.fixed.vertical {
+    border-left: 2px solid #ff9999;
+}
+
+.guide.fixed.horizontal {
+    border-top: 2px solid #ff9999;
+}
+
+.guide-position-display {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.guide-label {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 102;
+}
+
+.guide.vertical .guide-label {
+    top: 5px;
+    left: 5px;
+}
+
+.guide.horizontal .guide-label {
+    left: 5px;
+    top: 5px;
+}
+
+.guide:not(.fixed):hover {
+    cursor: move;
+}
+
+.guide.fixed:hover {
+    cursor: not-allowed;
+}
+
+.guide.fixed {
+    opacity: 0.8;
+}
+
+.guide.active {
+    z-index: 101;
+}
+
+.guide.vertical.active {
+    border-left: 3px solid #ff6b6b;
+}
+
+.guide.horizontal.active {
+    border-top: 3px solid #ff6b6b;
+}
+
+.all-guides-fixed .guide {
+    cursor: not-allowed !important;
+}
+
+.all-guides-fixed .guide:not(.fixed) {
+    opacity: 0.6;
+}
+
+.mqtt-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.mqtt-btn {
+    padding: 6px 12px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #2c3e50;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mqtt-btn.connected {
+    background: #27ae60;
+    border-color: #219653;
+}
+
+.mqtt-btn.connected:hover {
+    background: #219653;
+}
+
+.mqtt-btn.disconnected {
+    background: #e74c3c;
+    border-color: #c0392b;
+}
+
+.mqtt-btn.disconnected:hover {
+    background: #c0392b;
+}
+
+.mqtt-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-btn {
+    padding: 6px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: #2980b9;
+    transform: rotate(90deg);
+}
+.react-resizable-handle {
+    transition: none !important;
+}
