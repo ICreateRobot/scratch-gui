@@ -15,7 +15,11 @@ const guiColors = {
     'tabswitcher-control-first':'#faf7fd',
     'tabswitcher-control-second':'#f4f0ff',
     'tabswitcher-control-third':'#eee0f8',
-    'tabswitcher-serial-second':'#f0e0f8'
+    'tabswitcher-serial-second':'#f0e0f8',
+    'ic-main-1': '#855cd6',//当前项目主颜色
+    'ic-main-light-2': '#9d81d6',//当前项目主颜色--浅色
+    'ic-main-light-very-3': '#e5daf9',//当前项目主颜色--更浅色
+    'ic-main-light-pluse-4': '#efecf5'//当前项目主颜色--极浅色
 };
 
 const blockColors = {};

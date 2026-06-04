@@ -22,7 +22,12 @@ const guiColors = {
     'tabswitcher-control-first':'#f8f8f8',
     'tabswitcher-control-second':'#f0ffff',
     'tabswitcher-control-third':'#e0f8f8',
-    'tabswitcher-serial-second':'#e0f8e8'
+    'tabswitcher-serial-second':'#e0f8e8',
+    'tabswitcher-serial-second':'#e0f8e8',
+    'ic-main-1': '#32b7a6',          // 主绿色（清爽不刺眼）
+    'ic-main-light-2': '#4ade80',    // 浅绿
+    'ic-main-light-very-3': '#dcfce7', // 很浅绿（接近背景）
+    'ic-main-light-pluse-4': '#f0fdf4' // 极浅绿（几乎白）
 };
 
 const blockColors = {

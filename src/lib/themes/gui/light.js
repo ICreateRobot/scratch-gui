@@ -104,6 +104,11 @@ const guiColors = {
     'tabswitcher-control-fourth-lightordark':'white',
     'tabswitcher-serial-second-lightordark':'var(--tabswitcher-serial-second)',
     'tabswitcher-serial-first-lightordark':'white',
+
+    'ic-main': 'var(--ic-main-1)',          // 主绿色（清爽不刺眼）
+    'ic-main-light': 'var(--ic-main-light-2)',    // 浅绿
+    'ic-main-light-very': 'var(--ic-main-light-very-3)', // 很浅绿（接近背景）
+    'ic-main-light-pluse': 'var(--ic-main-light-pluse-4)' // 极浅绿（几乎白）
 };
 
 const blockColors = {};

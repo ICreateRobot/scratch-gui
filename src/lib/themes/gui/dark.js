@@ -55,6 +55,11 @@ const guiColors = {
     'tabswitcher-control-fourth-lightordark':'#1F1F1F',
     'tabswitcher-serial-second-lightordark':'#1F1F1F',
     'tabswitcher-serial-first-lightordark':'#2A2A2A',
+
+    'ic-main': '#1a1a1a',          // 主黑（不是纯黑，避免太死）
+    'ic-main-light': '#404040',    // 浅黑（用于hover/次级）
+    'ic-main-light-very': '#d9d9d9', // 很浅灰（背景层）
+    'ic-main-light-pluse': '#f5f5f5' // 极浅灰（接近白）
 };
 
 const blockColors = {

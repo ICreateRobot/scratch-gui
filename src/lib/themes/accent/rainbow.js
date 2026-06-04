@@ -17,7 +17,11 @@ const guiColors = {
 
     // eslint-disable-next-line max-len
     'menu-bar-background-image': 'linear-gradient(90deg, rgba(255, 0, 0, 0.75) 0%, rgba(255, 154, 0, 0.75) 10%, rgba(208, 222, 33, 0.75) 20%, rgba(79, 220, 74, 0.75) 30%, rgba(63, 218, 216, 0.75) 40%, rgba(47, 201, 226, 0.75) 50%, rgba(28, 127, 238, 0.75) 60%, rgba(95, 21, 242, 0.75) 70%, rgba(186, 12, 248, 0.75) 80%, rgba(251, 7, 217, 0.75) 90%, rgba(255, 0, 0, 0.75) 100%)',
-    'mode-toggle':'linear-gradient(90deg,#d67878,#d6a178,#d6d178,#78d6ac,#78d6d1,#78a9d6,#b078d6);'
+    'mode-toggle':'linear-gradient(90deg,#d67878,#d6a178,#d6d178,#78d6ac,#78d6d1,#78a9d6,#b078d6);',
+    'ic-main-1': '#ff4c4c',//当前项目主颜色
+    'ic-main-light-2': '#ff7777',//当前项目主颜色--浅色
+    'ic-main-light-very-3': '#ffdddd',//当前项目主颜色--更浅色
+    'ic-main-light-pluse-4': '#fff1f1',//当前项目主颜色--极浅色
 };
 
 const blockColors = {
