@@ -5,7 +5,7 @@ import codeModule from '../../../../../utils/global.js';
 import { getIsCode, setIsCode } from '../../../../../utils/whatModule.js';
 import { setAdd } from '../../../../../utils/isAddMaster.js';
 import { setLan, getLan } from '../../../../../utils/lanMode.js';
-import { setIsRobot, getShowCodeDb, setShowCodeDb, addLoadExtension, delLoadExtension, getLoadExtension, getAllLoaded, setAllLoaded, codeArray } from 'scratch-gui/src/components/utils/utils.js';
+import { setIsRobot, getShowCodeDb, setShowCodeDb, addLoadExtension, delLoadExtension, getLoadExtension, getAllLoaded, setAllLoaded, codeArray,setIsAiMode,getIsAiMode } from 'scratch-gui/src/components/utils/utils.js';
 
 let attemptCount = 0;
 let extensionSelect = [false, false, false];
@@ -45,7 +45,7 @@ export const useGuiLogic = (props) => {
     const [isBricks, setbricks] = useState(false);
     const [showCode, setShowCode] = useState(getShowCodeDb());
     const [lanMode, setLanMode] = useState(getLan());
-    const [isDown, setIsDown] = useState(true);
+    const [isDown, setIsDown] = useState(false);
     // const [currentExtension, setCurrentExtension] = useState('2');
     const [currentExtension, setCurrentExtension] = useState(() => {
         const current = getCurrent();
@@ -93,6 +93,9 @@ export const useGuiLogic = (props) => {
     const channelLoadExample = new BroadcastChannel('load_example')
     const channelProjectExtension = new BroadcastChannel('project_extension')
 
+    const [showIot, setShowIot] = useState(false);
+    const [aiMode,setAiMode] = useState(getIsAiMode())
+
     useEffect(() => {
         channelProjectExtension.addEventListener('message',(event)=>{
             let data=JSON.parse(event.data)
@@ -114,7 +117,7 @@ export const useGuiLogic = (props) => {
     }, [currentExtension]);
 
     useEffect(() => {
-        const newSocket = new WebSocket('ws://localhost:8082');
+        const newSocket = new WebSocket('ws://localhost:48219');
         setSocket(newSocket);
 
         newSocket.addEventListener('open', (event) => {
@@ -600,30 +603,48 @@ export const useGuiLogic = (props) => {
         );
         if (result) {
             vm.stopAll()
-            let enableChange = false;
-            if (getCurrent().length > 0) enableChange = true;
-            if (!enableChange) {
-                alert(
-                    formatMessage({
-                        id: 'gui.alert.selectDevice',
-                        default: 'Please select a device first',
-                        description: 'gui.alert.selectDevice'
-                    })
-                );
-                return;
-            }
+            // let enableChange = false;
+            // if (getCurrent().length > 0) enableChange = true;
+            // if (!enableChange) {
+            //     alert(
+            //         formatMessage({
+            //             id: 'gui.alert.selectDevice',
+            //             default: 'Please select a device first',
+            //             description: 'gui.alert.selectDevice'
+            //         })
+            //     );
+            //     return;
+            // }
 
             setModeValue(mode);
-            setShowCode(!showCode);
-            setShowCodeDb(!showCode);
-            setIsCode(!showCode);
-            channelMode.postMessage(showCode);
-            codeModule.setCode('');
+            if(mode=='interactive'){
+                setShowIot(false)
+                setShowCode(false);
+                setShowCodeDb(false);
+                setIsCode(false);
+                channelMode.postMessage(true);
+                codeModule.setCode('');
 
-            soc.send(JSON.stringify({
-                type:'mode',
-                data:!showCode
-            }))
+                soc.send(JSON.stringify({
+                    type:'mode',
+                    data:false
+                }))
+            }else if(mode == 'upload'){
+                setShowIot(false)
+                setShowCode(true);
+                setShowCodeDb(true);
+                setIsCode(true);
+                channelMode.postMessage(false);
+                codeModule.setCode('');
+
+                soc.send(JSON.stringify({
+                    type:'mode',
+                    data:true
+                }))
+            }else if(mode == 'iot'){
+                setShowIot(true)
+            }
+            
 
             
             if(!showCode){
@@ -809,6 +830,10 @@ export const useGuiLogic = (props) => {
         
     }
 
+    const handleOpenAiMode =(isOpen)=>{
+        setAiMode(isOpen)
+        setIsAiMode(isOpen)
+    }
 
     const aliveRef = useRef(false);
     const socketRef = useRef(null);
@@ -817,7 +842,7 @@ export const useGuiLogic = (props) => {
         isUnMount = false;
         aliveRef.current = true;
         console.log(window);
-        let Socket = new WebSocket('ws://localhost:8081');
+        let Socket = new WebSocket('ws://localhost:39147');
         socketRef.current = Socket;
         setSoc(Socket);
 
@@ -868,7 +893,7 @@ export const useGuiLogic = (props) => {
                             
                             // setSoc(Socket);
                             // setupListeners(Socket);
-                            const newSocket = new WebSocket('ws://localhost:8081');
+                            const newSocket = new WebSocket('ws://localhost:39147');
                             socketRef.current = newSocket;
                             setSoc(newSocket);
                             setupListeners(newSocket);
@@ -890,7 +915,8 @@ export const useGuiLogic = (props) => {
                 if (!aliveRef.current) return;
                 try {
                     if (JSON.parse(event.data).type == 'bricks') {
-                        setIsDown(!JSON.parse(event.data).data.message);
+                        console.log('################',JSON.parse(event.data).data.message)
+                        setIsDown(JSON.parse(event.data).data.message);
                         channelBleIsDown.postMessage(false)
                     } else if (JSON.parse(event.data).type == 'wifiDown') {
                         if (JSON.parse(event.data).data.message == 'success') {
@@ -906,7 +932,7 @@ export const useGuiLogic = (props) => {
                             portArr.forEach(port => {
                                 updateChildBallText(port, '', '', false);
                             });
-                            setIsDown(true);
+                            setIsDown(false);
                         }
                     } else if (JSON.parse(event.data).type == 'wifi') {
                         if (JSON.parse(event.data).data.message) {
@@ -1568,8 +1594,12 @@ export const useGuiLogic = (props) => {
         open,
         setOpen,
         selected,
+        aiMode,
         setSelected,
         handleOpenExample,
-        handleSelect
+        handleSelect,
+        handleOpenAiMode,
+        showIot,
+        setShowIot
     };
 };
