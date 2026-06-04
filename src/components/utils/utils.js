@@ -16,13 +16,15 @@ let allLoaded=[]
 
 let deletedCategoriesID = ['robotwifi', 'robotcat'];
 
-let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi'];
+let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi','robotpin_setIICPort','robotpin_IICScan','robotpin_IICWriteTo','robotpin_IICWriteToMem','robotpin_IICReadFrom','robotpin_IICReadFromInto','robotpin_IICReadFromMem','robotpin_IICReadFromMemInto'];
 
 let showCode=false
 
 let isDown=false
 
 let electronVisable=false
+
+let isOpenAiMode=false
 
 const codeArray=[
         `time.sleep(0.5)
@@ -300,6 +302,14 @@ function setElectron(a){
 function getElectron(){
     return electronVisable
 }
+
+function setIsAiMode(a){
+    isOpenAiMode=a
+}
+
+function getIsAiMode(){
+    return isOpenAiMode
+}
 export {
     setIsMaster,
     getIsMaster,
@@ -334,5 +344,7 @@ export {
     getLongIsDown,
     setElectron,
     getElectron,
-    codeArray
+    codeArray,
+    setIsAiMode,
+    getIsAiMode
 }
