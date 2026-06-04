@@ -28,7 +28,7 @@ export function createBlocksLogic(componentInstance) {
         self.currentDevice=getCurrent()
         if(getCurrent()=='ICRobot'){
 
-            if(!self.mode){
+            if(!self.mode){//下载模式
                 // let index = this.deletedCategoriesID.indexOf('robotwifi');
                 // if (index !== -1) {
                 //     this.deletedCategoriesID.splice(index, 1);
@@ -42,7 +42,7 @@ export function createBlocksLogic(componentInstance) {
                         delCategro(i,1)
                     }
                 }
-                let toMove=['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel']
+                let toMove=['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','robotpin_setIICPort','robotpin_IICScan','robotpin_IICWriteTo','robotpin_IICWriteToMem','robotpin_IICReadFrom','robotpin_IICReadFromInto','robotpin_IICReadFromMem','robotpin_IICReadFromMemInto']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i,1)
@@ -78,6 +78,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotsound_playLocalMusic')
                 setHiddenBlocks('robotimg_howStartCamera')
                 setHiddenBlocks('robotextend_startMode')
+                setHiddenBlocks('robotpin_setPinMode')
                 // setHiddenBlocks('robotsound_selectSound')
                 
                 
@@ -103,7 +104,18 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotimg_catPlace')
                 setHiddenBlocks('robotimg_isOpenModel')
 
-                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode']
+                setHiddenBlocks('robotpin_setIICPort')
+                setHiddenBlocks('robotpin_IICScan')
+                setHiddenBlocks('robotpin_IICWriteTo')
+
+                setHiddenBlocks('robotpin_IICWriteToMem')
+                setHiddenBlocks('robotpin_IICReadFrom')
+                setHiddenBlocks('robotpin_IICReadFromInto')
+                setHiddenBlocks('robotpin_IICReadFromMem')
+                setHiddenBlocks('robotpin_IICReadFromMemInto')
+                
+
+                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode','robotpin_setPinMode']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i, 1);
@@ -232,6 +244,13 @@ export function createBlocksLogic(componentInstance) {
             variablesXml = wrapper.outerHTML;
         }
 
+        // const fullDom = self.ScratchBlocks.Xml.workspaceToDom(self.workspace);
+
+        // const serializer = new XMLSerializer();
+        // const fullXml = serializer.serializeToString(fullDom);
+
+        // console.log(fullXml);
+
         // 4. 传给函数
         self.onWorkspaceUpdate({ xml: variablesXml });
         // this.onWorkspaceUpdate(dataXML)
@@ -357,7 +376,7 @@ export function createBlocksLogic(componentInstance) {
                         'robotcolorplace',
                         'robotcolorxy',
                         'robotface',
-                        'robotgood',
+                        // 'robotgood',
                         'robotqr',
                         'robottraffic',
                         'robotextend'
@@ -471,7 +490,7 @@ export function createBlocksLogic(componentInstance) {
                 'robotcolorplace',
                 'robotcolorxy',
                 'robotface',
-                'robotgood',
+                // 'robotgood',
                 'robotqr',
                 'robottraffic',
                 'robotextend'
@@ -600,7 +619,13 @@ export function createBlocksLogic(componentInstance) {
     }
 
     function workspaceToCode (event) {
-        
+        // const fullDom = self.ScratchBlocks.Xml.workspaceToDom(self.workspace);
+
+        // const xmlText = self.ScratchBlocks.Xml.domToText(fullDom);
+
+        // console.log(xmlText);
+        // console.log(fullDom)
+        // console.log(getToolboxXML())
         // console.log('--------------------')
         console.log(event.type)
         // console.log(this.workspace.blockDB_)
