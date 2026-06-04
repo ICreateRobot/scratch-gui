@@ -298,6 +298,8 @@ class Blocks extends React.Component {
             // console.log('程序停止')
         })
 
+        window.onWorkspaceUpdate = this.onWorkspaceUpdate.bind(this);
+
     }
     shouldComponentUpdate (nextProps, nextState) {
         return (
@@ -374,6 +376,9 @@ class Blocks extends React.Component {
         this.props.vm.clearFlyoutBlocks();
 
         AddonHooks.blocklyWorkspace = null;
+        if (window.onWorkspaceUpdate) {
+            delete window.onWorkspaceUpdate;
+        }
     }
     requestToolboxUpdate () {
         clearTimeout(this.toolboxUpdateTimeout);
@@ -584,6 +589,7 @@ class Blocks extends React.Component {
         // this.props.updateToolboxState(toolboxXML);
     }
     onWorkspaceUpdate (data) {
+        console.log(data)
         this.dataXML=data
         // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXML = this.getToolboxXML();
