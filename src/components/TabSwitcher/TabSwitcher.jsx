@@ -369,9 +369,14 @@ const SerialMonitor = ({ serialData,isDark }) => {
   );
 };
 // 程序下载页面（包含机器人图和切换）
-const ProgramDownload = ({onSendData,extension,isDark }) => {
+const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDown, setIsDown] = useState(getLongIsDown());
+  useEffect(() => {
+    console.log('--------------',parentIsDown)
+    setIsDown(parentIsDown)
+    setLongIsDown(parentIsDown)
+  }, [parentIsDown]);
   useEffect(() => {
     // console.log('下载界面初始化了一次')
     // console.log(isDown)
@@ -380,16 +385,16 @@ const ProgramDownload = ({onSendData,extension,isDark }) => {
       const channelBleIsDown = new BroadcastChannel('ble-download')
 
       const handleMessage = (event) => {
-        // if(event.data){
-        //   // console.log('收到了下载返回')
-        //   setLongIsDown(true)
-        //   setIsDown(true)
-        //   // console.log(isDown)
-        //   // console.log(getLongIsDown())
+        if(event.data){
+          // console.log('收到了下载返回')
+          setLongIsDown(true)
+          setIsDown(true)
+          // console.log(isDown)
+          // console.log(getLongIsDown())
           
-        // }
-          setLongIsDown(event.data)
-          setIsDown(event.data)
+        }
+          // setLongIsDown(true)
+          // setIsDown(true)
       };
 
       channelBleIsDown.addEventListener('message', handleMessage);
@@ -1648,7 +1653,7 @@ const ControlPanelLayout = ({extension,isDark}) => {
 
 
 // 主组件
-const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
+const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
   const [activeTab, setActiveTab] = useState('download');
 
   // 读取本地主题
@@ -1721,7 +1726,7 @@ const TabSwitcher = ({ serialData ,onSendData,extension  }) => {
           height: '26vh',
         }}
       >
-        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} isDark={isDark}/>}
+        {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} isDark={isDark} parentIsDown={isDown}/>}
         {activeTab === 'control' && <ControlPanelLayout extension={extension} isDark={isDark} />}
         {activeTab === 'monitor' && <SerialMonitor serialData={serialData} extension={extension} isDark={isDark} />}
       </div>
