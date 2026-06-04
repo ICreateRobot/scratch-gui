@@ -83,6 +83,8 @@ import ICmicrobitInsetIconURL from '../ICreate_Microbit/microbit-small.svg';
 import ICmicrobitConnectionIconURL from '../ICreate_Microbit/microbit-illustration.svg';
 import ICmicrobitConnectionSmallIconURL from '../ICreate_Microbit/microbit-small.svg';
 
+import robotPinImage from '../robotpin/robotPinImage.png'
+
 //k210
 
 const robotTeachableExtension = {
@@ -752,6 +754,29 @@ const robotExtendExtension = {
     featured: true
 };
 
+const robotPinExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="ICrobot Pin Control"
+            description="Name for the 'robotextend' extension"
+            id="gui.extension.robotpin.name"
+        />
+    ),
+    extensionId: 'robotpin',
+    iconURL: robotPinImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="This extension can control the digital pins, analog pins, and IIC pins of ICrobot devices."
+            description="Description for the 'robotextend' extension"
+            id="gui.extension.robotpin.description"
+        />
+    ),
+    tags: ['scratch'],
+    featured: true
+};
+
+
 
 
 export {
@@ -785,5 +810,6 @@ export {
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
-    k210Extension
+    k210Extension,
+    robotPinExtension
 };

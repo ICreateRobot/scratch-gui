@@ -82,7 +82,8 @@ import {
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
-    k210Extension
+    k210Extension,
+    robotPinExtension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -116,7 +117,8 @@ export default [
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
-    k210Extension,
+    // k210Extension,
+    robotPinExtension,
     {
         name: (
             <FormattedMessage
