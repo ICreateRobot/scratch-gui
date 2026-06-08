@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"> -->
     <meta name="google" value="notranslate">
     <meta name="description" content="<%= htmlWebpackPlugin.options.APP_NAME %> is a Scratch mod with a compiler to run projects faster, dark mode for your eyes, a bunch of addons to improve the editor, and more." />
     <title><%= htmlWebpackPlugin.options.title %></title>
@@ -97,6 +98,20 @@
       (function () {
         'use strict';
 
+
+        
+        let data = JSON.parse(localStorage.getItem("tw:addons") || "{}");
+
+        data["hide-flyout"] = {
+          enabled: true,
+          toggle: "hover",   // 关键：确保锁按钮可显示
+          speed: "default",
+          lockLoad: false
+        };
+
+        localStorage.setItem("tw:addons", JSON.stringify(data));
+        
+
         var theme = '';
         var accent = '#32b7a6';
 
@@ -181,6 +196,43 @@
           splash.hidden = true;
           window.onerror = null;
         };
+
+        document.addEventListener('deviceready', function() {
+          // 隐藏状态栏
+          StatusBar.hide();
+      
+          // 确保应用内容延伸到整个屏幕
+          StatusBar.overlaysWebView(true);
+
+          screen.orientation.lock('landscape');
+
+          var permissions = cordova.plugins.permissions;
+
+          permissions.requestPermission(
+              permissions.CAMERA,
+              function(status) {
+      
+                  if (status.hasPermission) {
+                      console.log("Camera permission granted ");
+                      
+                      // 在这里启动摄像头
+                      //startCamera();
+      
+                  } else {
+                      console.log("Camera permission denied ");
+                  }
+      
+              },
+              function(error) {
+                  console.error("Permission request error: ", error);
+              }
+          );
+
+          if (window.Keyboard) {
+            Keyboard.resize = true;        // 页面跟随键盘变化
+            Keyboard.disableScroll(false); // 允许页面滚动
+          }
+      }, false);
       })();
     </script>
 

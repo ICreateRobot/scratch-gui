@@ -51,6 +51,7 @@
   height: 100%;
   width: calc(var(--sa-flyout-width) + 1px);
   top: 0;
+  pointer-events: none;
 }
 
 [dir="ltr"] .sa-flyout-placeHolder {
@@ -107,7 +108,7 @@
   /* and above these so that dragged sprites aren't obscured: */
   /* .blocklyToolboxDiv (z-index: 40) */
   /* .gui_extension-button-container_b4rCs (z-index: 42) */
-  z-index: 43;
+  z-index: 492;
   padding-inline: 0.5rem;
   background-color: var(--editorDarkMode-page, hsl(215, 100%, 95%));
 }

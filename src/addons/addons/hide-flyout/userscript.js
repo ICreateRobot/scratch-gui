@@ -9,6 +9,7 @@ export default async function ({ addon, console, msg }) {
   let flyoutLock = false;
   let closeOnMouseUp = false;
   let scrollAnimation = true;
+  let lastSelectedDom = null;
 
   const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -201,6 +202,7 @@ export default async function ({ addon, console, msg }) {
       }
     };
 
+
     const oldSelectCategoryById = Blockly.Toolbox.prototype.selectCategoryById;
     Blockly.Toolbox.prototype.selectCategoryById = function (...args) {
       // called after populating the toolbox
@@ -220,6 +222,64 @@ export default async function ({ addon, console, msg }) {
       }
       return oldStepScrollAnimation.apply(this, args);
     };
+
+    
+
+    Blockly.getMainWorkspace().addChangeListener((event) => {
+      if (addon.self.disabled) return;
+      if (flyoutLock) return;
+    
+      console.log('aaaaa:',event.element)
+      // ✅ 拖拽结束（最稳定）
+      if (
+        event.type === Blockly.Events.UI &&
+        event.element === "selected"
+      ) {
+        onmouseleave(null);
+
+        const workspace = Blockly.getMainWorkspace();
+        const toolboxObj = workspace.getToolbox();
+        const selectedItem = toolboxObj.getSelectedItem();
+        selectedItem?.setSelected(false);
+        lastSelectedDom = null;
+      }
+    });
+
+    document.body.addEventListener("touchstart", (e) => {
+      if (flyoutLock) return;
+    
+      const toolbox = document.querySelector(".blocklyToolboxDiv");
+    
+      const isInside =
+        flyOut?.contains(e.target) ||
+        toolbox?.contains(e.target);
+    
+      if (!isInside) {
+        onmouseleave(null);
+      }
+    });
+  }
+
+  function handleRelease() {
+    if (addon.self.disabled) return;
+    if (flyoutLock) return;
+  
+    const workspace = Blockly.getMainWorkspace();
+  
+    // ❗ 只有真的拖了积木才关闭
+    if (workspace && workspace.isDragging && workspace.isDragging()) {
+      return; // 还在拖，不处理
+    }
+  
+    // ⭐ 判断刚刚是否发生过拖拽（关键技巧）
+    if (!flyOut.classList.contains("sa-flyoutClose")) {
+      setTimeout(() => {
+        // 再检查一次（防止误触）
+        if (!workspace.isDragging()) {
+          onmouseleave(null);
+        }
+      }, 100);
+    }
   }
 
   while (true) {
@@ -264,10 +324,22 @@ export default async function ({ addon, console, msg }) {
     lockIcon = document.createElement("img");
     lockIcon.alt = "";
     updateLockDisplay();
-    lockButton.onclick = () => {
+    // lockButton.onclick = () => {
+    //   flyoutLock = !flyoutLock;
+    //   updateLockDisplay();
+    // };
+    lockButton.addEventListener("click", (e) => {
+      e.stopPropagation();
       flyoutLock = !flyoutLock;
       updateLockDisplay();
-    };
+    });
+    
+    lockButton.addEventListener("touchstart", (e) => {
+      e.stopPropagation();
+      e.preventDefault(); // ⭐ 防止穿透
+      flyoutLock = !flyoutLock;
+      updateLockDisplay();
+    });
     lockButton.appendChild(lockIcon);
     lockObject.appendChild(lockButton);
     flyOut.appendChild(lockObject);
@@ -278,23 +350,102 @@ export default async function ({ addon, console, msg }) {
     const toolbox = document.querySelector(".blocklyToolboxDiv");
     const addExtensionButton = document.querySelector("[class^=gui_extension-button-container_]");
 
-    for (let element of [toolbox, addExtensionButton, flyOut, scrollBar]) {
-      element.onmouseenter = (e) => {
-        const toggleSetting = getToggleSetting();
-        if (!addon.self.disabled && (toggleSetting === "hover" || toggleSetting === "cathover")) onmouseenter(e);
-      };
-      element.onmouseleave = (e) => {
-        const toggleSetting = getToggleSetting();
-        if (!addon.self.disabled && (toggleSetting === "hover" || toggleSetting === "cathover")) onmouseleave(e);
-      };
-    }
-    placeHolderDiv.onmouseenter = (e) => {
-      if (!addon.self.disabled && getToggleSetting() === "hover") onmouseenter(e);
-    };
-    placeHolderDiv.onmouseleave = (e) => {
-      if (!addon.self.disabled && getToggleSetting() === "hover") onmouseleave(e);
-    };
+    // for (let element of [toolbox, addExtensionButton, flyOut, scrollBar]) {
+    //   element.onmouseenter = (e) => {
+    //     const toggleSetting = getToggleSetting();
+    //     if (!addon.self.disabled && (toggleSetting === "hover" || toggleSetting === "cathover")) onmouseenter(e);
+    //   };
+    //   element.onmouseleave = (e) => {
+    //     const toggleSetting = getToggleSetting();
+    //     if (!addon.self.disabled && (toggleSetting === "hover" || toggleSetting === "cathover")) onmouseleave(e);
+    //   };
+    // }
+    // placeHolderDiv.onmouseenter = (e) => {
+    //   if (!addon.self.disabled && getToggleSetting() === "hover") onmouseenter(e);
+    // };
+    // placeHolderDiv.onmouseleave = (e) => {
+    //   if (!addon.self.disabled && getToggleSetting() === "hover") onmouseleave(e);
+    // };
 
+    function toggleFlyout() {
+      if (flyoutLock) return;
+    
+      if (flyOut.classList.contains("sa-flyoutClose")) {
+        onmouseenter(null); // 打开
+      } else {
+        onmouseleave(null); // 关闭
+      }
+    }
+
+    
+    toolbox.addEventListener("click", (e) => {
+      if (addon.self.disabled) return;
+    
+      const workspace = Blockly.getMainWorkspace();
+      const toolboxObj = workspace.getToolbox();
+    
+      const selectedItem = toolboxObj.getSelectedItem();
+      const clickedDom = e.target.closest(".scratchCategoryMenuItem");
+    
+      if (getToggleSetting() === "hover") {
+        if (!clickedDom) return;
+    
+        const isSameCategory = clickedDom === lastSelectedDom;
+    
+        if (isSameCategory) {
+          // ✅ 点击当前分类 → 关闭
+          onmouseleave(null);
+          selectedItem?.setSelected(false);
+          lastSelectedDom = null;
+        } else {
+          // ✅ 点击不同分类 → 打开/保持打开
+          if (flyOut.classList.contains("sa-flyoutClose")) {
+            onmouseenter(null);
+          }
+          lastSelectedDom = clickedDom; // ⭐ 更新记录
+        }
+    
+        return;
+      }
+    
+      toggleFlyout();
+    });
+    // toolbox.addEventListener("click", (e) => {
+    //   if (addon.self.disabled) return;
+    //   toggleFlyout();
+    // });
+    toolbox.addEventListener("touchstart", (e) => {
+      // if (addon.self.disabled) return;
+      // toggleFlyout();
+      const workspace = Blockly.getMainWorkspace();
+      const toolboxObj = workspace.getToolbox();
+    
+      const selectedItem = toolboxObj.getSelectedItem();
+      const clickedDom = e.target.closest(".scratchCategoryMenuItem");
+    
+      if (getToggleSetting() === "hover") {
+        if (!clickedDom) return;
+    
+        const isSameCategory = clickedDom === lastSelectedDom;
+    
+        if (isSameCategory) {
+          // ✅ 点击当前分类 → 关闭
+          onmouseleave(null);
+          selectedItem?.setSelected(false);
+          lastSelectedDom = null;
+        } else {
+          // ✅ 点击不同分类 → 打开/保持打开
+          if (flyOut.classList.contains("sa-flyoutClose")) {
+            onmouseenter(null);
+          }
+          lastSelectedDom = clickedDom; // ⭐ 更新记录
+        }
+    
+        return;
+      }
+    
+      toggleFlyout();
+    });
     doOneTimeSetup();
     autoLock();
     Blockly.svgResize(Blockly.getMainWorkspace());
