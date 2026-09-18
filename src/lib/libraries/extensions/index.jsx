@@ -83,7 +83,9 @@ import {
     microbitPeripheralExtension,
     robotExtendExtension,
     k210Extension,
-    robotPinExtension
+    robotPinExtension,
+    arduinoUnoExtension,
+    py32Extension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -119,6 +121,8 @@ export default [
     robotExtendExtension,
     // k210Extension,
     robotPinExtension,
+    arduinoUnoExtension,
+    py32Extension,
     {
         name: (
             <FormattedMessage
