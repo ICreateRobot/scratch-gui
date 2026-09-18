@@ -1,0 +1,291 @@
+.flash-overlay { 
+    position: fixed; 
+ 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+ 
+    width: 100vw; 
+    height: 100vh; 
+ 
+    background-color: rgba(0, 0, 0, 0.45); 
+ 
+    display: flex; 
+ 
+    align-items: center; 
+    justify-content: center; 
+ 
+    z-index: 99999; 
+} 
+ 
+ 
+/* ========================= 
+   主体弹窗 
+   ========================= */ 
+ 
+.flash-container { 
+    width: 620px; 
+    max-width: 80vw; 
+ 
+    height: 460px; 
+    max-height: 75vh; 
+ 
+    background-color: #ffffff; 
+ 
+    border-radius: 10px; 
+ 
+    box-shadow: 
+        0 12px 35px rgba(0, 0, 0, 0.22); 
+ 
+    display: flex; 
+    flex-direction: column; 
+ 
+    padding: 20px; 
+ 
+    box-sizing: border-box; 
+} 
+ 
+ 
+/* ========================= 
+   标题 
+   ========================= */ 
+ 
+.flash-header { 
+    flex-shrink: 0; 
+ 
+    display: flex; 
+ 
+    align-items: center; 
+    justify-content: space-between; 
+ 
+    margin-bottom: 12px; 
+} 
+ 
+ 
+.flash-title { 
+    font-size: 19px; 
+ 
+    font-weight: 600; 
+ 
+    color: #333333; 
+} 
+
+
+/* =========================
+   烧录中 Loading 转圈
+   ========================= */
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+
+    border: 3px solid #eeeeee;
+    border-top: 3px solid #4caf50;
+
+    border-radius: 50%;
+
+    box-sizing: border-box;
+
+    animation: flash-spin 0.8s linear infinite;
+}
+
+
+/* =========================
+   Loading 动画
+   ========================= */
+
+@keyframes flash-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+ 
+ 
+/* ========================= 
+   状态 
+   ========================= */ 
+ 
+.flash-status { 
+    flex-shrink: 0; 
+ 
+    margin-top: 9px; 
+ 
+    margin-bottom: 12px; 
+ 
+    font-size: 13px; 
+ 
+    color: #777777; 
+} 
+ 
+ 
+/* ========================= 
+   日志整体 
+   ========================= */ 
+ 
+.log-wrapper { 
+    flex: 1; 
+ 
+    min-height: 0; 
+ 
+    display: flex; 
+ 
+    flex-direction: column; 
+ 
+    border: 1px solid #dddddd; 
+ 
+    border-radius: 7px; 
+ 
+    overflow: hidden; 
+ 
+    background-color: #111111; 
+} 
+ 
+ 
+/* ========================= 
+   日志标题 
+   ========================= */ 
+ 
+.log-header { 
+    flex-shrink: 0; 
+ 
+    height: 36px; 
+ 
+    padding: 0 12px; 
+ 
+    box-sizing: border-box; 
+ 
+    background-color: #222222; 
+ 
+    color: #eeeeee; 
+ 
+    font-size: 13px; 
+ 
+    display: flex; 
+ 
+    align-items: center; 
+ 
+    justify-content: space-between; 
+} 
+ 
+ 
+.log-progress { 
+    color: #8c8c8c; 
+ 
+    font-size: 12px; 
+} 
+ 
+ 
+/* ========================= 
+   日志内容 
+   ========================= */ 
+ 
+.log-content { 
+    flex: 1; 
+ 
+    overflow-y: auto; 
+ 
+    margin: 0; 
+    padding: 14px; 
+ 
+    box-sizing: border-box; 
+ 
+    color: #dddddd; 
+    font-size: 13px; 
+    line-height: 1.6; 
+ 
+    font-family: Consolas, Monaco, monospace; 
+ 
+    /* 保留日志原有换行 */ 
+    white-space: pre-wrap; 
+ 
+    /* 超长内容自动换行 */ 
+    overflow-wrap: anywhere; 
+    word-break: break-word; 
+ 
+    /* 允许鼠标选择和复制日志 */ 
+    user-select: text; 
+    -webkit-user-select: text; 
+ 
+    /* 鼠标显示文本选择样式 */ 
+    cursor: text; 
+} 
+ 
+ 
+/* ========================= 
+   日志滚动条 
+   ========================= */ 
+ 
+.log-content::-webkit-scrollbar { 
+    width: 7px; 
+} 
+ 
+ 
+.log-content::-webkit-scrollbar-track { 
+    background-color: #171717; 
+} 
+ 
+ 
+.log-content::-webkit-scrollbar-thumb { 
+    background-color: #555555; 
+ 
+    border-radius: 4px; 
+} 
+ 
+ 
+.log-content::-webkit-scrollbar-thumb:hover { 
+    background-color: #666666; 
+} 
+ 
+ 
+/* ========================= 
+   完成按钮 
+   ========================= */ 
+ 
+.button-wrapper { 
+    flex-shrink: 0; 
+ 
+    display: flex; 
+ 
+    justify-content: flex-end; 
+ 
+    margin-top: 12px; 
+} 
+ 
+ 
+.close-button { 
+    min-width: 80px; 
+ 
+    padding: 7px 20px; 
+ 
+    border: none; 
+ 
+    border-radius: 6px; 
+ 
+    background-color: #4caf50; 
+ 
+    color: #ffffff; 
+ 
+    font-size: 13px; 
+ 
+    cursor: pointer; 
+ 
+    transition: 
+        background-color 0.15s ease, 
+        opacity 0.15s ease; 
+} 
+ 
+ 
+.close-button:hover { 
+    opacity: 0.9; 
+} 
+ 
+ 
+.close-button:active { 
+    opacity: 0.8; 
+}
+
