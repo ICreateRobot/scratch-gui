@@ -242,11 +242,12 @@ const ModeToggle = ({ value, onChange }) => {
             {/* 标题 */}
             <span style={{
                 marginRight: '10px',
+                marginLeft: '10px',
                 color: 'white',
                 fontWeight: 'bold'
             }}>
                 <FormattedMessage
-                    defaultMessage="模式"
+                    defaultMessage="Mode"
                     id="gui.model.name"
                 />
             </span>
@@ -272,7 +273,7 @@ const ModeToggle = ({ value, onChange }) => {
                     style={{
                         position: 'absolute',
                         top: '3px',
-                        left: getLeftPosition(),
+                        insetInlineStart: getLeftPosition(),
                         width: `calc(${100 / modes.length}% - 6px)`,
                         height: '26px',
                         backgroundColor: 'var(--ic-main)',
