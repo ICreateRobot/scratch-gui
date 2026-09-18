@@ -163,6 +163,7 @@ class Blocks extends React.Component {
             'setLocale',
             'handleEnableProcedureReturns',
             'workspaceToCode',
+            'workspaceChange',
             'unindentCode',
             'findSecondTopParent',
             'handleRuntimeStop',
@@ -186,6 +187,269 @@ class Blocks extends React.Component {
     handleRuntimeStop=()=>{
         // console.log('程序停止')
     }
+    // workspaceChange(event){
+    //     console.log('执行了')
+    //     // // 当前工作区里的所有模块
+    //     // const workspaceBlocks =
+    //     // this.workspace.getAllBlocks(false);
+
+    //     // // 判断工作区里是否已经存在 UIEditor_whenButtonClicked
+    //     // const hasButtonHat = workspaceBlocks.some(
+    //     //     block => block.type === 'arduinouno_setDigital'
+    //     // );
+
+    //     // toolbox / flyout 工作区
+    //     const flyoutWorkspace =
+    //         this.workspace.getFlyout().getWorkspace();
+
+    //     // toolbox 里的所有模块
+    //     const flyoutBlocks =
+    //         flyoutWorkspace.getAllBlocks(false);
+
+    //     flyoutBlocks.forEach(block => {
+
+    //         // 找到 toolbox 中对应模块
+    //         if (block.type === 'arduinouno_setDigital') {
+
+    //             // 已存在 → 置灰
+    //             block.disabled = true;
+    //             // 立即刷新 disabled 的视觉状态
+    //             if (typeof block.updateDisabled === 'function') {
+    //                 block.updateDisabled();
+    //             }
+
+    //             // 记录原颜色（避免恢复不了）
+    //             if (!block._oldColour) {
+    //                 block._oldColour = block.getColour();
+    //             }
+
+    //             block.setColour('#808080');
+    //             // if (hasButtonHat) {
+
+    //             //     // 已存在 → 置灰
+    //             //     block.disabled = true;
+
+    //             //     // 记录原颜色（避免恢复不了）
+    //             //     if (!block._oldColour) {
+    //             //         block._oldColour = block.getColour();
+    //             //     }
+
+    //             //     block.setColour('#808080');
+
+    //             // } else {
+
+    //             //     // 不存在 → 恢复
+
+    //             //     block.disabled = false;
+
+    //             //     if (block._oldColour) {
+    //             //         block.setColour(block._oldColour);
+    //             //     }
+    //             // }
+    //         }
+    //     });
+    // }
+    // workspaceChange(typePrefix, disabled) {
+    //     console.log('执行了', typePrefix, disabled);
+
+    //     // 参数检查
+    //     if (!typePrefix) {
+    //         console.warn('workspaceChange: typePrefix 不能为空');
+    //         return;
+    //     }
+
+    //     // toolbox / flyout 工作区
+    //     const flyoutWorkspace =
+    //         this.workspace.getFlyout().getWorkspace();
+
+    //     // toolbox 里的所有模块
+    //     const flyoutBlocks =
+    //         flyoutWorkspace.getAllBlocks(false);
+
+    //     flyoutBlocks.forEach(block => {
+
+    //         // 判断 block.type 是否以指定字符串开头
+    //         if (block.type.startsWith(typePrefix)) {
+
+    //             if (disabled) {
+    //                 // =====================================================
+    //                 // 置灰
+    //                 // =====================================================
+
+    //                 block.disabled = true;
+
+    //                 // 记录原颜色，只记录一次
+    //                 if (!block._oldColour) {
+    //                     block._oldColour = block.getColour();
+    //                 }
+
+    //                 // 设置灰色
+    //                 block.setColour('#808080');
+
+    //                 // 刷新 disabled 的视觉状态
+    //                 if (typeof block.updateDisabled === 'function') {
+    //                     block.updateDisabled();
+    //                 }
+    //                 if (typeof block.render === 'function') {
+    //                     block.render();
+    //                 }
+
+    //             } else {
+    //                 // =====================================================
+    //                 // 恢复
+    //                 // =====================================================
+
+    //                 block.disabled = false;
+
+    //                 // 恢复原来的颜色
+    //                 if (block._oldColour) {
+    //                     block.setColour(block._oldColour);
+    //                 }
+
+    //                 // 刷新 disabled 的视觉状态
+    //                 if (typeof block.updateDisabled === 'function') {
+    //                     block.updateDisabled();
+    //                 }
+    //                 if (typeof block.render === 'function') {
+    //                     block.render();
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }font-size: inherit !important;
+    workspaceChange(typePrefix, disabled) {
+        console.log('执行了:', typePrefix, disabled);
+
+        if (!typePrefix) {
+            console.warn('workspaceChange: typePrefix 不能为空');
+            return;
+        }
+
+        const flyoutWorkspace =
+            this.workspace.getFlyout().getWorkspace();
+
+        const flyoutBlocks =
+            flyoutWorkspace.getAllBlocks(false);
+
+        flyoutBlocks.forEach(block => {
+
+            // =====================================================
+            // 匹配积木类型
+            // =====================================================
+
+            if (!block.type.startsWith(typePrefix)) {
+                return;
+            }
+
+            // console.log(
+            //     '处理积木:',
+            //     block.type,
+            //     'disabled:',
+            //     disabled
+            // );
+
+            // =====================================================
+            // 置灰
+            // =====================================================
+
+            if (disabled) {
+
+                block.disabled = true;
+
+                // 保存原始颜色
+                if (!block._oldColour) {
+                    block._oldColour = block.getColour();
+                }
+
+                // 积木主体颜色
+                block.setColour('#808080');
+
+                // =================================================
+                // 处理所有 Field
+                // =================================================
+
+                block.inputList.forEach(input => {
+
+                    if (!input.fieldRow) {
+                        return;
+                    }
+
+                    input.fieldRow.forEach(field => {
+
+                        // FieldDropdown
+                        if (field.box_ && field.arrow_) {
+
+                            // console.log(
+                            //     '找到 FieldDropdown:',
+                            //     field.name,
+                            //     field.text_
+                            // );
+
+                            // 下拉框背景
+                            field.box_.setAttribute(
+                                'fill',
+                                '#808080'
+                            );
+
+                            field.box_.setAttribute(
+                                'stroke',
+                                '#808080'
+                            );
+                        }
+                    });
+                });
+
+            }
+
+            // =====================================================
+            // 恢复
+            // =====================================================
+
+            else {
+
+                block.disabled = false;
+
+                // 原始颜色
+                const colour =
+                    block._oldColour ||
+                    block.getColour();
+
+                block.setColour(colour);
+
+                // =================================================
+                // 恢复所有 FieldDropdown
+                // =================================================
+
+                block.inputList.forEach(input => {
+
+                    if (!input.fieldRow) {
+                        return;
+                    }
+
+                    input.fieldRow.forEach(field => {
+
+                        if (field.box_ && field.arrow_) {
+
+                            field.box_.setAttribute(
+                                'fill',
+                                colour
+                            );
+
+                            field.box_.setAttribute(
+                                'stroke',
+                                colour
+                            );
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+
+
+
+
 
     componentDidMount () {
 
@@ -297,6 +561,9 @@ class Blocks extends React.Component {
         this.props.vm.runtime.on('PROJECT_RUN_STOP',()=>{
             // console.log('程序停止')
         })
+        // this.workspaceChange()
+        // //目前的功能是为了实现积木被拖动时检测是否将帽子快置灰
+        // this.workspace.addChangeListener(this.workspaceChange)
 
         window.onWorkspaceUpdate = this.onWorkspaceUpdate.bind(this);
 
@@ -603,24 +870,75 @@ class Blocks extends React.Component {
         }
 
         // Remove and reattach the workspace listener (but allow flyout events)
+        // this.workspace.removeChangeListener(this.props.vm.blockListener);
+        // const dom = this.ScratchBlocks.Xml.textToDom(data.xml);
+        // try {
+        //     this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+        // } catch (error) {
+        //     // The workspace is likely incomplete. What did update should be
+        //     // functional.
+        //     //
+        //     // Instead of throwing the error, by logging it and continuing as
+        //     // normal lets the other workspace update processes complete in the
+        //     // gui and vm, which lets the vm run even if the workspace is
+        //     // incomplete. Throwing the error would keep things like setting the
+        //     // correct editing target from happening which can interfere with
+        //     // some blocks and processes in the vm.
+        //     if (error.message) {
+        //         error.message = `Workspace Update Error: ${error.message}`;
+        //     }
+        //     log.error(error);
+        // }
         this.workspace.removeChangeListener(this.props.vm.blockListener);
+
+        // 保存当前 workspace
+        const oldDom = this.ScratchBlocks.Xml.workspaceToDom(this.workspace);
+        const oldXml = this.ScratchBlocks.Xml.domToText(oldDom);
+
         const dom = this.ScratchBlocks.Xml.textToDom(data.xml);
+
+        let loadSuccess = true;
+
         try {
-            this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+            this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(
+                dom,
+                this.workspace
+            );
         } catch (error) {
-            // The workspace is likely incomplete. What did update should be
-            // functional.
-            //
-            // Instead of throwing the error, by logging it and continuing as
-            // normal lets the other workspace update processes complete in the
-            // gui and vm, which lets the vm run even if the workspace is
-            // incomplete. Throwing the error would keep things like setting the
-            // correct editing target from happening which can interfere with
-            // some blocks and processes in the vm.
+            loadSuccess = false;
+
             if (error.message) {
                 error.message = `Workspace Update Error: ${error.message}`;
             }
+
             log.error(error);
+
+            console.warn('AI XML 加载失败，正在恢复之前的 workspace');
+
+            try {
+                // 清除加载失败后留下的残缺 workspace
+                this.workspace.clear();
+
+                // 恢复之前保存的 workspace
+                const restoreDom = this.ScratchBlocks.Xml.textToDom(oldXml);
+
+                this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(
+                    restoreDom,
+                    this.workspace
+                );
+
+                console.log('之前的 workspace 恢复成功');
+            } catch (restoreError) {
+                console.error('恢复之前 workspace 失败:', restoreError);
+            }
+        }
+
+        // 恢复 listener
+        this.workspace.addChangeListener(this.props.vm.blockListener);
+
+        if (!loadSuccess) {
+            console.warn('AI XML 加载失败，已经恢复之前的 workspace');
+            return;
         }
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
@@ -636,6 +954,7 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
+        this.workspaceToCode({ type: 'change' })
         // console.log('11111111111111111111')
     }
     handleMonitorsUpdate (monitors) {
