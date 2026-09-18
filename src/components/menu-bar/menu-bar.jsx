@@ -1343,7 +1343,8 @@ class MenuBar extends React.Component {
                         this.setState({ openAi: newValue });
                         this.props.openAiMode(newValue);
                     }}
-                    style={{marginTop:'1.5px',marginRight:'10px',lineHeight: "3rem"}}
+                    // style={{marginTop:'1.5px',marginRight:'10px',lineHeight: "3rem"}}
+                    style={{display:'flex',alignItems:'center',marginRight:'15px'}}
                 >
                     {this.state.openAi ? formatMessage({
                             id: 'gui.ai.close',
@@ -1360,8 +1361,8 @@ class MenuBar extends React.Component {
                 {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
                     canChangeLanguage={this.props.canChangeLanguage}
                     canChangeTheme={this.props.canChangeTheme}
-                    // isRtl={this.props.isRtl}
-                    isRtl={true}
+                    isRtl={!this.props.isRtl}
+                    // isRtl={true}
                     onClickDesktopSettings={
                         this.props.onClickDesktopSettings &&
                         this.handleClickDesktopSettings
