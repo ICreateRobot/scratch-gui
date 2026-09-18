@@ -175,6 +175,16 @@ import microbitPlaceRed from './microbitRed.svg'
 import microbitPlaceBlue from './microbitBlue.svg'
 import microbitPlacePurple from './microbitPurple.svg'
 
+import unoPlace from './unoPlace.png'
+import unoPlaceRed from './unoPlaceRed.png'
+import unoPlaceBlue from './unoPlaceBlue.png'
+import unoPlacePurple from './unoPlacePurple.png'
+
+import py32Place from './py32Place.png'
+import py32PlaceRed from './py32PlaceRed.png'
+import py32PlaceBlue from './py32PlaceBlue.png'
+import py32PlacePurple from './py32PlacePurple.png'
+
 
 // import mainCon from './conn_main_con.svg'
 import connMotor from './conn_motor.svg'
@@ -193,8 +203,9 @@ import runStopRed from './run_stopRed.svg'
 import runStopBlue from './run_stopBlue.svg'
 import runStopPurple from './run_stopPurple.svg'
 
-import { setLongIsDown,getLongIsDown } from 'scratch-gui/src/components/utils/utils.js';
+import { setLongIsDown,getLongIsDown,getCurrent } from 'scratch-gui/src/components/utils/utils.js';
 import styles from './TabSwitcher.css'
+import formatMessage  from 'format-message';
 
 // 串口监视器
 // 串口监视器组件
@@ -266,7 +277,8 @@ const SerialMonitor = ({ serialData,isDark }) => {
             borderRadius: '4px',
             padding: '6px 12px',
             backgroundColor: '#f0ffff',
-            width:'20%'
+            width:'20%',
+            color:'black'
           }}
         />
         <button 
@@ -279,7 +291,7 @@ const SerialMonitor = ({ serialData,isDark }) => {
             cursor: 'pointer'
           }}>
              <FormattedMessage
-                defaultMessage="发送"
+                defaultMessage="send"
                 description="Button in menu bar under settings to open desktop app settings"
                 id="sendMonitior"
             />
@@ -294,7 +306,7 @@ const SerialMonitor = ({ serialData,isDark }) => {
             cursor: 'pointer'
           }}>
             <FormattedMessage
-                defaultMessage="清除"
+                defaultMessage="clear"
                 description="Button in menu bar under settings to open desktop app settings"
                 id="clearMonitior"
             />
@@ -336,7 +348,7 @@ const SerialMonitor = ({ serialData,isDark }) => {
         ref={scrollRef}
         style={{
           // backgroundColor:isDark? '#1F1F1F': '#e0f8e8', // 浅绿色背景
-          color: '#000',
+          // color: '#000',
           height: '16vh',
           overflowY: 'auto',
           fontFamily: 'monospace',
@@ -429,6 +441,19 @@ const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
     }
   };
 
+  const downloadBn = async() =>{
+    await window.EditorPreload.flashArduino(
+      codeModule.getCode(),
+      'uno'
+    );
+  }
+  const downloadPyBn = async() =>{
+    await window.EditorPreload.flashArduino(
+      codeModule.getCode(),
+      'py32'
+    );
+  }
+
   const downMap={
     green:down,
     red:downRed,
@@ -463,8 +488,24 @@ const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
     purple:microbitPlacePurple
   }
 
+  const unoMap={
+    green:unoPlace,
+    red:unoPlaceRed,
+    blue:unoPlaceBlue,
+    purple:unoPlacePurple
+  }
+
+  const py32Map={
+    green:py32Place,
+    red:py32PlaceRed,
+    blue:py32PlaceBlue,
+    purple:py32PlacePurple
+  }
   const bricksHand=bricksMap[getAccent()]
   const microbitHand=microbitMap[getAccent()]
+  const unoHand=unoMap[getAccent()]
+
+  const py32Hand=py32Map[getAccent()]
     // console.log('-------------------')
     // console.log(extension)
     // console.log('###################')
@@ -766,6 +807,120 @@ const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
           </div>
       </div>
     );
+  }else if(extension == '4'){
+    const downHand=downMap[getAccent()]
+    return (
+      <div className={styles.tabswitcherProgrameBack} style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
+      }}>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={unoHand}></img>
+
+         {/* 下载 & 运行按钮 */}
+          <div
+            className={styles.tabswitcherProgrameDown}
+            style={{
+              position: 'absolute',
+              right: '0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
+              height:'100%',
+              width:'70px'
+            }}
+          >
+            {/* <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#B0E0E6',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              
+            >
+              <img src={down}></img>
+            </button> */}
+            <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#00F5FF',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              onClick={downloadBn}
+            >
+              <img draggable={false} src={downHand}></img>
+            </button>
+          </div>
+      </div>
+    );
+  }else if(extension == '5'){
+    const downHand=downMap[getAccent()]
+    return (
+      <div className={styles.tabswitcherProgrameBack} style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
+      }}>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={py32Hand}></img>
+
+         {/* 下载 & 运行按钮 */}
+          <div
+            className={styles.tabswitcherProgrameDown}
+            style={{
+              position: 'absolute',
+              right: '0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
+              height:'100%',
+              width:'70px'
+            }}
+          >
+            {/* <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#B0E0E6',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              
+            >
+              <img src={down}></img>
+            </button> */}
+            <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#00F5FF',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              onClick={downloadPyBn}
+            >
+              <img draggable={false} src={downHand}></img>
+            </button>
+          </div>
+      </div>
+    );
+  }else{
+    return(
+      <div></div>
+    )
   }
   
 };
@@ -1339,7 +1494,7 @@ const ControlPanelLayout = ({extension,isDark}) => {
         // );
 
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',gap:'10px' }}>
             {/* 图片部分 */}
             <img
               draggable={false}
@@ -1348,7 +1503,7 @@ const ControlPanelLayout = ({extension,isDark}) => {
               style={{ maxWidth: '100%', height: '60px' }}
             />
 
-            <br />
+            {/* <br /> */}
 
             {/* 实时数据展示部分 */}
             <div style={{
@@ -1492,7 +1647,7 @@ const ControlPanelLayout = ({extension,isDark}) => {
           width: '100%',
           // backgroundColor:isDark?'#2A2A2A': '#f0ffff',
           border: '1px solid #00ced1',
-          borderRadius: '8px',
+          // borderRadius: '8px',
           padding: '10px',
           boxShadow: '0 2px 6px rgba(0,206,209,0.2)'
         }}>
@@ -1648,6 +1803,797 @@ const ControlPanelLayout = ({extension,isDark}) => {
         {/* 占位 */}
       </div>
     )
+  }else if(extension == '4' || extension == '5'){
+     // =========================================================
+    // Arduino 库下载相关状态
+    // =========================================================
+
+    const [libraryName, setLibraryName] = useState('');
+    const [downloadLogs, setDownloadLogs] = useState([]);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+
+    // =========================================================
+    // Arduino 库下载
+    // =========================================================
+
+    const handleDownloadLibrary = async () => {
+
+      const name = libraryName.trim();
+
+      // -------------------------------------------------------
+      // 检查库名称
+      // -------------------------------------------------------
+
+      if (!name) {
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // 防止重复点击
+      // -------------------------------------------------------
+
+      if (isDownloading) {
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // 开始下载
+      // -------------------------------------------------------
+
+      setIsDownloading(true);
+
+      try {
+
+        console.log(
+          '开始安装 Arduino 库:',
+          name
+        );
+
+
+        // -----------------------------------------------------
+        // 调用 preload
+        //
+        // 第二个参数：
+        // install = 安装
+        // uninstall = 卸载
+        // -----------------------------------------------------
+
+        const result =
+          await window.EditorPreload.downloadLib(
+            name,
+            'install'
+          );
+
+
+        console.log(
+          'Arduino 库安装结果:',
+          result
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Arduino 库安装异常:',
+          error
+        );
+
+      } finally {
+
+        // -----------------------------------------------------
+        // 无论成功还是失败，都恢复按钮
+        // -----------------------------------------------------
+
+        setIsDownloading(false);
+
+      }
+
+    };
+
+
+    // =========================================================
+    // Arduino 库卸载
+    // =========================================================
+
+    const handleUninstallLibrary = async () => {
+
+      const name = libraryName.trim();
+
+      // -------------------------------------------------------
+      // 检查库名称
+      // -------------------------------------------------------
+
+      if (!name) {
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // 防止重复点击
+      // -------------------------------------------------------
+
+      if (isDownloading) {
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // 开始卸载
+      // -------------------------------------------------------
+
+      setIsDownloading(true);
+
+      try {
+
+        console.log(
+          '开始卸载 Arduino 库:',
+          name
+        );
+
+
+        // -----------------------------------------------------
+        // 调用 preload
+        //
+        // 第二个参数：
+        // install = 安装
+        // uninstall = 卸载
+        // -----------------------------------------------------
+
+        const result =
+          await window.EditorPreload.downloadLib(
+            name,
+            'uninstall'
+          );
+
+
+        console.log(
+          'Arduino 库卸载结果:',
+          result
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Arduino 库卸载异常:',
+          error
+        );
+
+      } finally {
+
+        // -----------------------------------------------------
+        // 无论成功还是失败，都恢复按钮
+        // -----------------------------------------------------
+
+        setIsDownloading(false);
+
+      }
+
+    };
+
+
+    // =========================================================
+    // 回车下载
+    // =========================================================
+
+    const handleKeyDown = (event) => {
+
+      if (
+        event.key === 'Enter' &&
+        !isDownloading
+      ) {
+
+        handleDownloadLibrary();
+
+      }
+
+    };
+
+
+    // =========================================================
+    // 接收主进程 Arduino CLI 日志
+    // =========================================================
+    //
+    // 注意：
+    // 日志区域只显示这里接收到的日志。
+    // 前端不会再主动往 downloadLogs 中添加任何日志。
+    // =========================================================
+
+    useEffect(() => {
+
+      const handleArduinoLibraryLog = (logs) => {
+
+        console.log(
+          'Arduino Library Log:',
+          logs
+        );
+
+
+        if (!logs) {
+          return;
+        }
+
+
+        // -----------------------------------------------------
+        // 主进程传过来的日志格式：
+        //
+        // {
+        //   type: 'stdout',
+        //   message: '...'
+        // }
+        //
+        // {
+        //   type: 'stderr',
+        //   message: '...'
+        // }
+        //
+        // {
+        //   type: 'success',
+        //   message: '...'
+        // }
+        //
+        // {
+        //   type: 'error',
+        //   message: '...'
+        // }
+        // -----------------------------------------------------
+
+        let logType =
+          logs.type || 'info';
+
+        let logText =
+          logs.message !== undefined
+            ? logs.message
+            : String(logs);
+
+
+        // -----------------------------------------------------
+        // stderr 不一定代表失败
+        //
+        // Arduino CLI 某些正常信息也可能通过 stderr 输出，
+        // 所以这里仍然显示为 warning。
+        // -----------------------------------------------------
+
+        if (logType === 'stderr') {
+
+          logType = 'warning';
+
+        }
+
+
+        // -----------------------------------------------------
+        // 只有这里接收到的日志才进入日志区域
+        // -----------------------------------------------------
+
+        setDownloadLogs(prev => [
+          ...prev,
+          {
+            type: logType,
+            text: logText
+          }
+        ]);
+
+      };
+
+
+      // -------------------------------------------------------
+      // 注册 Arduino CLI 日志监听
+      // -------------------------------------------------------
+
+      window.EditorPreload.sendArduinoLibLogs(
+        handleArduinoLibraryLog
+      );
+
+
+      return () => {
+
+        // 当前 preload 没有提供 removeListener，
+        // 所以这里暂时不进行移除。
+
+      };
+
+    }, []);
+    let EnterLibraryName=formatMessage({
+        id: "control.libraryname",
+        default: "Please enter library name",
+        description: "control.libraryname",
+    })
+
+
+    let Processing=formatMessage({
+        id: "control.Processing",
+        default: "Processing",
+        description: "control.Processing",
+    })
+
+    let Download=formatMessage({
+        id: "control.Download",
+        default: "Download",
+        description: "control.Download",
+    })
+
+    // =========================================================
+    // 页面
+    // =========================================================
+
+    return (
+
+      <div
+        className={styles.tabswitcherControlFourth}
+        style={{
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: '10px',
+          fontFamily: 'Arial, sans-serif'
+        }}
+      >
+
+        {/* =====================================================
+            外层容器
+            ===================================================== */}
+
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            boxSizing: 'border-box',
+
+            border: '1px solid #00ced1',
+            borderRadius: '8px',
+
+            padding: '12px',
+
+            boxShadow:
+              '0 2px 6px rgba(0,206,209,0.2)',
+
+            display: 'flex',
+            flexDirection: 'column',
+
+            backgroundColor:
+              isDark
+                ? '#2A2A2A'
+                : '#ffffff'
+          }}
+        >
+
+          {/* ===================================================
+              输入区域
+              =================================================== */}
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+
+              width: '100%',
+              boxSizing: 'border-box'
+            }}
+          >
+
+            {/* -------------------------------------------------
+                Arduino 库名称
+                ------------------------------------------------- */}
+
+            <input
+              type="text"
+
+              value={libraryName}
+
+              onChange={(event) => {
+                setLibraryName(event.target.value);
+              }}
+
+              onKeyDown={handleKeyDown}
+
+              placeholder={EnterLibraryName}
+
+              disabled={isDownloading}
+
+              style={{
+                flex: 1,
+
+                height: '38px',
+
+                boxSizing: 'border-box',
+
+                border:
+                  '1px solid #00ced1',
+
+                borderRadius: '6px',
+
+                padding:
+                  '0 12px',
+
+                outline: 'none',
+
+                fontSize: '14px',
+
+                color:
+                  isDark
+                    ? '#ffffff'
+                    : '#333333',
+
+                backgroundColor:
+                  isDark
+                    ? '#1f1f1f'
+                    : '#ffffff'
+              }}
+            />
+
+
+            {/* -------------------------------------------------
+                下载按钮
+                ------------------------------------------------- */}
+
+            <button
+              onClick={handleDownloadLibrary}
+
+              disabled={isDownloading}
+
+              style={{
+                height: '38px',
+
+                minWidth: '80px',
+
+                padding:
+                  '0 16px',
+
+                border: 'none',
+
+                borderRadius: '6px',
+
+                backgroundColor:
+                  isDownloading
+                    ? '#9aa0a0'
+                    : '#00ced1',
+
+                color: '#ffffff',
+
+                fontSize: '14px',
+
+                fontWeight: 'bold',
+
+                cursor:
+                  isDownloading
+                    ? 'not-allowed'
+                    : 'pointer',
+
+                boxShadow:
+                  isDownloading
+                    ? 'none'
+                    : '0 2px 4px rgba(0,206,209,0.25)',
+
+                transition:
+                  'all 0.2s ease'
+              }}
+            >
+
+              {
+                isDownloading
+                  ? Processing
+                  : Download
+              }
+
+            </button>
+
+
+            {/* -------------------------------------------------
+                卸载按钮
+                ------------------------------------------------- */}
+
+            <button
+              onClick={handleUninstallLibrary}
+
+              disabled={isDownloading}
+
+              style={{
+                height: '38px',
+
+                minWidth: '80px',
+
+                padding:
+                  '0 16px',
+
+                border: 'none',
+
+                borderRadius: '6px',
+
+                backgroundColor:
+                  isDownloading
+                    ? '#9aa0a0'
+                    : '#e74c3c',
+
+                color: '#ffffff',
+
+                fontSize: '14px',
+
+                fontWeight: 'bold',
+
+                cursor:
+                  isDownloading
+                    ? 'not-allowed'
+                    : 'pointer',
+
+                boxShadow:
+                  isDownloading
+                    ? 'none'
+                    : '0 2px 4px rgba(231,76,60,0.25)',
+
+                transition:
+                  'all 0.2s ease'
+              }}
+            >
+
+              <FormattedMessage
+                  defaultMessage="Uninstall"
+                  description="Uninstall"
+                  id="control.Uninstall"
+              />
+
+            </button>
+
+          </div>
+
+
+          {/* ===================================================
+              分割线
+              =================================================== */}
+
+          <hr
+            style={{
+              width: '100%',
+
+              margin:
+                '12px 0',
+
+              border: 'none',
+
+              borderTop:
+                '1px solid #b0e0e6'
+            }}
+          />
+
+
+          {/* ===================================================
+              日志区域
+              =================================================== */}
+
+          <div
+            style={{
+              flex: 1,
+
+              minHeight: 0,
+
+              overflowY: 'auto',
+
+              overflowX: 'hidden',
+
+              border:
+                '1px solid #b0e0e6',
+
+              borderRadius: '6px',
+
+              padding: '8px',
+
+              boxSizing: 'border-box',
+
+              backgroundColor:
+                isDark
+                  ? '#151515'
+                  : '#f8ffff',
+
+              fontFamily:
+                'Consolas, "Courier New", monospace',
+
+              fontSize: '13px'
+            }}
+          >
+
+            {/* -------------------------------------------------
+                没有日志
+                ------------------------------------------------- */}
+
+            {downloadLogs.length === 0 ? (
+
+              <div
+                style={{
+                  height: '100%',
+
+                  display: 'flex',
+
+                  alignItems:
+                    'center',
+
+                  justifyContent:
+                    'center',
+
+                  color:
+                    isDark
+                      ? '#777777'
+                      : '#999999'
+                }}
+              >
+
+                <FormattedMessage
+                    defaultMessage=" No download logs"
+                    description=" No download logs"
+                    id="control.nologs"
+                />
+
+              </div>
+
+            ) : (
+
+              /* -------------------------------------------------
+                日志列表
+                ------------------------------------------------- */
+
+              downloadLogs.map(
+                (log, index) => {
+
+                  let logColor =
+                    isDark
+                      ? '#dddddd'
+                      : '#444444';
+
+
+                  // 成功
+                  if (
+                    log.type === 'success'
+                  ) {
+
+                    logColor =
+                      '#20a060';
+
+                  }
+
+
+                  // 错误
+                  if (
+                    log.type === 'error'
+                  ) {
+
+                    logColor =
+                      '#e74c3c';
+
+                  }
+
+
+                  // 警告
+                  if (
+                    log.type === 'warning'
+                  ) {
+
+                    logColor =
+                      '#e6a23c';
+
+                  }
+
+
+                  // 信息
+                  if (
+                    log.type === 'info'
+                  ) {
+
+                    logColor =
+                      isDark
+                        ? '#dddddd'
+                        : '#444444';
+
+                  }
+
+
+                  // stdout
+                  if (
+                    log.type === 'stdout'
+                  ) {
+
+                    logColor =
+                      isDark
+                        ? '#dddddd'
+                        : '#444444';
+
+                  }
+
+
+                  return (
+
+                    <div
+                      key={index}
+
+                      style={{
+                        display:
+                          'flex',
+
+                        alignItems:
+                          'flex-start',
+
+                        lineHeight:
+                          '22px',
+
+                        color:
+                          logColor,
+
+                        borderBottom:
+                          index !==
+                          downloadLogs.length - 1
+                            ? '1px solid rgba(176,224,230,0.25)'
+                            : 'none',
+
+                        padding:
+                          '2px 0'
+                      }}
+                    >
+
+                      {/* ---------------------------------------
+                          日志序号
+                          --------------------------------------- */}
+
+                      <span
+                        style={{
+                          width:
+                            '35px',
+
+                          flexShrink:
+                            0,
+
+                          color:
+                            '#999999',
+
+                          userSelect:
+                            'none'
+                        }}
+                      >
+
+                        [{index + 1}]
+
+                      </span>
+
+
+                      {/* ---------------------------------------
+                          日志内容
+                          --------------------------------------- */}
+
+                      <span
+                        style={{
+                          flex: 1,
+
+                          wordBreak:
+                            'break-all',
+
+                          whiteSpace:
+                            'pre-wrap'
+                        }}
+                      >
+
+                        {log.text}
+
+                      </span>
+
+                    </div>
+
+                  );
+
+                }
+
+              )
+
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    );
+  }else{
+    return(
+      <div></div>
+    )
   }
 };
 
@@ -1656,6 +2602,9 @@ const ControlPanelLayout = ({extension,isDark}) => {
 const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
   const [activeTab, setActiveTab] = useState('download');
 
+  console.log('进入了控制台界面')
+  console.log(extension)
+  console.log(getCurrent())
   // 读取本地主题
   const local = localStorage.getItem("tw:theme");
   let isDark = false;
@@ -1670,6 +2619,43 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
     }
   } catch (e) {
     isDark = false;
+  }
+
+  const currentDevice = getCurrent();
+  if (!currentDevice) {
+    return (
+      <div style={{
+        width: '100%',
+        // background: '#98F5FF',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        maxHeight: '40vh',           // 设置最大高度
+        overflowY: 'auto',           // 超出时出现滚动条
+        boxSizing: 'border-box',     // 让 padding 不额外撑高度
+        paddingTop:'10px',
+        height:'31vh',
+      }}>
+        <div
+          style={{
+            height: '100%',
+            backgroundColor: '#fff',
+            // border: '1px solid #17a934',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '18px',
+            color: '#999',
+            borderRadius:'20px'
+          }}
+        >
+          <FormattedMessage
+                id="gui.alert.selectDevice"
+                defaultMessage="Please select a device first"
+                description="first select device"
+              />
+        </div>
+      </div>
+    );
   }
   return (
     <div
@@ -1688,9 +2674,9 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
       {/* Tabs */}
       <div style={{ display: 'flex' }}>
         {[
-          { key: 'download', label: '下载' },
-          { key: 'control', label: '控制台' },
-          { key: 'monitor', label: '串口监视器' },
+          { key: 'download', label: 'download' },
+          { key: 'control', label: 'control' },
+          { key: 'monitor', label: 'monitor' },
         ].map(({ key, label }) => (
           <div
             key={key}
@@ -1721,9 +2707,9 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
         style={{
           backgroundColor: '#fff',
           // padding: '20px',
-          borderRadius: '0 0 8px 8px',
+          // borderRadius: '0 0 8px 8px',
           border: '1px solid #17a934', 
-          height: '26vh',
+          height: '25vh',
         }}
       >
         {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} isDark={isDark} parentIsDown={isDown}/>}
