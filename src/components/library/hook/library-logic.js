@@ -12,7 +12,7 @@ export const HIDDEN_EXTENSIONS = [
     'bricksmotor','brickstwomotor','brickslight','brickssensors','bricksevent',
     'robotmove','robotsensors','robotevent','robotwifi','robotemote','robotshow',
     'robotsound','robotactuator','robotble','MicrobitIcreate','MicrobiteIcreateP',
-    'robotextend'
+    'robotextend','arduinouno','py32'
 ];
 
 let preKey = null;
@@ -356,7 +356,7 @@ export function createLibraryLogic(componentInstance) {
     // 初始化定时器逻辑（原来在 componentDidMount 里）
     function initExtensionLoader(getFilteredData, getHiddenData) {
         setTimeout(() => {
-            fetch('http://localhost:3000/get-extension')
+            fetch('http://localhost:38127/get-extension')
                 .then(response => {
                     if (response.ok) return response.text();
                     throw new Error('请求失败，状态码：' + response.status);
@@ -371,7 +371,7 @@ export function createLibraryLogic(componentInstance) {
                         handleClose();
                         setIsMaster(false);
                         channelLoad.postMessage(false);
-                        fetch('http://localhost:3000/set-extension', {
+                        fetch('http://localhost:38127/set-extension', {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain' },
                             body: 0
@@ -422,7 +422,7 @@ export function createLibraryLogic(componentInstance) {
                         handleClose();
                         setIsMaster(false);
                         channelLoad.postMessage(false);
-                        fetch('http://localhost:3000/set-extension', {
+                        fetch('http://localhost:38127/set-extension', {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain' },
                             body: 0
@@ -434,7 +434,31 @@ export function createLibraryLogic(componentInstance) {
                         handleClose();
                         setIsMaster(false);
                         channelLoad.postMessage(false);
-                        fetch('http://localhost:3000/set-extension', {
+                        fetch('http://localhost:38127/set-extension', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: 0
+                        });
+                    } else if (extension == 4 && getIsMaster()) {
+                        // self.props.onItemSelected(getHiddenData()[14]);
+                        self.props.onItemSelected(getHiddenData()[17]);
+                        oneExtension.postMessage(17);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        fetch('http://localhost:38127/set-extension', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: 0
+                        });
+                    }else if (extension == 5 && getIsMaster()) {
+                        // self.props.onItemSelected(getHiddenData()[14]);
+                        self.props.onItemSelected(getHiddenData()[18]);
+                        oneExtension.postMessage(18);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        fetch('http://localhost:38127/set-extension', {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain' },
                             body: 0
