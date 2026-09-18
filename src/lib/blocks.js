@@ -4,6 +4,7 @@ import 'scratch-blocks/blockly_compressed_horizontal'
 import 'scratch-blocks/lua_compressed'
 
 import 'scratch-blocks/python_compressed'
+import 'scratch-blocks/arduino_compressed'
 /**
  * Connect scratch blocks with the vm
  * @param {VirtualMachine} vm - The scratch vm
