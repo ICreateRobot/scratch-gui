@@ -104,3 +104,14 @@
   padding: 4px 10px;
   cursor: pointer
 }
+/* ✅ 允许选中文本（解决不能复制的问题） */
+.chat-ai-messages {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.chat-ai-message {
+  user-select: text;
+  -webkit-user-select: text;
+  pointer-events: auto;
+}
