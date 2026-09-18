@@ -11,10 +11,20 @@ import makeToolboxXML from '../../lib/make-toolbox-xml';
 export function createBlocksLogic(componentInstance) {
     const self = componentInstance
 
-    let downEnableCategories=['control','operators','variables','myBlocks','robot','bricks','Microbit']
+    let downEnableCategories=['control','operators','variables','myBlocks','robot','bricks','Microbit','arduino','py']
     let isChangeMode=false
     // let mode=!getShowCodeDb()
     const channelMode=new BroadcastChannel('mode')
+    //选择设备后将模块置灰
+    const channelGrayBlock = new BroadcastChannel('gray-block')
+    channelGrayBlock.addEventListener('message',(event)=>{
+        if(self.mode){
+            self.workspaceChange(event.data,true)
+        }else{
+            self.workspaceChange(event.data,false)
+        }
+        
+    })
 
     channelMode.addEventListener('message',(event)=>{
         if((self.mode==event.data) && (self.currentDevice==getCurrent())) return
@@ -56,6 +66,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotface_isSymFace')
                 setHiddenBlocks('robotface_faceName')
                 setHiddenBlocks('robotface_symFacePlace')
+                setHiddenBlocks('robotface_reSetFace')
                 // this.hiddenBlocksTypes.push('robotgood_isGood')
                 // this.hiddenBlocksTypes.push('robotgood_goodPlace')
                 setHiddenBlocks('robotimg_isTraffic')
@@ -115,7 +126,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotpin_IICReadFromMemInto')
                 
 
-                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode','robotpin_setPinMode']
+                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotface_reSetFace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode','robotpin_setPinMode']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i, 1);
@@ -157,6 +168,7 @@ export function createBlocksLogic(componentInstance) {
 
         if(isChangeMode){
             if(!self.mode){
+                self.workspaceChange(getCurrent().toLowerCase(),false)
                 // const children = toolboxDom.children;
                 // for (let i = 0; i < children.length; i++) {
                 //     console.log(children[i]);
@@ -199,6 +211,7 @@ export function createBlocksLogic(componentInstance) {
             }else{
 
 
+                self.workspaceChange(getCurrent().toLowerCase(),true)
                 const deleted = getDeletedCate();
                 console.log(deleted)
                 for (let i = deleted.length - 1; i >= 0; i--) {
@@ -256,17 +269,18 @@ export function createBlocksLogic(componentInstance) {
         // this.onWorkspaceUpdate(dataXML)
         // this.workspace.clear()
         // window.location.reload()
-        if(!self.mode){
-            // 创建初始块，不可删除
-            const block = self.workspace.newBlock('event_when');
-            console.log(block)
-            block.initSvg();
-            block.render();
-            block.moveBy(200, 100);
+        // if(!self.mode){
+        //     // 创建初始块，不可删除
+        //     const block = self.workspace.newBlock('event_when');
+        //     console.log(block)
+        //     block.initSvg();
+            
+        //     block.moveBy(200, 100);
+        //     block.render();
 
-            block.setDeletable(false);
-            // block.setMovable(false);
-        }
+        //     block.setDeletable(false);
+        //     // block.setMovable(false);
+        // }
 
     })
 
@@ -415,15 +429,34 @@ export function createBlocksLogic(componentInstance) {
             self.onWorkspaceUpdate(self.dataXML)
             self.workspace.clear()
             
+        }else if(event.data=='4'){
+                await restoreCategoriesToToolbox([
+                'arduinouno'
+
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
+            
         }
+        else if(event.data=='5'){
+                await restoreCategoriesToToolbox([
+                'py32'
+
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
+            
+        }
+
 
         if(!self.mode){
             // 创建初始块，不可删除
             const block = self.workspace.newBlock('event_when');
             console.log(block)
             block.initSvg();
-            block.render();
+            
             block.moveBy(200, 100);
+            block.render();
     
             block.setDeletable(false);
             // block.setMovable(false);
@@ -443,8 +476,9 @@ export function createBlocksLogic(componentInstance) {
             const block = self.workspace.newBlock('event_when');
             console.log(block)
             block.initSvg();
-            block.render();
+            
             block.moveBy(200, 100);
+            block.render();
     
             block.setDeletable(false);
             // block.setMovable(false);
@@ -509,10 +543,30 @@ export function createBlocksLogic(componentInstance) {
             ]);
             self.onWorkspaceUpdate(self.dataXML)
             self.workspace.clear()
+        }else if(self.preClose[3] && !close[3]){
+
+
+            await removeCategoryFromToolbox([
+                'arduinouno',
+                
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
+        }else if(self.preClose[4] && !close[4]){
+
+
+            await removeCategoryFromToolbox([
+                'py32',
+                
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
         }
         self.preClose[0]=close[0]
         self.preClose[1]=close[1]
         self.preClose[2]=close[2]
+        self.preClose[3]=close[3]
+        self.preClose[4]=close[4]
     })
 
 
@@ -683,8 +737,9 @@ export function createBlocksLogic(componentInstance) {
                     const block = self.workspace.newBlock('event_when');
                     console.log(block)
                     block.initSvg();
-                    block.render();
+                    
                     block.moveBy(200, 100);
+                    block.render();
 
                     block.setDeletable(false);
                 }
@@ -708,7 +763,12 @@ export function createBlocksLogic(componentInstance) {
                 // console.log(code)
                 // console.log(this.unindentCode(code))
                 
-                codeModule.setCode(indentPythonFunctions(unindentCode(code)))
+                if(generatorName=='Python'){
+                    codeModule.setCode(indentPythonFunctions(unindentCode(code)))
+                }else{
+                    codeModule.setCode(code)
+                }
+                
                 // console.log(code)
                 
                 // alert(getCode())
