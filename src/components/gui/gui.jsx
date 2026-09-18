@@ -39,6 +39,8 @@ import TWUnknownPlatformModal from '../../containers/tw-unknown-platform-modal.j
 import TWInvalidProjectModal from '../../containers/tw-invalid-project-modal.jsx';
 import CodeMirrorComponent from 'scratch-gui/src/components/CodeMirrorComponent/CodeMirrorComponent.jsx';
 
+import FlashProgress from 'scratch-gui/src/components/FlashProgressModal/FlashProgressModal.jsx';
+
 import {STAGE_SIZE_MODES, FIXED_WIDTH, UNCONSTRAINED_NON_STAGE_WIDTH} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
 import {Theme} from '../../lib/themes';
@@ -250,7 +252,11 @@ const GUIComponent = props => {
         handleSelect,
         handleOpenAiMode,
         showIot,
-        setShowIot
+        setShowIot,
+        flashLogs,
+        setFlashLogs,
+        showFlash,
+        setShowFlash
     } = useGuiLogic({
         onExtensionButtonClick,
         onOpenCustomExtensionModal,
@@ -594,7 +600,7 @@ const GUIComponent = props => {
                                 <div style={{
                                 position: 'absolute',
                                 top: '3rem',
-                                right: '0',
+                                insetInlineEnd: '0',
                                 // width: '30vw',
                                 width:'490px',
                                 height:'calc(100% - 3rem)',
@@ -651,7 +657,7 @@ const GUIComponent = props => {
                             {/* {showCode && <CodeMirrorComponent code={pythonCode}/>}
                             {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>} */}
                             {showCode && <div style={{minWidth:'480px',display: 'flex',flexDirection: 'column',paddingLeft: '$space',paddingRight: '$space',flexBasis: '0'}}>
-                                {showCode && <CodeMirrorComponent code={pythonCode}/>}
+                                {showCode && <CodeMirrorComponent theme={theme} code={pythonCode}/>}
                                 {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension} isDown={isDown}/>}
                             </div>}
                             
@@ -695,6 +701,11 @@ const GUIComponent = props => {
                                 onSelect={handleSelect}
                             />
 
+                            {showFlash && <FlashProgress logs={flashLogs}
+                                onClose={() => {
+                                    setShowFlash(false);
+                                    setFlashLogs('');
+                            }}></FlashProgress>}
                             {showIot && <IotEditor></IotEditor>}
                             
                         </Box>
