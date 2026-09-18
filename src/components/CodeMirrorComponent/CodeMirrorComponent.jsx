@@ -17,29 +17,57 @@ import { autocompletion } from '@codemirror/autocomplete';
 import { oneDark } from '@codemirror/theme-one-dark';
 
 
-
-const CodeMirrorComponent = ({ code, options }) => {
+const CodeMirrorComponent = ({ theme,code, options }) => {
     const editorRef = useRef(null);
     // console.log(code)
 
     const codeMirrorRef = useRef(null);
     const STORAGE_KEY='tw:theme'
     const local = localStorage.getItem(STORAGE_KEY);
+    const forceLTR = EditorView.theme({
+        "&": {
+          direction: "ltr"
+        },
+      
+        ".cm-content": {
+          direction: "ltr",
+          textAlign: "left",
+          whiteSpace: "pre"
+        },
+      
+        ".cm-line": {
+          direction: "ltr",
+          textAlign: "left"
+        },
+        // 横向滚动 
+        ".cm-scroller": { overflowX: "auto", overflowY: "auto" }
+      });
      // 判断是否暗色
     let editorTheme = "light";
-    try {
-        if (local) {
-            if (local === "dark") {
-                editorTheme = oneDark;
-            } else {
-                const parsed = JSON.parse(local);
-                if (parsed?.gui === "dark") {
-                    editorTheme = oneDark;
-                }
-            }
+    // try {
+    //     if (local) {
+    //         if (local === "dark") {
+    //             editorTheme = oneDark;
+    //         } else {
+    //             const parsed = JSON.parse(local);
+    //             if (parsed?.gui === "dark") {
+    //                 editorTheme = oneDark;
+    //             }
+    //         }
+    //     }
+    // } catch (e) {
+    //     // 解析失败则使用默认 light
+    // }
+    try{
+      if(theme.gui){
+        if(theme.gui=='light'){
+          editorTheme = "light";
+        }else if(theme.gui=='dark'){
+          editorTheme = oneDark
         }
-    } catch (e) {
-        // 解析失败则使用默认 light
+      }
+    }catch(e){
+
     }
 
     useEffect(() => {
@@ -91,7 +119,8 @@ const CodeMirrorComponent = ({ code, options }) => {
             extensions={[
               python(),
               autocompletion(),
-              EditorView.lineWrapping,
+              // EditorView.lineWrapping,
+              forceLTR, 
             ]}
             // theme="light"
             theme={editorTheme}
