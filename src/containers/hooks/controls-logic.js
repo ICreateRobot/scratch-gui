@@ -8,7 +8,7 @@ export function createControlsLogic(componentInstance) {
         e.preventDefault();
         e.persist(); // 保留事件对象
         console.log('小绿旗')
-        fetch(`http://localhost:3000/get-ble`,{
+        fetch(`http://localhost:38127/get-ble`,{
             method: 'GET'
         })
         .then(response => {
