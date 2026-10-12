@@ -401,10 +401,25 @@ import {QRCodeSVG} from 'qrcode.react';
 
 import {getLastTime,setLastTime} from '../utils/utils'
 import {safeSerialWrite} from '../utils/safeSerialWrite'
+import scanDevice from './scanDevice.svg'
 
+import scanBn from './scanBn.png'
+import disConnectBn from './disConnectBn.png'
+import serialIcoGreen from './serial.png'
+import serialIcoRed from './serialRed.png'
+import serialIcoBlue from './serialBlue.png'
+import serialIcoPurple from './serialPurple.png'
+import bleIconGreen from './ble.png'
+import bleIconRed from './bleRed.png'
+import bleIconBlue from './bleBlue.png'
+import bleIconPurple from './blePurple.png'
+
+import { DAPLink, WebUSB } from 'dapjs';
+let daplink;
 let isCheckMicrobit=false
 let heartTime;
 let timeSpace;
+window.hasResponse=false;
 /** 串口全局监听（保持不变） */
 if (!window.__serialDisconnectBound) {
   window.__serialDisconnectBound = true;
@@ -413,6 +428,7 @@ if (!window.__serialDisconnectBound) {
       console.warn(" 全局监听：串口设备已拔出", event);
       setVersion(['microbit',''])
       setVersion(['icrobot',''])
+      setVersion(['icrobotHard',''])
       if(heartTime){
         clearInterval(heartTime)
       }
@@ -464,9 +480,66 @@ if (!window.__serialDisconnectBound) {
           if (window.__onSerialDeviceRemoved) {
             window.__onSerialDeviceRemoved();
           }
+          // if (window.__microbitUSB) {
+          //   try {
+          //     await window.__daplink.disconnect()
+          //     await window.__microbitUSB.close();
+          //     clearInterval(window.dapReadTime)
+          //     console.log("✅ micro:bit WebUSB 已断开");
+          //   } catch (err) {
+          //     console.warn("断开 WebUSB 失败:", err);
+          //   } finally {
+          //     window.__microbitUSB = null;
+          //     window.__daplink=null
+          //     clearInterval(window.dapReadTime)
+          //   }
+          // }
         } catch (err) {
           console.warn("全局清理失败:", err);
         }
+      }
+    });
+  }catch(e){
+    console.log('无法使用web serial')
+  }
+  
+}
+
+if (!window.__usbDisconnectBound) {
+  window.__usbDisconnectBound = true;
+  try{
+    navigator.usb.addEventListener("disconnect", async (event) => {
+      console.warn(" 全局监听：usb设备已拔出", event);
+      setVersion(['microbit',''])
+      console.log(event.device)
+      console.log(window.__microbitUSB)
+      if (event.device !== window.__microbitUSB) return
+      alert(formatMessage({
+                    id: "gui.firmware.microbitDisconnectToast",
+                    default: 'Connection disconnected',
+                    description: "gui.firmware.microbitDisconnectToast"
+            }))
+      try {
+        if (window.__microbitUSB) {
+          try {
+            await window.__daplink.disconnect()
+            await window.__microbitUSB.close();
+            clearInterval(window.dapReadTime)
+            window.hasResponse=false;
+            console.log("micro:bit WebUSB 已断开");
+          } catch (err) {
+            console.warn("断开 WebUSB 失败:", err);
+          } finally {
+            if(window.__onUsbDeviceRemoved){
+              window.__onUsbDeviceRemoved()
+            }
+            window.__microbitUSB = null;
+            window.__daplink=null
+            clearInterval(window.dapReadTime)
+          }
+        }
+      } catch (err) {
+        console.warn("全局清理失败:", err);
       }
     });
   }catch(e){
@@ -508,6 +581,7 @@ if (!window.__bluetoothGlobalBound) {
     window.__bluetoothSensorState = [[], [], [], [], [], [], [], [], []];
 
     setVersion(['icrobot',''])
+    setVersion(['icrobotHard',''])
     if (typeof window.__onBluetoothConnectData === "function") {
       window.__onBluetoothConnectData({
         type: "isOpenBluetooth",
@@ -523,7 +597,9 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   const [portInfo, setPortInfo] = useState(
     window.__serialPort?.getInfo ? window.__serialPort.getInfo() : null
   );
+  const [usb, setUsb] = useState(window.__microbitUSB || null);
 
+  const [loading, setLoading] = useState(false);
   const readerRef = useRef(window.__serialReader || null);
   const writerRef = useRef(window.__serialWriter || null);
 
@@ -555,6 +631,13 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
       handleConnectData({ type: "isOpenPort", data: { message: false } });
     };
     return () => delete window.__onSerialDeviceRemoved;
+  }, []);
+
+  useEffect(() => {
+    window.__onUsbDeviceRemoved = () => {
+      setUsb(null);
+    };
+    return () => delete window.__onUsbDeviceRemoved;
   }, []);
 
   /** 🔌 串口逻辑保持不变 */
@@ -646,120 +729,269 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
 
   async function sendSerialCommand(command, delay = 50) {
     console.log('111111111111111111111111111111111111111')
-    const encoder = new TextEncoder();
-    const buffer = encoder.encode(command);
+    // const encoder = new TextEncoder();
+    // const buffer = encoder.encode(command);
     
-    await window.__serialWriter.write(buffer);
-      // return new Promise((resolve, reject) => {
-      //   window.__serialWriter.write(buffer, err => {
-      //     if (err) return reject(err);
-      //     // writer.releaseLock()
-      //     setTimeout(resolve, delay);
-      //   });
-      // });
+    // await window.__serialWriter.write(buffer);
+    await daplink.serialWrite(command + "\r\n");
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  const handleScanAndConnect = async () => {
-    try {
-      // 🚀 请求用户选择端口
-      const newPort = await navigator.serial.requestPort({
-        filters: [
-          { usbVendorId: 0x0D28, usbProductId: 0x0204  },
-          { usbVendorId: 0x0D28, usbProductId: 0x0205  },
-          { usbVendorId: 0x1A86 },
-        ]
-      });
-      const info = newPort.getInfo ? newPort.getInfo() : {};
-      console.log("🔍 识别到设备信息:", info);
+  // const handleScanAndConnect = async () => {
+  //   try {
+  //     // 🚀 请求用户选择端口
+  //     const newPort = await navigator.serial.requestPort({
+  //       filters: [
+  //         { usbVendorId: 0x0D28, usbProductId: 0x0204  },
+  //         { usbVendorId: 0x0D28, usbProductId: 0x0205  },
+  //         { usbVendorId: 0x1A86 },
+  //       ]
+  //     });
+  //     const info = newPort.getInfo ? newPort.getInfo() : {};
 
-      // ✅ 判断是否为 micro:bit（VID: 0x0D28，PID: 0x0204 / 0x0205）
-      const isMicrobit =
-        info.usbVendorId === 0x0d28 &&
-        (info.usbProductId === 0x0204 || info.usbProductId === 0x0205);
+  //     // ✅ 判断是否为 micro:bit（VID: 0x0D28，PID: 0x0204 / 0x0205）
+  //     const isMicrobit =
+  //       info.usbVendorId === 0x0d28 &&
+  //       (info.usbProductId === 0x0204 || info.usbProductId === 0x0205);
 
-      if (isMicrobit) {
-        console.log("🟡 检测到 micro:bit，启用双连接 (USB + Serial)");
+  //     if (isMicrobit) {
+  //       console.log("🟡 检测到 micro:bit，启用双连接 (USB + Serial)");
 
-        /** 1️⃣ 打开串口连接 */
-        await newPort.open({ baudRate: 115200 });
-        setPort(newPort);
-        setPortInfo(info);
-        window.__serialPort = newPort;
-        window.__serialPortInfo = info;
+  //       /** 1️⃣ 打开串口连接 */
+  //       await newPort.open({ baudRate: 115200 });
+  //       setPort(newPort);
+  //       setPortInfo(info);
+  //       window.__serialPort = newPort;
+  //       window.__serialPortInfo = info;
 
-        /** 2️⃣ 打开 WebUSB 连接 */
-       try{
-         const usbDevice = await navigator.usb.requestDevice({
-          filters: [{ vendorId: 0x0d28 }],
-          });
-          await usbDevice.open();
-          if (usbDevice.configuration === null) {
-            await usbDevice.selectConfiguration(1);
-          }
-          // await usbDevice.claimInterface(0);
+  //       /** 2️⃣ 打开 WebUSB 连接 */
+  //      try{
+  //        const usbDevice = await navigator.usb.requestDevice({
+  //         filters: [{ vendorId: 0x0d28 }],
+  //         });
+  //         await usbDevice.open();
+  //         if (usbDevice.configuration === null) {
+  //           await usbDevice.selectConfiguration(1);
+  //         }
+  //         // await usbDevice.claimInterface(0);
 
-          const iface = usbDevice.configuration.interfaces.find(
-            i => i.alternates[0].interfaceClass === 0xff
-          );
-          if (iface) {
-            await usbDevice.claimInterface(iface.interfaceNumber);
-            window.__microbitUSB = usbDevice;
-            console.log("✅ micro:bit WebUSB 接口已连接 (class=0xFF)");
-          } else {
-            console.warn("⚠️ 未找到可用的 micro:bit WebUSB 接口");
-          }
+  //         const iface = usbDevice.configuration.interfaces.find(
+  //           i => i.alternates[0].interfaceClass === 0xff
+  //         );
+  //         if (iface) {
+  //           await usbDevice.claimInterface(iface.interfaceNumber);
+  //           window.__microbitUSB = usbDevice;
+  //           console.log("✅ micro:bit WebUSB 接口已连接 (class=0xFF)");
+  //         } else {
+  //           console.warn("⚠️ 未找到可用的 micro:bit WebUSB 接口");
+  //         }
           
-          console.log("✅ micro:bit USB 接口已就绪:", usbDevice);
-          window.__microbitUSB = usbDevice;
-       }catch(e){
-        console.log(e)
-       }
+  //         console.log("✅ micro:bit USB 接口已就绪:", usbDevice);
+  //         window.__microbitUSB = usbDevice;
+  //      }catch(e){
+  //       console.log(e)
+  //      }
 
         
 
-        /** 3️⃣ 建立串口写入器并发送初始化命令 */
-        const writer = newPort.writable.getWriter();
-        writerRef.current = writer;
-        window.__serialWriter = writer;
+  //       /** 3️⃣ 建立串口写入器并发送初始化命令 */
+  //       const writer = newPort.writable.getWriter();
+  //       writerRef.current = writer;
+  //       window.__serialWriter = writer;
 
-        // const textEncoder = new TextEncoderStream();
-        // const writableStreamClosed = textEncoder.readable.pipeTo(window.__serialPort.writable);
-        // const writer = textEncoder.writable.getWriter();
-        // writerRef.current = writer;
-        // window.__serialWriter = writer;
+  //       // const textEncoder = new TextEncoderStream();
+  //       // const writableStreamClosed = textEncoder.readable.pipeTo(window.__serialPort.writable);
+  //       // const writer = textEncoder.writable.getWriter();
+  //       // writerRef.current = writer;
+  //       // window.__serialWriter = writer;
 
-        handleConnectData({ type: "isOpenPort", data: { message: true } });
+  //       handleConnectData({ type: "isOpenPort", data: { message: true } });
 
-        // 发送初始化命令（与原逻辑保持一致）
-        // const jsonData = {
-        //   command: "select_mode",
-        //   params: { mode: getShowCodeDb() ? "file" : "scratch" },
-        // };
-        // const str = JSON.stringify(jsonData) + "\n";
-        // const encoder = new TextEncoder();
-        // await writer.write(encoder.encode(str));
+  //       // 发送初始化命令（与原逻辑保持一致）
+  //       // const jsonData = {
+  //       //   command: "select_mode",
+  //       //   params: { mode: getShowCodeDb() ? "file" : "scratch" },
+  //       // };
+  //       // const str = JSON.stringify(jsonData) + "\n";
+  //       // const encoder = new TextEncoder();
+  //       // await writer.write(encoder.encode(str));
 
-        /** 4️⃣ 启动串口监听 */
-        listenToPortData(newPort);
+  //       /** 4️⃣ 启动串口监听 */
+  //       listenToPortData(newPort);
+
+  //       isCheckMicrobit=true
+  //       await new Promise(resolve => setTimeout(resolve, 1000))
+
+  //       await sendSerialCommand('\x03'); 
+  //       await sendSerialCommand('from microbit import *\r',200);
+  //       await sendSerialCommand('from ICreate import *\r',200);
+  //       await sendSerialCommand('display.show(Image.HEART)\n\r', 200);
+  //       await sendSerialCommand('get_version()\n\r', 200);//用于获取当前版本号
+
+  //       onRequestClose()
+  //       console.log("✅ micro:bit 串口与 USB 已同时连接");
+  //       return;
+  //     }
+
+  //     if(window.__bluetoothDevice){
+  //       handleBluetoothDisconnect()
+  //     }
+
+  //     // 🧩 普通设备逻辑（原样保留）
+  //     await newPort.open({ baudRate: 115200 });
+      
+  //     window.__serialPort = newPort;
+  //     window.__serialPortInfo = info;
+
+  //     listenToPortData(newPort);
+
+  //     if (getCurrent() === 'ICRobot') {
+  //       icRobotConnectedRef.current = false;
+
+  //       // 🚨 启动 3 秒握手超时
+  //       icRobotHandshakeTimerRef.current = setTimeout(() => {
+  //         console.warn("⏱ ICRobot 3 秒未收到 [0]，自动断开");
+  //         // alert()
+  //         showToast(
+  //           formatMessage({
+  //               id: "gui.connect.serialCatchfailedDevice",
+  //               default: 'Serial port connection failed',
+  //               description: "gui.connect.serialCatchfailedDevice"
+  //             })
+  //         )
+  //         handleDisconnect();
+  //       }, 3000);
+  //     }
+
+  //     const writer = newPort.writable.getWriter();
+  //     writerRef.current = writer;
+  //     window.__serialWriter = writer;
+
+  //     const jsonData = {
+  //       command: "select_mode",
+  //       params: { mode: getShowCodeDb() ? "file" : "scratch" },
+  //     };
+  //     const str = JSON.stringify(jsonData) + "\n";
+  //     const encoder = new TextEncoder();
+  //     await writer.write(encoder.encode(str));
+
+  //     icRobotConnectedRef.current = false;
+  //     // setPort(newPort);
+  //     // setPortInfo(info);
+  //     // handleConnectData({ type: "isOpenPort", data: { message: true } });
+  //     window.__serialListeners = [];
+  //     window.__addSerialListener = function (fn) {
+  //       window.__serialListeners.push(fn);
+  //     };
+  //     window.__removeSerialListener = function (fn) {
+  //       window.__serialListeners = window.__serialListeners.filter(f => f !== fn);
+  //     };
+  //     // onRequestClose()
+      
+  //   } catch (err) {
+  //     console.error("连接失败:", err);
+  //   }
+  // };
+
+  const handleScanAndConnect = async () => {
+    try {
+      setLoading(true)
+
+      if (getCurrent()=='Microbit') {
+        console.log("检测到 micro:bit，启用双连接 (USB + Serial)");
+
+        const device = await navigator.usb.requestDevice({
+          filters: [{ vendorId: 0x0D28 }]
+        });
+    
+        console.log("Device selected");
+    
+        const transport = new WebUSB(device);
+        daplink = new DAPLink(transport);
+    
+        await new Promise(r => setTimeout(r, 200));
+        await daplink.connect();
+    
+        console.log("Connected ✔");
+        window.__microbitUSB = device;
+        setUsb(device)
+        window.__daplink=daplink
+    
+        // 监听 serial 输出
+        // setInterval(async () => {
+        //   const data = await daplink.serialRead();
+        //   if (data) console.log(new TextDecoder().decode(data));
+        // }, 100);
+        
+    
+        console.log(await daplink.getSerialBaudrate());
+        await daplink.setSerialBaudrate(115200);
+        console.log('222')
+        await new Promise(r => setTimeout(r, 200));
+    
+        // reset REPL
+        // await daplink.serialWrite("\x03");
+        // await daplink.serialWrite("\x04");
+
+        console.log('333')
+        // handleConnectData({ type: "isOpenPort", data: { message: true } });
+
+
+        /** 启动串口监听 */
+        // listenToPortData(newPort);
 
         isCheckMicrobit=true
         await new Promise(resolve => setTimeout(resolve, 1000))
 
-        await sendSerialCommand('\x03'); 
+        listenMicrobitData()
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        let timeCheck=setTimeout(()=>{
+          if(!window.hasResponse){
+            alert(
+              formatMessage({
+                id: 'gui.connect.versionLow',
+                default: 'The current device firmware version is too low,to ensure stable and proper operation, please flash the firmware first.',
+                description: 'gui.connect.versionLow'
+              })
+            )
+            clearTimeout(timeCheck)
+          }
+        },3000)
+        console.log('444')
+        if(getShowCodeDb()){
+          await daplink.serialWrite("\x03");
+          await daplink.serialWrite("\x04");
+        }else{
+          await sendSerialCommand('\x03',200); 
+
+          // alert('111')
+        }
+        
         await sendSerialCommand('from microbit import *\r',200);
         await sendSerialCommand('from ICreate import *\r',200);
         await sendSerialCommand('display.show(Image.HEART)\n\r', 200);
         await sendSerialCommand('get_version()\n\r', 200);//用于获取当前版本号
 
-        console.log("✅ micro:bit 串口与 USB 已同时连接");
+
+
+        setLoading(false)
+        // await new Promise(resolve => setTimeout(resolve, 500))
+        onRequestClose()
+        console.log(" micro:bit 串口与 USB 已同时连接");
         return;
       }
 
       if(window.__bluetoothDevice){
         handleBluetoothDisconnect()
       }
+      const newPort = await navigator.serial.requestPort({
+        filters: [
+          { usbVendorId: 0x1A86 },
+        ]
+      });
+      const info = newPort.getInfo ? newPort.getInfo() : {};
 
-      // 🧩 普通设备逻辑（原样保留）
+      //  普通设备逻辑（原样保留）
       await newPort.open({ baudRate: 115200 });
       
       window.__serialPort = newPort;
@@ -770,9 +1002,10 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
       if (getCurrent() === 'ICRobot') {
         icRobotConnectedRef.current = false;
 
-        // 🚨 启动 3 秒握手超时
+        //  启动 3 秒握手超时
         icRobotHandshakeTimerRef.current = setTimeout(() => {
           console.warn("⏱ ICRobot 3 秒未收到 [0]，自动断开");
+          setLoading(false)
           // alert()
           showToast(
             formatMessage({
@@ -808,9 +1041,33 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
       window.__removeSerialListener = function (fn) {
         window.__serialListeners = window.__serialListeners.filter(f => f !== fn);
       };
+      // onRequestClose()
       
     } catch (err) {
+      setLoading(false)
       console.error("连接失败:", err);
+      const msg = err?.message || "";
+      if (
+          msg.includes("Bad response for 8 -> 17")
+      ) {
+
+          showToast(
+            formatMessage({
+              id: 'gui.connect.microbitCatch',
+              default: 'Device communication error. Please unplug and reconnect the micro:bit, then try again.',
+              description: 'gui.connect.microbitCatch'
+            })
+          );
+
+      }
+      if( msg.includes("Failed to execute 'claimInterface' on 'USBDevice': Unable to claim interface.")){
+        showToast(formatMessage({
+          id: 'gui.connect.microbitUsing',
+          default: 'Another window may be using this device.',
+          description: 'gui.connect.microbitUsing'
+        }))
+        // handleDisconnect()
+      }
     }
   };
 
@@ -863,6 +1120,74 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   function parseVersion(num) {
       const str = String(num).padStart(3, '0'); // 防止出现 12 这种情况
       return `${str[0]}.${str[1]}.${str[2]}`;
+  }
+
+  const listenMicrobitData=async()=>{
+    let bufferData = "";
+    let currentResponse = "";
+    window.dapReadTime=setInterval(async () => {
+      const data = await daplink.serialRead();
+      bufferData += new TextDecoder().decode(data);
+
+      if(bufferData) window.hasResponse=true
+      // console.log(bufferData)
+      while (bufferData.includes(">>>")) {
+        console.log(bufferData)
+        // 按提示符拆分
+        const parts = bufferData.split(">>>");
+
+        // 前面部分（去掉第一个提示符之前的可能空数据）
+        const fullResponse = parts.shift().trim();
+        bufferData = parts.join(">>>"); // 剩余数据保留（可能是下一次命令）
+
+        if (fullResponse) {
+          // 拼上结尾的 >>> 还原完整一块
+          const completeMessage = fullResponse + "\n>>>";
+
+          console.log(completeMessage)
+          console.log('版本号：',isVersionString(completeMessage))
+         if(isCheckMicrobit){
+            if(completeMessage.includes("NameError: name 'get_version' isn't defined")){
+              isCheckMicrobit=false
+              alert(formatMessage({
+                id: 'gui.connect.versionLow',
+                default: 'The current device firmware version is too low,to ensure stable and proper operation, please flash the firmware first.',
+                description: 'gui.connect.versionLow'
+              }))
+            }
+            if(isVersionString(completeMessage)){
+              isCheckMicrobit=false
+              setVersion(['microbit',isVersionString(completeMessage)])
+              try{
+                const res = await getLatestMicrobitVersionWithFallback()
+                console.log(res)
+                
+                let result=compareVersion(isVersionString(completeMessage),res)
+                console.log('abcd:',result)
+                if(result==-1){
+                  alert(formatMessage({
+                    id: 'gui.connect.versionLow',
+                    default: 'The current device firmware version is too low,to ensure stable and proper operation, please flash the firmware first.',
+                    description: 'gui.connect.versionLow'
+                  }))
+                }
+              }catch(e){
+                console.log(e)
+              }
+            }
+         }
+          // 如果当前设备是 Microbit，就触发你的逻辑
+          handleConnectData({
+            type: "MicroSerialData",
+            data: { message: completeMessage },
+          })
+
+          // 清空当前响应缓存
+          currentResponse = "";
+        }
+      }
+      // if (data) console.log(new TextDecoder().decode(data));
+    }, 100);
   }
   const listenToPortData = async (serialPort) => {
     if (!serialPort.readable || serialPort.readable.locked) return;
@@ -979,6 +1304,8 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                 if (icRobotHandshakeTimerRef.current) {
                   clearTimeout(icRobotHandshakeTimerRef.current);
                   icRobotHandshakeTimerRef.current = null;
+                  setLoading(false)
+                  onRequestClose()
                 }
                 timeSpace=Date.now()
 
@@ -1029,7 +1356,13 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                 }
 
                 if(!getVersion().icrobot && parsed[30]){
+                  console.log(parsed[30])
                   setVersion(['icrobot',parseVersion(parsed[30])])
+                }
+
+                if(!getVersion().icrobotHard && parsed[31]){
+                  console.log(parsed[31])
+                  setVersion(['icrobotHard',parseVersion(parsed[31])])
                 }
                 // const parsed = JSON.parse(message);
                 handleConnectData({ type: "serialData", data: { message: parsed } });
@@ -1055,6 +1388,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   const handleDisconnect = async () => {
     setVersion(['microbit',''])
     setVersion(['icrobot',''])
+    setVersion(['icrobotHard',''])
     if(heartTime){
       clearInterval(heartTime)
     }
@@ -1065,13 +1399,16 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
     }
 
     icRobotConnectedRef.current = false;
-    const jsonData = {
-        command: "select_mode",
-        params: { mode:"file"},
-    };
-    const str = JSON.stringify(jsonData) + "\n";
-    const encoder = new TextEncoder();
-    await window.__serialWriter.write(encoder.encode(str));
+    if(getCurrent()=='ICRobot'){
+      const jsonData = {
+          command: "select_mode",
+          params: { mode:"file"},
+      };
+      const str = JSON.stringify(jsonData) + "\n";
+      const encoder = new TextEncoder();
+      await window.__serialWriter.write(encoder.encode(str));
+    }
+    
     try {
       if (readerRef.current) await readerRef.current.cancel();
       if (writerRef.current) {
@@ -1088,14 +1425,21 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
       }
 
        // ✅ 新增：断开 WebUSB
-      if (window.__microbitUSB) {
+       if (window.__microbitUSB) {
         try {
+          await window.__daplink.disconnect()
           await window.__microbitUSB.close();
+          window.hasResponse=false;
+          setUsb(null)
+          clearInterval(window.dapReadTime)
           console.log("✅ micro:bit WebUSB 已断开");
         } catch (err) {
           console.warn("断开 WebUSB 失败:", err);
         } finally {
           window.__microbitUSB = null;
+          window.__daplink=null
+          setUsb(null)
+          clearInterval(window.dapReadTime)
         }
       }
     } catch (err) {
@@ -1157,6 +1501,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   }
 
   const handleBluetoothConnect = async () => {
+    setLoading(true)
     if(getCurrent()=='ICBricks'){
          try {
           let device
@@ -1342,8 +1687,11 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
               // 通知上层连接已打开
               handleConnectData({ type: "isOpenBluetooth", data: { message: true } });
 
+              setLoading(false)
+              onRequestClose()
               console.log("✅ 蓝牙设备已连接:", device.name);
             }catch(err){
+              setLoading(false)
                if(String(err).includes('NetworkError')){
                   showToast(formatMessage({
                     id: 'gui.connect.bleCatchRecon',
@@ -1365,6 +1713,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
 
             
         } catch (err) {
+          setLoading(false)
           showToast(formatMessage({
             id: 'gui.connect.bleCatchfailedDevice',
             default: 'Bluetooth connection error.',
@@ -1483,6 +1832,10 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
             if(!getVersion().icrobot && JSON.parse(sensorArray)[30]){
               setVersion(['icrobot',parseVersion(JSON.parse(sensorArray)[30])])
             }
+
+            if(!getVersion().icrobotHard && JSON.parse(sensorArray)[31]){
+              setVersion(['icrobotHard',parseVersion(JSON.parse(sensorArray)[31])])
+            }
             handleConnectData({
               type:'robotSensor',
               data:sensorArray
@@ -1516,7 +1869,10 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
           handleConnectData({ type: "isOpenBluetooth", data: { message: true } });
           console.log(deviceRobot.name)
 
+          setLoading(false)
+          onRequestClose()
         }catch(err){
+          setLoading(false)
           console.log(err)
 
           if (String(err).includes('WriteTimeout')) {
@@ -1554,6 +1910,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
           // handleBluetoothDisconnect()
         }
       }catch(e){
+        setLoading(false)
         showToast(formatMessage({
           id: 'gui.connect.bleCatchfailedDevice',
           default: 'Bluetooth connection error.',
@@ -1668,6 +2025,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
 
   const handleBluetoothDisconnect = async () => {
     setVersion(['icrobot',''])
+    setVersion(['icrobotHard',''])
     try {
       console.log(window.__bluetoothDevice?.gatt.connected)
       if (window.__bluetoothDevice?.gatt.connected) window.__bluetoothDevice.gatt.disconnect();
@@ -1825,6 +2183,45 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
               description: 'gui.connect.noFilter'
             })
 
+  const serialIcons = {
+    green: serialIcoGreen,
+    red: serialIcoRed,
+    blue: serialIcoBlue,
+    purple: serialIcoPurple,
+  }
+  
+  const bleIcons = {
+    green: bleIconGreen,
+    red: bleIconRed,
+    blue: bleIconBlue,
+    purple: bleIconPurple,
+  }
+  const getAccent = () => {
+    const themeStr = localStorage.getItem('tw:theme');
+  
+    // 没有主题 → 绿色
+    if (!themeStr) return 'green';
+  
+    try {
+      const theme = JSON.parse(themeStr);
+      const accent = theme?.accent;
+  
+      // 只允许这三种
+      if (['blue', 'red', 'purple'].includes(accent)) {
+        return accent;
+      }
+  
+      // 其它全部兜底绿色
+      return 'green';
+    } catch {
+      return 'green';
+    }
+  };
+
+  const accent = getAccent()
+
+const serialIco = serialIcons[accent]
+const bleIcon = bleIcons[accent]
 
   const deviceType = getCurrent(); 
 
@@ -1851,7 +2248,14 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
   };
   return (
     <div className={styles.overlay}>
+    
       <div className={styles.connectContainer}>
+          {/* 全屏加载遮罩 */}
+    {loading && (
+      <div className={styles.loadingOverlay}>
+        <div className={styles.spinner} />
+      </div>
+    )}
         <div className={styles.headerRow}>
           <button className={styles.closeButton} onClick={onRequestClose}>
             ✕
@@ -1934,10 +2338,11 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                   setActiveTab(key);
                 }}
               >
+                {/* {key=="serial" && <img style={{width:'30px',height:"30px"}} src={serialTabIcon}></img>} */}
                 {{
                   serial: formatMessage({
                     id: 'gui.connect.serialName',
-                    default: 'Serial',
+                    default: 'Wired Connection',
                     description: 'gui.connect.serialName'
                   }),
                   bluetooth: formatMessage({
@@ -1956,17 +2361,22 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
           {activeTab === "serial" && (
             <div className={styles.serialPanel}>
               <div className={styles.serialCard}>
+                <img style={{width:'210px',height:"210px"}} src={serialIco}></img>
+              </div>
+              <div className={styles.serialCard}>
                 <div className={styles.serialStatus}>
                   <div
                     className={`${styles.statusDot} ${
-                      port ? styles.connected : styles.disconnected
+                      port || usb ? styles.connected : styles.disconnected
                     }`}
                   ></div>
                   <span className={styles.deviceText}>
-                    {portInfo
-                      ? `device | VID: ${portInfo.usbVendorId || "unknown"} | PID: ${
-                          portInfo.usbProductId || "unknown"
-                        }`
+                    {portInfo || usb
+                      ? formatMessage({
+                            id: 'gui.connection.connected',
+                            default: 'connected',
+                            description: 'gui.connection.connected'
+                        })
                       : formatMessage({
                                 id: 'gui.connect.noDevice',
                                 default: 'no device',
@@ -1974,14 +2384,16 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                             })}
                   </span>
                 </div>
+                <hr style={{border: 'none', borderTop: '2px dashed #ddd', width: '100%'}}></hr>
 
                 <div className={styles.serialButtons}>
                   <button
                     className={`${styles.serialBtn} ${styles.scanBtn}`}
                     onClick={handleScanAndConnect}
-                    disabled={!!port}
+                    disabled={!!(port || usb)}
                   >
-                    {port ? formatMessage({
+                    <img style={{width:'20px',height:"20px"}} src={scanBn}></img>
+                    {(port || usb) ? formatMessage({
                                 id: 'gui.connect.shouquan',
                                 default: 'Authorized',
                                 description: 'gui.connect.shouquan'
@@ -1995,8 +2407,9 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                   <button
                     className={`${styles.serialBtn} ${styles.disconnectBtn}`}
                     onClick={handleDisconnect}
-                    disabled={!port}
+                    disabled={!(port || usb)}
                   >
+                    <img style={{width:'20px',height:"20px"}} src={disConnectBn}></img>
                      <FormattedMessage
                         defaultMessage="disconnect"
                         description="disconnect"
@@ -2011,7 +2424,10 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
           {/* 🔵 蓝牙 */}
           {activeTab === "bluetooth" && (
             <div className={styles.serialPanel}>
-              <div className={`${styles.serialCard} ${styles.bluetoothCard}`}>
+              <div className={styles.serialCard}>
+                <img style={{width:'250px',height:"250px"}} src={bleIcon}></img>
+              </div>
+              <div className={`${styles.serialCard}`}>
                 <div className={styles.serialStatus}>
                   <div
                     className={`${styles.statusDot} ${
@@ -2044,6 +2460,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                     </option>
                   </select>
                 </div>
+                <hr style={{border: 'none', borderTop: '2px dashed #ddd', width: '100%'}}></hr>
 
                 <div className={styles.serialButtons}>
                   <button
@@ -2051,6 +2468,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                     onClick={handleBluetoothConnect}
                     disabled={!!bluetoothDevice}
                   >
+                    <img style={{width:'20px',height:"20px"}} src={scanBn}></img>
                     {bluetoothDevice ? formatMessage({
                                 id: 'gui.connect.shouquan',
                                 default: 'Authorized',
@@ -2067,6 +2485,7 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
                     onClick={handleBluetoothDisconnect}
                     disabled={!bluetoothDevice}
                   >
+                    <img style={{width:'20px',height:"20px"}} src={disConnectBn}></img>
                     <FormattedMessage
                         defaultMessage="disconnect"
                         description="disconnect"
@@ -2078,66 +2497,11 @@ const ConnectTabs = ({ onRequestClose, handleConnectData, portData }) => {
             </div>
           )}
 
-          {/* {activeTab === "sta" && (
-            <div className={styles.qrPanel}>
-              <h2>生成 Wi-Fi 连接二维码</h2>
-
-
-              <div className={styles.qrInputWrapper}>
-                <label htmlFor="ssid">热点名称 (SSID):</label>
-                <input
-                  id="ssid"
-                  type="text"
-                  value={ssid}
-                  onChange={(e) => setSsid(e.target.value)}
-                  placeholder="请输入热点名称"
-                />
-              </div>
-
-
-              <div className={styles.qrInputWrapper}>
-                <label htmlFor="password">密码:</label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="请输入密码"
-                />
-              </div>
-
-
-              <div className={styles.qrBtnWrapper}>
-                <button
-                  className={styles.generateBtn}
-                  onClick={handleGenerateQRCode}
-                  disabled={!(ssid && password)}
-                >
-                  生成二维码
-                </button>
-                <button
-                  className={styles.clearBtn}
-                  onClick={() => {
-                    setSsid("");
-                    setPassword("");
-                    setQrCodeValue("");
-                  }}
-                >
-                  清除
-                </button>
-              </div>
-
-              {qrCodeValue && (
-                <div className={styles.qrCodeWrapper}>
-                  <QRCodeSVG value={qrCodeValue} size={256} />
-                </div>
-              )}
-            </div>
-          )} */}
 
         </div>
       </div>
     </div>
+    
   );
 };
 

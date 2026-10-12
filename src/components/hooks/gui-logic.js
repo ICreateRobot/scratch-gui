@@ -5,7 +5,7 @@ import codeModule from '../../../../../utils/global.js';
 import { getIsCode, setIsCode } from '../../../../../utils/whatModule.js';
 import { setAdd } from '../../../../../utils/isAddMaster.js';
 import { setLan, getLan } from '../../../../../utils/lanMode.js';
-import { setIsRobot, getShowCodeDb, setShowCodeDb, addLoadExtension, delLoadExtension, getLoadExtension, getAllLoaded, setAllLoaded, codeArray } from 'scratch-gui/src/components/utils/utils.js';
+import { setIsRobot, getShowCodeDb, setShowCodeDb, addLoadExtension, delLoadExtension, getLoadExtension, getAllLoaded, setAllLoaded, codeArray,setIsAiMode,getIsAiMode  } from 'scratch-gui/src/components/utils/utils.js';
 import { setLongIsDown,getLongIsDown } from 'scratch-gui/src/components/utils/utils.js';
 // import { createHex } from "https://esm.sh/@microbit/microbit-fs";
 import {MicropythonFsHex }  from '@microbit/microbit-fs';
@@ -89,6 +89,7 @@ export const useGuiLogic = (props) => {
     const [selectedOption, setSelectedOption] = useState('');
     const currentModelValue= showCode ? 'upload':'interactive'
     const [modeValue, setModeValue] = useState(currentModelValue); // 控制 ModeToggle 状态
+    const [aiMode,setAiMode] = useState(getIsAiMode())
 
     const portArr = [7, 0, 6, 1, 5, 2, 4, 3];
     const channelMode = new BroadcastChannel('mode');
@@ -141,10 +142,12 @@ export const useGuiLogic = (props) => {
     },[])
 
     async function sendSerialCommand(command, delay = 50) {
-        const encoder = new TextEncoder();
-        const buffer = encoder.encode(command);
+        // const encoder = new TextEncoder();
+        // const buffer = encoder.encode(command);
         
-        await window.__serialWriter.write(buffer);
+        // await window.__serialWriter.write(buffer);
+        await window.__daplink.serialWrite(command + "\r\n");
+        await new Promise(resolve => setTimeout(resolve, delay));
     }
     if (!window.EditorPreload && !isElectron) {
             window.EditorPreload = {
@@ -212,10 +215,49 @@ export const useGuiLogic = (props) => {
             },
             async sendCommandToDevice(command) {
                 console.log('[Mock sendCommandToDevice]', command);
-                const encoder = new TextEncoder();
-                const buffer = encoder.encode(command + '\r\n');
-                await window.__serialWriter.write(buffer)
+                // const encoder = new TextEncoder();
+                // const buffer = encoder.encode(command + '\r\n');
+                // console.log(window.__serialPort)
+                // if(!window.__serialPort){
+                //     showToast(formatMessage({
+                //         id: 'gui.connect.serialDisconnect',
+                //         default: 'Serial connection disconnected',
+                //         description: 'gui.connect.serialDisconnect'
+                //     }));
+                    
+                //     vm.stopAll()
+                // }
+                // await window.__serialWriter.write(buffer)
+                if(!window.__microbitUSB){
+                    showToast(
+                      formatMessage({
+                          id: "gui.firmware.microbitDisconnect",
+                          default: 'No device connected',
+                          description: "gui.firmware.microbitDisconnect"
+                        })
+                    )
+                    vm.stopAll()
+                    return
+                }
+                // await window.__daplink.serialWrite(command + "\r\n");
+                const CHUNK_SIZE = 48;
 
+                // 分包发送
+                for (let i = 0; i < command.length; i += CHUNK_SIZE) {
+                    let chunk = command.slice(i, i + CHUNK_SIZE);
+
+                    // 最后一包才加回车
+                    if (i + CHUNK_SIZE >= command.length) {
+                    chunk += "\r\n";
+                    }
+
+                    await window.__daplink.serialWrite(chunk);
+
+                    // 给 micro:bit 一点处理时间（可根据实际情况调整）
+                    // await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                console.log('发送过去了')
                 // await new Promise(resolve => setTimeout(resolve, 100))
                 // 为本次请求分配 ID
                 const reqId = ++this._requestId;
@@ -226,9 +268,12 @@ export const useGuiLogic = (props) => {
 
                     
                     setTimeout(() => {
+                        // console.log(this._pendingMap)
                     if (this._pendingMap.has(reqId)) {
                         console.warn("sendCommandToDevice timeout", command);
                         this._pendingMap.delete(reqId);
+                        // this._pendingMap.clear()
+                        // console.log(this._pendingMap)
                         resolve(">>> TIMEOUT >>>");
                     }
                     }, 3000);
@@ -280,8 +325,8 @@ export const useGuiLogic = (props) => {
             },
             async enterDownloadMode() {
                 console.log('进入下载模式')
-                await sendSerialCommand('\x03'); 
-                await sendSerialCommand('\x04'); 
+                await sendSerialCommand('\x03',200); 
+                await sendSerialCommand('\x04',200); 
                 return { success: true };
             },
 
@@ -322,7 +367,11 @@ export const useGuiLogic = (props) => {
                 }, 4000);
             },
         };
+        
     }
+    stopAll.addEventListener('message',(event)=>{
+        window.EditorPreload._pendingMap.clear()
+    })
     useEffect(()=>{
         getBricksPort.addEventListener('message',async(event)=>{
             if(!isElectron && event.data=='getPortState' && getCurrent()=='ICBricks'){
@@ -981,6 +1030,140 @@ export const useGuiLogic = (props) => {
         
 
     }
+
+    function checkAiModelInitialization(code) {
+        // 代码完全没有使用 icrobot.ai，不需要检查
+        if (!code.includes('icrobot.ai')) {
+            return true;
+        }
+    
+        const aiModels = [
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotqr.name',
+                    default: 'QR Code Recognition',
+                    description: 'gui.extension.robotqr.name'
+                }),
+                apis: [
+                    'icrobot.ai.qr_isrecognized(',
+                    'icrobot.ai.get_qr_information('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.qr_recognition)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotapriltag.name',
+                    default: 'AprilTag Recognition',
+                    description: 'gui.extension.robotapriltag.name'
+                }),
+                apis: [
+                    'icrobot.ai.apriltag_isrecognized(',
+                    'icrobot.ai.get_apriltag_information(',
+                    'icrobot.ai.get_apriltag_location(',
+                    'icrobot.ai.get_apriltag_size('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.apriltag_recognition)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotface.name',
+                    default: 'Face Recognition',
+                    description: 'gui.extension.robotface.name'
+                }),
+                apis: [
+                    'icrobot.ai.face_isdetected(',
+                    'icrobot.ai.get_face_number(',
+                    'icrobot.ai.get_face_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.face_detection)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotcolorxy.name',
+                    default: 'Color Coordinate Tracking',
+                    description: 'gui.extension.robotcolorxy.name'
+                }),
+                apis: [
+                    'icrobot.ai.color_istracked(',
+                    'icrobot.ai.set_color_tracking(',
+                    'icrobot.ai.get_color_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.color_tracking)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotcat.name',
+                    default: 'Cat Face Recognition',
+                    description: 'gui.extension.robotcat.name'
+                }),
+                apis: [
+                    'icrobot.ai.cat_isdetected(',
+                    'icrobot.ai.get_cat_number(',
+                    'icrobot.ai.get_cat_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.cat_detection)'
+            }
+        ];
+    
+        // 逐个检查 AI 模型
+        for (const model of aiModels) {
+    
+            // 判断代码中是否真正使用了这个模型的 API
+            const isUsed = model.apis.some(api => code.includes(api));
+    
+            // 没有使用这个模型，跳过
+            if (!isUsed) {
+                continue;
+            }
+    
+            // 使用了，但是没有初始化
+            if (!code.includes(model.initApi)) {
+                // alert(
+                //     `AI模型初始化错误\n\n` +
+                //     `检测到代码使用了【${model.name}】相关功能，` +
+                //     `但是没有初始化对应的AI模型。\n\n` +
+                //     `请添加：\n${model.name}对应的初始化模块`
+                // );
+                alert(
+                    formatMessage({
+                        id: 'gui.robot.aicode1',
+                        default: 'AI model initialization error',
+                        description: 'gui.robot.aicode1'
+                    })+`\n\n`+
+                    formatMessage({
+                        id: 'gui.robot.aicode2',
+                        default: 'Detected that the code uses 【',
+                        description: 'gui.robot.aicode2'
+                    })+`${model.name}`+
+                    formatMessage({
+                        id: 'gui.robot.aicode3',
+                        default: '】-related features,',
+                        description: 'gui.robot.aicode3'
+                    })+
+                    formatMessage({
+                        id: 'gui.robot.aicode4',
+                        default: 'but the corresponding AI model has not been initialized.',
+                        description: 'gui.robot.aicode4'
+                    })+`\n\n`+
+                    formatMessage({
+                        id: 'gui.robot.aicode5',
+                        default: 'Please add:',
+                        description: 'gui.robot.aicode5'
+                    })+`\n${model.name}`+
+                    formatMessage({
+                        id: 'gui.robot.aicode6',
+                        default: 'the corresponding initialization module',
+                        description: 'gui.robot.aicode6'
+                    })
+
+                )
+    
+                return false;
+            }
+        }
+    
+        return true;
+    }
     async function downloadCodeTotal(args) {
         if(whatConnect[1]==1){
             console.log('wifi下载');
@@ -1077,6 +1260,8 @@ export const useGuiLogic = (props) => {
                 }
                 //  setIsDown(!isDown);
             }else if(extensionName=='ICRobot'){
+                let isCheck = checkAiModelInitialization(codeModule.getCode())
+                if (!isCheck) return
                 if(isElectron){
                     download(args);
                 }else{
@@ -1105,6 +1290,8 @@ export const useGuiLogic = (props) => {
             let place=args
             if (place > 0 && place < 6) {
                 if(getCurrent()=='ICRobot'){
+                    let isCheck = checkAiModelInitialization(codeModule.getCode())
+                    if (!isCheck) return
                     let data={
                         place:place,
                         code:codeModule.getCode()
@@ -1336,16 +1523,16 @@ export const useGuiLogic = (props) => {
             vm.stopAll()
             let enableChange = false;
             if (getCurrent().length > 0) enableChange = true;
-            if (!enableChange) {
-                alert(
-                    formatMessage({
-                        id: 'gui.alert.selectDevice',
-                        default: 'Please select a device first',
-                        description: 'gui.alert.selectDevice'
-                    })
-                );
-                return;
-            }
+            // if (!enableChange) {
+            //     alert(
+            //         formatMessage({
+            //             id: 'gui.alert.selectDevice',
+            //             default: 'Please select a device first',
+            //             description: 'gui.alert.selectDevice'
+            //         })
+            //     );
+            //     return;
+            // }
 
             setModeValue(mode);
             setShowCode(!showCode);
@@ -1362,140 +1549,148 @@ export const useGuiLogic = (props) => {
             
             if(!showCode){
                 isUpLoadMode=true
-                if(whatConnect[1]==1){
+                if(extensionName=='Microbit'){
+                    window.EditorPreload.enterDownloadMode()
+                }else{
+                    if(whatConnect[1]==1){
 
-                    const Socket = new WebSocket(`ws://${IP}:8084`);
-
-                    Socket.addEventListener('open', (event) => {
-                        console.log('连接成功');
-                        let timer=setInterval(async()=>{
-                            Socket.send('file')
-                            if(isRecive){
-                                isRecive=false
-                                Socket.close()
-                                clearInterval(timer)
-                                await new Promise(resolve => setTimeout(resolve, 100)); 
-                                channel2.postMessage(true)
+                        const Socket = new WebSocket(`ws://${IP}:8084`);
+    
+                        Socket.addEventListener('open', (event) => {
+                            console.log('连接成功');
+                            let timer=setInterval(async()=>{
+                                Socket.send('file')
+                                if(isRecive){
+                                    isRecive=false
+                                    Socket.close()
+                                    clearInterval(timer)
+                                    await new Promise(resolve => setTimeout(resolve, 100)); 
+                                    channel2.postMessage(true)
+                                }
+                            
+                            },1000)
+                        });
+    
+                        Socket.addEventListener('message', (event) => {
+                            if(event.data=='success'){
+                                isRecive=true
                             }
-                        
-                        },1000)
-                    });
-
-                    Socket.addEventListener('message', (event) => {
-                        if(event.data=='success'){
-                            isRecive=true
-                        }
-                    })
-                }else if(whatConnect[0]==1){
-                    bleChangeMode.postMessage('file')
-                }else if(whatConnect[2]==1){
-                    // soc?.send(JSON.stringify({
-                    //     type: 'port',
-                    //     data: { message: JSON.stringify({
-                    //         "command": "select_mode",
-                    //         "params": 
-                    //             {
-                    //                 "mode": `file`,
+                        })
+                    }else if(whatConnect[0]==1){
+                        bleChangeMode.postMessage('file')
+                    }else if(whatConnect[2]==1){
+                        // soc?.send(JSON.stringify({
+                        //     type: 'port',
+                        //     data: { message: JSON.stringify({
+                        //         "command": "select_mode",
+                        //         "params": 
+                        //             {
+                        //                 "mode": `file`,
+                        //             }
+                        //     })}
+                        // }));
+                        const jsonData = {
+                            command: "select_mode",
+                            params: { mode:"file"},
+                        };
+                        const str = JSON.stringify(jsonData) + "\n";
+                        const encoder = new TextEncoder();
+                        await window.__serialWriter.write(encoder.encode(str));
+                    }
+                    // if(whatConnect[2]==1){
+    
+                    //     soc?.send(JSON.stringify({
+                    //         type: 'port',
+                    //         data: { message: JSON.stringify({
+                    //             "command": "select_mode",
+                    //             "params": 
+                    //                 {
+                    //                     "mode": `file`,
+                    //                 }
+                    //         })}
+                    //     }));
+                    // }else if(whatConnect[2]==0 && whatConnect[0]==1){
+                    //     bleChangeMode.postMessage('file')
+                    // }else{
+                    //     const Socket = new WebSocket(`ws://${IP}:8084`);
+    
+                    //     Socket.addEventListener('open', (event) => {
+                    //         console.log('连接成功');
+                    //         let timer=setInterval(async()=>{
+                    //             Socket.send('file')
+                    //             if(isRecive){
+                    //                 isRecive=false
+                    //                 Socket.close()
+                    //                 clearInterval(timer)
+                    //                 await new Promise(resolve => setTimeout(resolve, 100)); 
+                    //                 channel2.postMessage(true)
                     //             }
-                    //     })}
-                    // }));
-                    const jsonData = {
-                        command: "select_mode",
-                        params: { mode:"file"},
-                    };
-                    const str = JSON.stringify(jsonData) + "\n";
-                    const encoder = new TextEncoder();
-                    await window.__serialWriter.write(encoder.encode(str));
+                            
+                    //         },1000)
+                    //     });
+    
+                    //     Socket.addEventListener('message', (event) => {
+                    //         if(event.data=='success'){
+                    //             isRecive=true
+                    //         }
+                    //     })
+                    // }
+                    
+    
                 }
-                // if(whatConnect[2]==1){
-
-                //     soc?.send(JSON.stringify({
-                //         type: 'port',
-                //         data: { message: JSON.stringify({
-                //             "command": "select_mode",
-                //             "params": 
-                //                 {
-                //                     "mode": `file`,
-                //                 }
-                //         })}
-                //     }));
-                // }else if(whatConnect[2]==0 && whatConnect[0]==1){
-                //     bleChangeMode.postMessage('file')
-                // }else{
-                //     const Socket = new WebSocket(`ws://${IP}:8084`);
-
-                //     Socket.addEventListener('open', (event) => {
-                //         console.log('连接成功');
-                //         let timer=setInterval(async()=>{
-                //             Socket.send('file')
-                //             if(isRecive){
-                //                 isRecive=false
-                //                 Socket.close()
-                //                 clearInterval(timer)
-                //                 await new Promise(resolve => setTimeout(resolve, 100)); 
-                //                 channel2.postMessage(true)
-                //             }
-                        
-                //         },1000)
-                //     });
-
-                //     Socket.addEventListener('message', (event) => {
-                //         if(event.data=='success'){
-                //             isRecive=true
-                //         }
-                //     })
-                // }
                 
-
                 
             }else{
+                isUpLoadMode=false
                 if(extensionName=='Microbit'){
                     window.EditorPreload.enterReplMode()
+                }else{
+                    if(whatConnect[1]==1){
+                        const Socket = new WebSocket(`ws://${IP}:8084`);
+   
+                       Socket.addEventListener('open', (event) => {
+                           console.log('连接成功');
+                           let timer=setInterval(()=>{
+                               Socket.send('scratch')
+                               if(isRecive){
+                                   isRecive=false
+                                   Socket.close()
+                                   clearInterval(timer)
+                                   channel2.postMessage(true)
+                               }
+                           
+                           },1000)
+                       });
+   
+                       Socket.addEventListener('message', (event) => {
+                           if(event.data=='success'){
+                               isRecive=true
+                           }
+                       })
+                   }else if(whatConnect[0]==1){
+                       bleChangeMode.postMessage('scratch')
+                   }else if(whatConnect[2]==1){
+                       // soc?.send(JSON.stringify({
+                       //     type: 'port',
+                       //     data: { message: JSON.stringify({
+                       //         "command": "select_mode",
+                       //         "params": 
+                       //             {
+                       //                 "mode": `scratch`,
+                       //             }
+                       //     })}
+                       // }));
+                       const jsonData = {
+                           command: "select_mode",
+                           params: { mode:"scratch"},
+                       };
+                       const str = JSON.stringify(jsonData) + "\n";
+                       const encoder = new TextEncoder();
+                       await window.__serialWriter.write(encoder.encode(str));
+                   }
                 }
-                isUpLoadMode=false
-                if(whatConnect[1]==1){
-                     const Socket = new WebSocket(`ws://${IP}:8084`);
-
-                    Socket.addEventListener('open', (event) => {
-                        console.log('连接成功');
-                        let timer=setInterval(()=>{
-                            Socket.send('scratch')
-                            if(isRecive){
-                                isRecive=false
-                                Socket.close()
-                                clearInterval(timer)
-                                channel2.postMessage(true)
-                            }
-                        
-                        },1000)
-                    });
-
-                    Socket.addEventListener('message', (event) => {
-                        if(event.data=='success'){
-                            isRecive=true
-                        }
-                    })
-                }else if(whatConnect[0]==1){
-                    bleChangeMode.postMessage('scratch')
-                }else if(whatConnect[2]==1){
-                    // soc?.send(JSON.stringify({
-                    //     type: 'port',
-                    //     data: { message: JSON.stringify({
-                    //         "command": "select_mode",
-                    //         "params": 
-                    //             {
-                    //                 "mode": `scratch`,
-                    //             }
-                    //     })}
-                    // }));
-                    const jsonData = {
-                        command: "select_mode",
-                        params: { mode:"scratch"},
-                    };
-                    const str = JSON.stringify(jsonData) + "\n";
-                    const encoder = new TextEncoder();
-                    await window.__serialWriter.write(encoder.encode(str));
-                }
+                
+                
                 // if(whatConnect[2]==1){
                 //     soc?.send(JSON.stringify({
                 //         type: 'port',
@@ -1552,6 +1747,11 @@ export const useGuiLogic = (props) => {
             channelLoadExample.postMessage(item)
         }
         
+    }
+
+    const handleOpenAiMode =(isOpen)=>{
+        setAiMode(isOpen)
+        setIsAiMode(isOpen)
     }
 
 
@@ -1784,6 +1984,7 @@ export const useGuiLogic = (props) => {
                             setCurrentExtension('2');
                             setExtensionName('ICRobot');
                             setCurrent('ICRobot');
+                            setIsRobot(true);
                             if (extensionSelect[extension - 1]) {
                                 setIsBricks(false);
                                 channel1.postMessage(extension);
@@ -1825,7 +2026,7 @@ export const useGuiLogic = (props) => {
                                 setIsLoading(true);
                                 setIsBricks(false);
                                 setIsMaster(true);
-                                setIsRobot(true);
+                                
                                 setAdd(true);
                                 onExtensionButtonClick();
                                 extensionSelect[extension - 1] = true;
@@ -1837,6 +2038,7 @@ export const useGuiLogic = (props) => {
                             setCurrentExtension('3');
                             setExtensionName('Microbit');
                             setCurrent('Microbit');
+                            setIsRobot(false);
                             if (extensionSelect[extension - 1]) {
                                 setIsBricks(false);
                                 channel1.postMessage(extension);
@@ -1857,7 +2059,7 @@ export const useGuiLogic = (props) => {
                                 setIsLoading(true);
                                 setIsBricks(false);
                                 setIsMaster(true);
-                                setIsRobot(false);
+                                
                                 setAdd(true);
                                 onExtensionButtonClick();
                                 extensionSelect[extension - 1] = true;
@@ -2151,6 +2353,7 @@ export const useGuiLogic = (props) => {
                 setCurrentExtension('2');
                 setExtensionName('ICRobot');
                 setCurrent('ICRobot');
+                setIsRobot(true);
                 if (extensionSelect[extension - 1]) {
                     setIsBricks(false);
                     channel1.postMessage(extension);
@@ -2192,7 +2395,7 @@ export const useGuiLogic = (props) => {
                     setIsLoading(true);
                     setIsBricks(false);
                     setIsMaster(true);
-                    setIsRobot(true);
+                    
                     setAdd(true);
                     onExtensionButtonClick();
                     extensionSelect[extension - 1] = true;
@@ -2207,6 +2410,7 @@ export const useGuiLogic = (props) => {
                 setCurrentExtension('3');
                 setExtensionName('Microbit');
                 setCurrent('Microbit');
+                setIsRobot(false);
                 if (extensionSelect[extension - 1]) {
                     setIsBricks(false);
                     channel1.postMessage(extension);
@@ -2216,7 +2420,7 @@ export const useGuiLogic = (props) => {
                     setIsLoading(true);
                     setIsBricks(false);
                     setIsMaster(true);
-                    setIsRobot(false);
+                    
                     setAdd(true);
                     onExtensionButtonClick();
                     extensionSelect[extension - 1] = true;
@@ -2283,6 +2487,7 @@ export const useGuiLogic = (props) => {
             window.EditorPreload._emitState(dataJson.data);
         }else if(dataJson.type=='MicroSerialData'){
             window.EditorPreload.setMicroData(dataJson.data.message);
+            setData(prev => prev + dataJson.data.message+'\n');
         }else if(dataJson.type=='wifiIp'){
             setIsLoading(true);
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -2454,10 +2659,12 @@ export const useGuiLogic = (props) => {
         setOpen,
         selected,
         setSelected,
+        aiMode,
         handleOpenExample,
         handleSelect,
         handledata,
         handleConnectData,
-        handleFirmwareData
+        handleFirmwareData,
+        handleOpenAiMode,
     };
 };

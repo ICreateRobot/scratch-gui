@@ -18,7 +18,7 @@ const MasterController = props => (
             /> */}
            {props.value === '选择设备' ? (
                 <FormattedMessage
-                    defaultMessage="选择设备"
+                    defaultMessage="Select Device"
                     description="Button in menu bar under settings to open desktop app settings"
                     id="selectDevice"
                 />

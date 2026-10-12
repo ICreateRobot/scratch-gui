@@ -91,3 +91,6 @@ $tabswitcher-control-third-lightordark:var(--tabswitcher-control-third-lightorda
 $tabswitcher-control-fourth-lightordark:var(--tabswitcher-control-fourth-lightordark);
 $tabswitcher-serial-first-lightordark:var(--tabswitcher-serial-first-lightordark);
 $tabswitcher-serial-second-lightordark:var(--tabswitcher-serial-second-lightordark);
+$ic-main-light:var(--ic-main-light);
+$ic-main-light-very:var(--ic-main-light-very);
+$ic-main-light-pluse:var(--ic-main-light-pluse);

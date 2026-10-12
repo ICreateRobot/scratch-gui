@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer layer - large semi-transparent circle -->
+  <circle cx="500" cy="500" r="450" fill="rgba(232, 248, 244,0.8)" opacity="0.8"/>
+  
+  <!-- Middle layer - second ring -->
+  <circle cx="500" cy="500" r="350" fill="none" stroke="rgba(241, 248, 232,0.6)" stroke-width="80"/>
+  
+  <!-- Center circle with gradient -->
+  <defs>
+    <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a3e9d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="500" cy="500" r="220" fill="url(#centerGradient)"/>
+  
+  <!-- OBD connector shape -->
+  <rect x="350" y="400" width="300" height="180" rx="40" ry="40" fill="white"/>
+  <rect x="375" y="425" width="250" height="130" rx="25" ry="25" fill="#4ecdc4"/>
+  
+  <!-- Connector pins -->
+  <circle cx="430" cy="475" r="15" fill="white"/>
+  <circle cx="480" cy="475" r="15" fill="white"/>
+  <circle cx="530" cy="475" r="15" fill="white"/>
+  <circle cx="580" cy="475" r="15" fill="white"/>
+  <circle cx="455" cy="525" r="15" fill="white"/>
+  <circle cx="505" cy="525" r="15" fill="white"/>
+  <circle cx="555" cy="525" r="15" fill="white"/>
+  
+  <!-- Four corner dots -->
+  <circle cx="500" cy="40" r="18" fill="#48a899"/>
+  <circle cx="40" cy="480" r="18" fill="#48a899"/>
+  <circle cx="960" cy="480" r="18" fill="#48a899"/>
+  <circle cx="500" cy="960" r="18" fill="#48a899"/>
+</svg>

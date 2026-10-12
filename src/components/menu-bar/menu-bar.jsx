@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import bindAll from 'lodash.bindall';
 import bowser from 'bowser';
 import React from 'react';
+import formatMessage  from 'format-message';
 
 import VM from 'scratch-vm';
 
@@ -37,7 +38,7 @@ import CloudVariablesToggler from '../../containers/tw-cloud-toggler.jsx';
 import TWSaveStatus from './tw-save-status.jsx';
 import ModeToggle from 'scratch-gui/src/components/menu-bar/ModeToggle.jsx';
 
-import { setElectron, getElectron } from 'scratch-gui/src/components/utils/utils.js';
+import { setElectron, getElectron,setIsAiMode,getIsAiMode } from 'scratch-gui/src/components/utils/utils.js';
 
 import {openTipsLibrary, openSettingsModal, openRestorePointModal} from '../../reducers/modals';
 import {setPlayer} from '../../reducers/mode';
@@ -254,7 +255,8 @@ class MenuBar extends React.Component {
         this.extended=null
         this.state = {
             isVisible: getElectron(), // 控制显示/隐藏的状态
-            elector:-1
+            elector:-1,
+            openAi:getIsAiMode()
         };
 
         // this.channelHostPot=new BroadcastChannel('hostpot')
@@ -1337,12 +1339,31 @@ class MenuBar extends React.Component {
                     />
                 </div> */}
 
+                <span
+                    onClick={() => {
+                        const newValue = !this.state.openAi;
+                        this.setState({ openAi: newValue });
+                        this.props.openAiMode(newValue);
+                    }}
+                    // style={{marginTop:'1.5px',marginRight:'10px',lineHeight: "3rem"}}
+                    style={{display:'flex',alignItems:'center',marginRight:'15px'}}
+                >
+                    {this.state.openAi ? formatMessage({
+                            id: 'gui.ai.close',
+                            default: 'Close AI Mode',
+                            description: 'gui.ai.close'
+                        }) : formatMessage({
+                            id: 'gui.ai.open',
+                            default: 'Open AI Mode',
+                            description: 'gui.ai.open'
+                        })}
+                </span>
                 <ModeToggle onChange={this.props.onModeChange} value={this.props.modeValue}/>
                 {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
                     canChangeLanguage={this.props.canChangeLanguage}
                     canChangeTheme={this.props.canChangeTheme}
-                    // isRtl={this.props.isRtl}
-                    isRtl={true}
+                    isRtl={!this.props.isRtl}
+                    // isRtl={true}
                     onClickDesktopSettings={
                         this.props.onClickDesktopSettings &&
                         this.handleClickDesktopSettings
@@ -1373,7 +1394,7 @@ class MenuBar extends React.Component {
                     onRequestOpen={this.props.onClickSettings}
                     settingsMenuOpen={this.props.settingsMenuOpen}
                 />)}
-
+                &nbsp;&nbsp;&nbsp;
                 {/* {aboutButton} */}
             </Box>
         );

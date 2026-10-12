@@ -25,7 +25,9 @@
         overflow-y: auto;          
         box-sizing: border-box;   
         padding-top:10px;
-        height:32vh;
+        /* height:35vh; */
+        flex: 1;
+        min-height: 0;
         /* // height:'80%', */
     }
 }

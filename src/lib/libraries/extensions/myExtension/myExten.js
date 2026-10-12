@@ -83,10 +83,18 @@ import ICmicrobitInsetIconURL from '../ICreate_Microbit/microbit-small.svg';
 import ICmicrobitConnectionIconURL from '../ICreate_Microbit/microbit-illustration.svg';
 import ICmicrobitConnectionSmallIconURL from '../ICreate_Microbit/microbit-small.svg';
 
+import robotPinImage from '../robotpin/robotPinImage.png'
+
+import gestureImage from '../gesture/gestureExtension.png'
+
+import poseImage from '../pose/pose.png'
+
+import iotIconURL from '../IoT_school/iot.jpg';
+
 const robotTeachableExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="机器学习"
+            defaultMessage="Machine Learning"
             description="Name for the 'robotteachable' extension"
             id="gui.extension.robotteachable.name"
         />
@@ -95,7 +103,7 @@ const robotTeachableExtension = {
     iconURL: robotteachableImage,
     description: (
         <FormattedMessage
-            defaultMessage="机器学习."
+            defaultMessage="Machine Learning."
             description="Description for the 'robotteachable' extension"
             id="gui.extension.robotteachable.description"
         />
@@ -107,7 +115,7 @@ const robotTeachableExtension = {
 const robotImgExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="摄像头"
+            defaultMessage="Camera"
             description="Name for the 'robotimg' extension"
             id="gui.extension.robotimg.name"
         />
@@ -116,7 +124,7 @@ const robotImgExtension = {
     iconURL: robotImgImage,
     description: (
         <FormattedMessage
-            defaultMessage="摄像头."
+            defaultMessage="Camera."
             description="Description for the 'robotimg' extension"
             id="gui.extension.robotimg.description"
         />
@@ -128,7 +136,7 @@ const robotImgExtension = {
 const robotApriltagExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="apriltag识别"
+            defaultMessage="AprilTag Recognition"
             description="Name for the 'robotapriltag' extension"
             id="gui.extension.robotapriltag.name"
         />
@@ -137,7 +145,7 @@ const robotApriltagExtension = {
     iconURL: robotapriltagImage,
     description: (
         <FormattedMessage
-            defaultMessage="apriltag识别."
+            defaultMessage="AprilTag Recognition."
             description="Description for the 'robotapriltag' extension"
             id="gui.extension.robotapriltag.description"
         />
@@ -149,7 +157,7 @@ const robotApriltagExtension = {
 const robotColordeteExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="颜色识别"
+            defaultMessage="Color Detection"
             description="Name for the 'robotcolordete' extension"
             id="gui.extension.robotcolordete.name"
         />
@@ -158,7 +166,7 @@ const robotColordeteExtension = {
     iconURL: robotcolordeteImage,
     description: (
         <FormattedMessage
-            defaultMessage="颜色识别."
+            defaultMessage="Color Detection."
             description="Description for the 'robotcolordete' extension"
             id="gui.extension.robotcolordete.description"
         />
@@ -170,7 +178,7 @@ const robotColordeteExtension = {
 const robotQrExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="二维码识别"
+            defaultMessage="QR Code Recognition"
             description="Name for the 'robotqr' extension"
             id="gui.extension.robotqr.name"
         />
@@ -179,7 +187,7 @@ const robotQrExtension = {
     iconURL: robotqrImage,
     description: (
         <FormattedMessage
-            defaultMessage="二维码识别."
+            defaultMessage="QR Code Recognition."
             description="Description for the 'robotqr' extension"
             id="gui.extension.robotqr.description"
         />
@@ -191,7 +199,7 @@ const robotQrExtension = {
 const robotGoodExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="物体识别"
+            defaultMessage="Object Recognition"
             description="Name for the 'robotgood' extension"
             id="gui.extension.robotgood.name"
         />
@@ -200,7 +208,7 @@ const robotGoodExtension = {
     iconURL: robotgoodImage,
     description: (
         <FormattedMessage
-            defaultMessage="物体识别."
+            defaultMessage="Object Recognition."
             description="Description for the 'robotgood' extension"
             id="gui.extension.robotgood.description"
         />
@@ -212,7 +220,7 @@ const robotGoodExtension = {
 const robotFaceExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="人脸识别"
+            defaultMessage="Face Recognition"
             description="Name for the 'robotface' extension"
             id="gui.extension.robotface.name"
         />
@@ -221,7 +229,7 @@ const robotFaceExtension = {
     iconURL: robotfaceImage,
     description: (
         <FormattedMessage
-            defaultMessage="人脸识别."
+            defaultMessage="Face Recognition."
             description="Description for the 'robotface' extension"
             id="gui.extension.robotface.description"
         />
@@ -233,7 +241,7 @@ const robotFaceExtension = {
 const robotColorplaceExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="颜色位置追踪"
+            defaultMessage="Color Position Tracking"
             description="Name for the 'robotcolorplace' extension"
             id="gui.extension.robotcolorplace.name"
         />
@@ -242,7 +250,7 @@ const robotColorplaceExtension = {
     iconURL: robotcolorplaceImage,
     description: (
         <FormattedMessage
-            defaultMessage="颜色位置追踪."
+            defaultMessage="Color Position Tracking."
             description="Description for the 'robotcolorplace' extension"
             id="gui.extension.robotcolorplace.description"
         />
@@ -254,7 +262,7 @@ const robotColorplaceExtension = {
 const robotColorxyExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="颜色坐标追踪"
+            defaultMessage="Color Coordinate Tracking"
             description="Name for the 'robotcolorxy' extension"
             id="gui.extension.robotcolorxy.name"
         />
@@ -263,7 +271,7 @@ const robotColorxyExtension = {
     iconURL: robotcolorxyImage,
     description: (
         <FormattedMessage
-            defaultMessage="颜色坐标追踪."
+            defaultMessage="Color Coordinate Tracking."
             description="Description for the 'robotcolorxy' extension"
             id="gui.extension.robotcolorxy.description"
         />
@@ -275,7 +283,7 @@ const robotColorxyExtension = {
 const robotCatExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="猫脸识别"
+            defaultMessage="Cat Face Recognition"
             description="Name for the 'robotcat' extension"
             id="gui.extension.robotcat.name"
         />
@@ -284,7 +292,7 @@ const robotCatExtension = {
     iconURL: robotcatImage,
     description: (
         <FormattedMessage
-            defaultMessage="猫脸识别."
+            defaultMessage="Cat Face Recognition."
             description="Description for the 'robotcat' extension"
             id="gui.extension.robotcat.description"
         />
@@ -296,7 +304,7 @@ const robotCatExtension = {
 const robotTrafficExtension = {
     name: (
         <FormattedMessage
-            defaultMessage="路标识别"
+            defaultMessage="Traffic Sign Recognition"
             description="Name for the 'robottraffic' extension"
             id="gui.extension.robottraffic.name"
         />
@@ -305,7 +313,7 @@ const robotTrafficExtension = {
     iconURL: robottrafficImage,
     description: (
         <FormattedMessage
-            defaultMessage="路标识别."
+            defaultMessage="Traffic Sign Recognition."
             description="Description for the 'robottraffic' extension"
             id="gui.extension.robottraffic.description"
         />
@@ -750,8 +758,101 @@ const robotExtendExtension = {
     tags: ['scratch'],
     featured: true
 };
+const robotPinExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="ICrobot Pin Control"
+            description="Name for the 'robotextend' extension"
+            id="gui.extension.robotpin.name"
+        />
+    ),
+    extensionId: 'robotpin',
+    iconURL: robotPinImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="This extension can control the digital pins, analog pins, and IIC pins of ICrobot devices."
+            description="Description for the 'robotextend' extension"
+            id="gui.extension.robotpin.description"
+        />
+    ),
+    tags: ['main'],
+    featured: true
+};
 
+const gestureDetectExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="gesture detect"
+            description="Name for the 'gesturedetect' extension"
+            id="gui.extension.gesturedetect.name"
+        />
+    ),
+    extensionId: 'gesturedetect',
+    iconURL: gestureImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="Key Point Coordinates for Gesture Recognition"
+            description="Description for the 'gesturedetect' extension"
+            id="gui.extension.gesturedetect.description"
+        />
+    ),
+    tags: ['main'],
+    featured: true
+};
 
+const poseDetectExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="pose detect"
+            description="Name for the 'posedetect' extension"
+            id="gui.extension.posedetect.name"
+        />
+    ),
+    extensionId: 'posedetect',
+    iconURL: poseImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="Key Point Coordinates for pose Recognition"
+            description="Description for the 'posedetect' extension"
+            id="gui.extension.posedetect.description"
+        />
+    ),
+    tags: ['main'],
+    featured: true
+};
+const iotSchoolExtension = {//智慧教室
+    name: "智慧教室",
+    extensionId: 'IoTSchool',
+    iconURL: iotIconURL,
+    description: "物联网智能教室",
+    tags: ['IoT'],
+    featured: true
+}
+
+const zerothExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="zeroth"
+            description="Name for the 'zeroth' extension"
+            id="gui.extension.zeroth.name"
+        />
+    ),
+    extensionId: 'zeroth',
+    iconURL: robotPinImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="This extension can control the digital pins, analog pins, and IIC pins of zeroth devices."
+            description="Description for the 'zeroth' extension"
+            id="gui.extension.zeroth.description"
+        />
+    ),
+    tags: ['main'],
+    featured: true
+};
 
 export {
     robotTeachableExtension,
@@ -784,5 +885,10 @@ export {
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
-    k210Extension
+    k210Extension,
+    robotPinExtension,
+    gestureDetectExtension,
+    iotSchoolExtension,
+    poseDetectExtension,
+    zerothExtension
 };

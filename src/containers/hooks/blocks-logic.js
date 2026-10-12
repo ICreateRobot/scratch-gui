@@ -42,7 +42,7 @@ export function createBlocksLogic(componentInstance) {
                         delCategro(i,1)
                     }
                 }
-                let toMove=['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel']
+                let toMove=['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','robotpin_setIICPort','robotpin_IICScan','robotpin_IICWriteTo','robotpin_IICWriteToMem','robotpin_IICReadFrom','robotpin_IICReadFromInto','robotpin_IICReadFromMem','robotpin_IICReadFromMemInto']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i,1)
@@ -56,6 +56,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotface_isSymFace')
                 setHiddenBlocks('robotface_faceName')
                 setHiddenBlocks('robotface_symFacePlace')
+                setHiddenBlocks('robotface_reSetFace')
                 // this.hiddenBlocksTypes.push('robotgood_isGood')
                 // this.hiddenBlocksTypes.push('robotgood_goodPlace')
                 setHiddenBlocks('robotimg_isTraffic')
@@ -78,6 +79,7 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotsound_playLocalMusic')
                 setHiddenBlocks('robotimg_howStartCamera')
                 setHiddenBlocks('robotextend_startMode')
+                setHiddenBlocks('robotpin_setPinMode')
                 // setHiddenBlocks('robotsound_selectSound')
                 
                 
@@ -85,6 +87,7 @@ export function createBlocksLogic(componentInstance) {
                 setDeletedCate('robotcolorplace');
                 setDeletedCate('robotgood');
                 setDeletedCate('robottraffic');
+                setDeletedCate('gesturedetect');
                 // this.hiddenBlocksTypes.push('robotimg_isApril')
                 // this.hiddenBlocksTypes.push('robotimg_getAprilContent')
                 // this.hiddenBlocksTypes.push('robotimg_getAprilPlace')
@@ -102,15 +105,24 @@ export function createBlocksLogic(componentInstance) {
                 setHiddenBlocks('robotimg_catNum')
                 setHiddenBlocks('robotimg_catPlace')
                 setHiddenBlocks('robotimg_isOpenModel')
+                setHiddenBlocks('robotpin_setIICPort')
+                setHiddenBlocks('robotpin_IICScan')
+                setHiddenBlocks('robotpin_IICWriteTo')
 
-                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode']
+                setHiddenBlocks('robotpin_IICWriteToMem')
+                setHiddenBlocks('robotpin_IICReadFrom')
+                setHiddenBlocks('robotpin_IICReadFromInto')
+                setHiddenBlocks('robotpin_IICReadFromMem')
+                setHiddenBlocks('robotpin_IICReadFromMemInto')
+
+                let toMove=['robotface_symFace','robotface_isSymFace','robotface_faceName','robotface_symFacePlace','robotface_reSetFace','robotimg_isTraffic','robotimg_trafficPlace','robotsensors_cstartsound','robotimg_cstartComputerCamera','robotimg_cstopComputerCamera','robotqr_getQrPlace','robotqr_getQrWh','robotevent_whenPressed','robotimg_csetCamera','robotface_getFaceWh','robotcolorxy_getColorWh','robotimg_cstartNetCamera','robotimg_isOpenCamera','robotsound_playLocalMusic','robotimg_howStartCamera','robotextend_startMode','robotpin_setPinMode']
                 for (let i = getHiddenBlocks().length - 1; i >= 0; i--) {
                     if (toMove.includes( getHiddenBlocks()[i])) {
                         delHiddenBlocks(i, 1);
                     }
                 }
 
-                let toMoveCategory=['robotcolordete','robotcolorplace','robotgood','robottraffic']
+                let toMoveCategory=['robotcolordete','robotcolorplace','robotgood','robottraffic','gesturedetect']
                 for (let i = getDeletedCate().length - 1; i >= 0; i--) {
                     if (toMoveCategory.includes(getDeletedCate()[i])) {
                         delCategro(i, 1);
@@ -239,17 +251,17 @@ export function createBlocksLogic(componentInstance) {
         // this.onWorkspaceUpdate(dataXML)
         // this.workspace.clear()
         // window.location.reload()
-        if(!self.mode){
-            // 创建初始块，不可删除
-            const block = self.workspace.newBlock('event_when');
-            console.log(block)
-            block.initSvg();
-            block.render();
-            block.moveBy(200, 100);
+        // if(!self.mode){
+        //     // 创建初始块，不可删除
+        //     const block = self.workspace.newBlock('event_when');
+        //     console.log(block)
+        //     block.initSvg();
+        //     block.render();
+        //     block.moveBy(200, 100);
 
-            block.setDeletable(false);
-            // block.setMovable(false);
-        }
+        //     block.setDeletable(false);
+        //     // block.setMovable(false);
+        // }
 
     })
 

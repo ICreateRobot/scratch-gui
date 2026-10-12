@@ -32,55 +32,59 @@ const PY_PATH = `${modelPath}/main.py`;
 const MPY_PATH = `${modelPath}/icrobot.mpy`;
 const MICRO_PATH = `${modelPath}/MICROBIT.hex`
 
-let USE_GITEE=true
+const OSS_BASE_URL = "https://arkt-advert.oss-cn-beijing.aliyuncs.com/firmware";
+
+const PERIODS = ["last", "middle", "long"];
+
+// let USE_GITEE=true
 
 
-/******************* GITEE CONFIG *******************/
-const GITEE_OWNER = 'lgmShine';
-const GITEE_REPO = 'bucket';
-const GITEE_BRANCH = 'master';
-const GITEE_BASE_FOLDER = 'firmware';
-const GITEE_TOKEN = getGiteeTocken();
+// /******************* GITEE CONFIG *******************/
+// const GITEE_OWNER = 'lgmShine';
+// const GITEE_REPO = 'bucket';
+// const GITEE_BRANCH = 'master';
+// const GITEE_BASE_FOLDER = 'firmware';
+// const GITEE_TOKEN = getGiteeTocken();
 
 
-/******************* GITHUB CONFIG *******************/
-const GITHUB_OWNER = 'ICreateRobot';
-const GITHUB_REPO = 'bucket';
-const GITHUB_BRANCH = 'master'; // 或 main
-const GITHUB_BASE_FOLDER = 'firmware';
-const GITHUB_TOKEN = getGithubTocken(); // 可选，国外一般不需要
+// /******************* GITHUB CONFIG *******************/
+// const GITHUB_OWNER = 'ICreateRobot';
+// const GITHUB_REPO = 'bucket';
+// const GITHUB_BRANCH = 'master'; // 或 main
+// const GITHUB_BASE_FOLDER = 'firmware';
+// const GITHUB_TOKEN = getGithubTocken(); // 可选，国外一般不需要
 
-function giteeApiUrl(path, params = {}) {
-  const base = `https://gitee.com/api/v5${path}`;
-  const qs = new URLSearchParams(params).toString();
-  return qs ? `${base}?${qs}` : base;
-}
+// function giteeApiUrl(path, params = {}) {
+//   const base = `https://gitee.com/api/v5${path}`;
+//   const qs = new URLSearchParams(params).toString();
+//   return qs ? `${base}?${qs}` : base;
+// }
 
-function repoApiUrl(path, params = {}) {
-  if (USE_GITEE) {
-    const base = `https://gitee.com/api/v5${path}`;
-    const qs = new URLSearchParams(params).toString();
-    return qs ? `${base}?${qs}` : base;
-  } else {
-    const base = `https://api.github.com${path}`;
-    const qs = new URLSearchParams(params).toString();
-    return qs ? `${base}?${qs}` : base;
-  }
-}
+// function repoApiUrl(path, params = {}) {
+//   if (USE_GITEE) {
+//     const base = `https://gitee.com/api/v5${path}`;
+//     const qs = new URLSearchParams(params).toString();
+//     return qs ? `${base}?${qs}` : base;
+//   } else {
+//     const base = `https://api.github.com${path}`;
+//     const qs = new URLSearchParams(params).toString();
+//     return qs ? `${base}?${qs}` : base;
+//   }
+// }
 
 
-function repoHeaders() {
-  if (USE_GITEE && GITEE_TOKEN) {
-    return { Authorization: `token ${GITEE_TOKEN}` };
-  }
-  if (!USE_GITEE && GITHUB_TOKEN) {
-    return { Authorization: `Bearer ${GITHUB_TOKEN}` };
-  }
-  return {};
-}
-function giteeRawUrl(repoPath) {
-  return `https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/raw/${GITEE_BRANCH}/${repoPath}`;
-}
+// function repoHeaders() {
+//   if (USE_GITEE && GITEE_TOKEN) {
+//     return { Authorization: `token ${GITEE_TOKEN}` };
+//   }
+//   if (!USE_GITEE && GITHUB_TOKEN) {
+//     return { Authorization: `Bearer ${GITHUB_TOKEN}` };
+//   }
+//   return {};
+// }
+// function giteeRawUrl(repoPath) {
+//   return `https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/raw/${GITEE_BRANCH}/${repoPath}`;
+// }
 
 
 export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
@@ -94,10 +98,18 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   getVersion().icrobot ||
   getVersion().icbricks ||
     '');
+  const [versionHard, setVersionHardIn] = useState(
+  getVersion().icrobotHard ||
+    '');
 
   const channelVersion = new BroadcastChannel('channel-version')
   channelVersion.addEventListener('message',(event)=>{
-    setVersionIn(event.data)
+    if(event.data[0]=='icrobotHard'){
+      setVersionHardIn(event.data[1])
+    }else{
+      setVersionIn(event.data[1])
+    }
+    
   })
 
   const channelLoading = new BroadcastChannel('channel-loading-tabSwitcher')
@@ -106,17 +118,28 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
 
   const logRef = useRef(null);
 
-  const [giteeFirmware, setGiteeFirmware] = useState({
+  const [ossFirmware, setOssFirmware] = useState({
     standard: [],
     xiaozhi: [],
-    microbit:[]
-  });
+    microbit: []
+});
 
   const [selectedStandardFirmware, setSelectedStandardFirmware] = useState('local');
   const [selectedXiaoZhiFirmware, setSelectedXiaoZhiFirmware] = useState('local');
   const [selectedMicrobitFirmware, setSelectedMicrobitFirmware] = useState('local');
 
-  
+  const [activeTab, setActiveTab] = useState("default");
+
+  const [customBaud, setCustomBaud] =
+      useState(1152000);
+
+  const [customFiles, setCustomFiles] = useState([
+  {
+      address: "0x0",
+      file: null,
+      fileName: ""
+  }
+  ]);
 
   // const loadGiteeFirmwareList = async () => {
   //   try {
@@ -237,6 +260,94 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   // }, []);
 
 
+  const loadRepoFirmwareList = async () => {
+      try {
+
+          const loadType = async (type) => {
+
+              const result = [];
+
+              for (const period of PERIODS) {
+
+                  try {
+
+                      const infoUrl =
+                          `${OSS_BASE_URL}/${type}/${period}/info.json`;
+
+                      const info = await fetch(infoUrl).then(r => r.json());
+
+                      let bins = [];
+
+                      if (type === "microbit") {
+
+                          bins.push({
+                              name: "MICROBIT.hex",
+                              url:
+                                  `${OSS_BASE_URL}/${type}/${period}/MICROBIT.hex`
+                          });
+
+                      } else if(type=='standard'){
+
+                          bins.push({
+                              name: "firmware.bin",
+                              url:
+                                  `${OSS_BASE_URL}/${type}/${period}/firmware.bin`
+                          });
+
+                          bins.push({
+                              name: "vfs.bin",
+                              url:
+                                  `${OSS_BASE_URL}/${type}/${period}/vfs.bin`
+                          });
+
+                      }else{
+                        bins.push({
+                          name: "combined.bin",
+                          url:
+                              `${OSS_BASE_URL}/${type}/${period}/combined.bin`
+                      });
+                      }
+
+                      result.push({
+                          folder: period,
+                          version: info.version,
+                          description: info.description,
+                          place: info.place,
+                          bins
+                      });
+
+                  } catch (e) {
+
+                      console.warn(`${type}/${period} 不存在`);
+
+                  }
+              }
+
+              return result;
+          };
+
+          const [standard, xiaozhi, microbit] =
+              await Promise.all([
+                  loadType("standard"),
+                  loadType("xiaozhi"),
+                  loadType("microbit")
+              ]);
+
+              setOssFirmware({
+              standard,
+              xiaozhi,
+              microbit
+          });
+
+      } catch (err) {
+
+          appendLog("获取 OSS 固件失败：" + err.message);
+
+      }
+  };
+  useEffect(() => {
+      loadRepoFirmwareList();
+  }, []);
   // const loadRepoFirmwareList = async () => {
   //   try {
   //     console.log(`正在从 ${USE_GITEE ? 'Gitee' : 'GitHub'} 获取固件列表...`);
@@ -376,145 +487,145 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
     xiaozhi: '.bin',
     microbit: '.hex',
   };
-  const loadFirmwareFromRepo = async (source) => {
-    const isGitee = source === 'gitee';
+  // const loadFirmwareFromRepo = async (source) => {
+  //   const isGitee = source === 'gitee';
   
-    console.log(`尝试从 ${isGitee ? 'Gitee' : 'GitHub'} 获取固件列表...`);
+  //   console.log(`尝试从 ${isGitee ? 'Gitee' : 'GitHub'} 获取固件列表...`);
   
-    const headers = isGitee
-      ? (GITEE_TOKEN ? { Authorization: `token ${GITEE_TOKEN}` } : {})
-      : (GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {});
+  //   const headers = isGitee
+  //     ? (GITEE_TOKEN ? { Authorization: `token ${GITEE_TOKEN}` } : {})
+  //     : (GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {});
   
-    const listType = async (type) => {
-      const basePath = `${(isGitee ? GITEE_BASE_FOLDER : GITHUB_BASE_FOLDER)}/${type}`;
+  //   const listType = async (type) => {
+  //     const basePath = `${(isGitee ? GITEE_BASE_FOLDER : GITHUB_BASE_FOLDER)}/${type}`;
   
-      const url = isGitee
-        ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${basePath}?ref=${GITEE_BRANCH}`
-        : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${basePath}?ref=${GITHUB_BRANCH}`;
+  //     const url = isGitee
+  //       ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${basePath}?ref=${GITEE_BRANCH}`
+  //       : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${basePath}?ref=${GITHUB_BRANCH}`;
   
-      const res = await fetch(url, { headers });
-      if (!res.ok) throw new Error(`${source} 获取目录失败`);
+  //     const res = await fetch(url, { headers });
+  //     if (!res.ok) throw new Error(`${source} 获取目录失败`);
   
-      const items = await res.json();
-      const dirs = items.filter(i => i.type === 'dir');
-      const result = [];
+  //     const items = await res.json();
+  //     const dirs = items.filter(i => i.type === 'dir');
+  //     const result = [];
   
-      for (const d of dirs) {
-        const folderPath = d.path;
+  //     for (const d of dirs) {
+  //       const folderPath = d.path;
   
-        /* ---------- 目录内容 ---------- */
-        const contentsUrl = isGitee
-          ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${folderPath}?ref=${GITEE_BRANCH}`
-          : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${folderPath}?ref=${GITHUB_BRANCH}`;
+  //       /* ---------- 目录内容 ---------- */
+  //       const contentsUrl = isGitee
+  //         ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${folderPath}?ref=${GITEE_BRANCH}`
+  //         : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${folderPath}?ref=${GITHUB_BRANCH}`;
   
-        const r2 = await fetch(contentsUrl, { headers });
-        if (!r2.ok) continue;
+  //       const r2 = await fetch(contentsUrl, { headers });
+  //       if (!r2.ok) continue;
   
-        const files = await r2.json();
+  //       const files = await r2.json();
   
-        /* ---------- version.txt ---------- */
-        let version = d.name;
-        const vfile = files.find(f => f.name.toLowerCase() === 'version.txt');
+  //       /* ---------- version.txt ---------- */
+  //       let version = d.name;
+  //       const vfile = files.find(f => f.name.toLowerCase() === 'version.txt');
   
-        if (vfile) {
-          try {
-            if (isGitee) {
-              const vr = await fetch(
-                `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${vfile.path}?ref=${GITEE_BRANCH}`,
-                { headers }
-              );
-              const vjson = await vr.json();
-              if (vjson?.content) {
-                version = atob(vjson.content.replace(/\n/g, '')).trim();
-              }
-            } else {
-              const vr = await fetch(vfile.download_url);
-              version = (await vr.text()).trim();
-            }
-          } catch {}
-        }
+  //       if (vfile) {
+  //         try {
+  //           if (isGitee) {
+  //             const vr = await fetch(
+  //               `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${vfile.path}?ref=${GITEE_BRANCH}`,
+  //               { headers }
+  //             );
+  //             const vjson = await vr.json();
+  //             if (vjson?.content) {
+  //               version = atob(vjson.content.replace(/\n/g, '')).trim();
+  //             }
+  //           } else {
+  //             const vr = await fetch(vfile.download_url);
+  //             version = (await vr.text()).trim();
+  //           }
+  //         } catch {}
+  //       }
   
-        /* ---------- bin 文件 ---------- */
-        // const bins = files
-        //   .filter(f => f.name.toLowerCase().endsWith('.bin'))
-        //   .map(f => ({
-        //     name: f.name,
-        //     url: isGitee
-        //       ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${f.path}?ref=${GITEE_BRANCH}`
-        //       : f.download_url,
-        //   }));
-        // if (!bins.length) continue;
-        const ext = TYPE_FILE_EXT[type]; // '.bin' or '.hex'
+  //       /* ---------- bin 文件 ---------- */
+  //       // const bins = files
+  //       //   .filter(f => f.name.toLowerCase().endsWith('.bin'))
+  //       //   .map(f => ({
+  //       //     name: f.name,
+  //       //     url: isGitee
+  //       //       ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${f.path}?ref=${GITEE_BRANCH}`
+  //       //       : f.download_url,
+  //       //   }));
+  //       // if (!bins.length) continue;
+  //       const ext = TYPE_FILE_EXT[type]; // '.bin' or '.hex'
 
-        const firmwareFiles = files
-          .filter(f => f.name.toLowerCase().endsWith(ext))
-          .map(f => ({
-            name: f.name,
-            url: isGitee
-              ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${f.path}?ref=${GITEE_BRANCH}`
-              : f.download_url,
-          }));
+  //       const firmwareFiles = files
+  //         .filter(f => f.name.toLowerCase().endsWith(ext))
+  //         .map(f => ({
+  //           name: f.name,
+  //           url: isGitee
+  //             ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/contents/${f.path}?ref=${GITEE_BRANCH}`
+  //             : f.download_url,
+  //         }));
 
-        if (!firmwareFiles.length) continue;
+  //       if (!firmwareFiles.length) continue;
   
-        /* ---------- commits ---------- */
-        let commits = [];
-        try {
-          const commitsUrl = isGitee
-            ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/commits?path=${folderPath}&sha=${GITEE_BRANCH}&per_page=5`
-            : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits?path=${folderPath}&sha=${GITHUB_BRANCH}&per_page=5`;
+  //       /* ---------- commits ---------- */
+  //       let commits = [];
+  //       try {
+  //         const commitsUrl = isGitee
+  //           ? `https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/commits?path=${folderPath}&sha=${GITEE_BRANCH}&per_page=5`
+  //           : `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits?path=${folderPath}&sha=${GITHUB_BRANCH}&per_page=5`;
   
-          const cr = await fetch(commitsUrl, { headers });
-          const cjson = await cr.json();
+  //         const cr = await fetch(commitsUrl, { headers });
+  //         const cjson = await cr.json();
   
-          commits = (cjson || []).map(c => ({
-            sha: c.sha,
-            message: c.commit?.message?.split('\n')[0] || '',
-            author: c.commit?.committer?.name || '',
-            date: c.commit?.committer?.date || '',
-          }));
-        } catch {}
+  //         commits = (cjson || []).map(c => ({
+  //           sha: c.sha,
+  //           message: c.commit?.message?.split('\n')[0] || '',
+  //           author: c.commit?.committer?.name || '',
+  //           date: c.commit?.committer?.date || '',
+  //         }));
+  //       } catch {}
   
-        // result.push({
-        //   folder: d.name,
-        //   version,
-        //   bins,
-        //   commits,
-        // });
-        result.push({
-          folder: d.name,     // last / middle / long
-          version,            // version.txt 内容
-          bins: firmwareFiles, // bin 或 hex
-          commits,
-        });
-      }
+  //       // result.push({
+  //       //   folder: d.name,
+  //       //   version,
+  //       //   bins,
+  //       //   commits,
+  //       // });
+  //       result.push({
+  //         folder: d.name,     // last / middle / long
+  //         version,            // version.txt 内容
+  //         bins: firmwareFiles, // bin 或 hex
+  //         commits,
+  //       });
+  //     }
   
-      return result;
-    };
+  //     return result;
+  //   };
   
-    // const [standard, xiaozhi] = await Promise.all([
-    //   listType('standard'),
-    //   listType('xiaozhi'),
-    // ]);
+  //   // const [standard, xiaozhi] = await Promise.all([
+  //   //   listType('standard'),
+  //   //   listType('xiaozhi'),
+  //   // ]);
   
-    // return { standard, xiaozhi };
+  //   // return { standard, xiaozhi };
 
-    const [standard, xiaozhi, microbit] = await Promise.all([
-      listType('standard'),
-      listType('xiaozhi'),
-      listType('microbit'),
-    ]);
-    console.log({
-      standard, 
-      xiaozhi, 
-      microbit
-    })
+  //   const [standard, xiaozhi, microbit] = await Promise.all([
+  //     listType('standard'),
+  //     listType('xiaozhi'),
+  //     listType('microbit'),
+  //   ]);
+  //   console.log({
+  //     standard, 
+  //     xiaozhi, 
+  //     microbit
+  //   })
 
-    // const latestUrl = getLatestBinUrl(microbit);
-    // setMicrobitUrl(latestUrl)
-    return { standard, xiaozhi, microbit };
+  //   // const latestUrl = getLatestBinUrl(microbit);
+  //   // setMicrobitUrl(latestUrl)
+  //   return { standard, xiaozhi, microbit };
     
-  };
+  // };
 
 
   function compareVersion(v1, v2) {
@@ -552,26 +663,26 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
     // 取 bins 里的 url（默认取第一个）
     return latestItem.bins?.[0]?.url || null;
   }
-  const loadRepoFirmwareList = async () => {
-    try {
-      // 1️⃣ 先试 Gitee
-      const data = await loadFirmwareFromRepo('gitee');
-      setGiteeFirmware(data);
-      console.log('已使用 Gitee 固件源');
-    } catch (giteeErr) {
-      console.log('Gitee 访问失败，切换 GitHub...');
+  // const loadRepoFirmwareList = async () => {
+  //   try {
+  //     // 1️⃣ 先试 Gitee
+  //     const data = await loadFirmwareFromRepo('gitee');
+  //     setGiteeFirmware(data);
+  //     console.log('已使用 Gitee 固件源');
+  //   } catch (giteeErr) {
+  //     console.log('Gitee 访问失败，切换 GitHub...');
   
-      try {
-        // 2️⃣ fallback GitHub
-        const data = await loadFirmwareFromRepo('github');
-        setGiteeFirmware(data);
-        console.log('已切换至 GitHub 固件源');
-      } catch (githubErr) {
-        console.log('GitHub 访问失败，无法获取固件列表');
-        console.error(giteeErr, githubErr);
-      }
-    }
-  };
+  //     try {
+  //       // 2️⃣ fallback GitHub
+  //       const data = await loadFirmwareFromRepo('github');
+  //       setGiteeFirmware(data);
+  //       console.log('已切换至 GitHub 固件源');
+  //     } catch (githubErr) {
+  //       console.log('GitHub 访问失败，无法获取固件列表');
+  //       console.error(giteeErr, githubErr);
+  //     }
+  //   }
+  // };
   useEffect(() => {
     loadRepoFirmwareList();
     
@@ -618,6 +729,75 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   // firmwareUrl: URL pointing to .bin file
   // returns true/false
   const flashWithEsptoolOfficial = async (firmwareUrl, baudrate = 1152000) => {
+    const port = window.__serialPort;
+    if (port) {
+      try {
+
+        const jsonData = {
+          command: "select_mode",
+          params: { mode:"file"},
+        };
+        const str = JSON.stringify(jsonData) + "\n";
+        const encoder = new TextEncoder();
+        await window.__serialWriter.write(encoder.encode(str));
+        if (window.__serialReader) {
+          try {
+            await window.__serialReader.cancel();
+          } catch (e) {
+            console.warn("取消 reader 失败:", e);
+          }
+          window.__serialReader = null;
+        }
+
+        if (window.__serialWriter) {
+          try {
+            await window.__serialWriter.releaseLock();
+          } catch (e) {
+            console.warn("释放 writer 失败:", e);
+          }
+          window.__serialWriter = null;
+        }
+
+        if (port.readable || port.writable) {
+          try {
+            await port.close();
+          } catch (err) {
+            console.warn("关闭端口失败:", err);
+          }
+        }
+
+        if (typeof window.__onSerialConnectData === "function") {
+          window.__onSerialConnectData({
+            type: "isOpenPort",
+            data: { message: false },
+          });
+        }
+
+        window.__serialPort = null;
+        window.__serialPortInfo = null;
+
+        if (window.__onSerialDeviceRemoved) {
+          window.__onSerialDeviceRemoved();
+        }
+      } catch (err) {
+        console.warn("全局清理失败:", err);
+      }
+    }
+
+    let baudrateOs=baudrate
+    const ua = navigator.userAgent;
+
+    if (ua.includes("Windows")) {
+        console.log("Windows");
+        baudrateOs=baudrate
+    } else if (ua.includes("Mac")) {
+        console.log("macOS");
+        baudrateOs=115200
+    } else if (ua.includes("Linux")) {
+        console.log("Linux");
+    } else if (/iPhone|iPad|iPod/.test(ua)) {
+        console.log("iOS");
+    }
     appendLog(`准备使用 esptool-js（Transport + ESPLoader）烧录：${firmwareUrl}`);
     let device = null;
     let transport = null;
@@ -666,7 +846,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       // 4. create ESPLoader instance using options object (official style)
       esploader = new ESPLoader({
         transport,
-        baudrate: baudrate,
+        baudrate: baudrateOs,
         terminal,
         debugLogging: false,
       });
@@ -681,24 +861,8 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       const arr = await fetch(firmwareUrl);
       if (!arr.ok) throw new Error(`下载固件失败: ${arr.status} ${arr.statusText}`);
       let bin
-      if (
-        firmwareUrl.startsWith("https://raw.githubusercontent.com") ||
-        firmwareUrl.startsWith("https://github.com") ||
-        firmwareUrl.endsWith(".bin")
-      ) {
-        console.log('本地/github')
-        const buf = await arr.arrayBuffer();
-        bin = new Uint8Array(buf);
-      }
-      // ✅ 情况 2：Gitee contents API（base64）
-      else {
-        console.log('gitee固件')
-        const file = await arr.json();
-        if (!file.content) {
-          throw new Error("Gitee 固件内容为空");
-        }
-        bin = base64ToUint8Array(file.content);
-      }
+      const buf = await arr.arrayBuffer();
+      bin = new Uint8Array(buf);
       // if(firmwareUrl==FLASH_COMBINED_PATH){
       //   const buf = await arr.arrayBuffer();
       //   bin = new Uint8Array(buf);
@@ -827,14 +991,81 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       // console.log(window.__serialPort)
       // console.log(window.__serialPortInfo)
       // return
-      //  const jsonData = {
-      //   command: "select_mode",
-      //   params: { mode:"file"},
-      // };
-      // const str = JSON.stringify(jsonData) + "\n";
-      // const encoder = new TextEncoder();
-      // await window.__serialWriter.write(encoder.encode(str));
-      // window.__serialPort.close()
+       
+      let baudrateOs=baudrate
+      const ua = navigator.userAgent;
+
+      if (ua.includes("Windows")) {
+          console.log("Windows");
+          baudrateOs=baudrate
+      } else if (ua.includes("Mac")) {
+          console.log("macOS");
+          baudrateOs=115200
+      } else if (ua.includes("Linux")) {
+          console.log("Linux");
+      } else if (/iPhone|iPad|iPod/.test(ua)) {
+          console.log("iOS");
+      }
+
+      const port = window.__serialPort;
+      if (port) {
+        try {
+
+          const jsonData = {
+            command: "select_mode",
+            params: { mode:"file"},
+          };
+          const str = JSON.stringify(jsonData) + "\n";
+          const encoder = new TextEncoder();
+          await window.__serialWriter.write(encoder.encode(str));
+          if (window.__serialReader) {
+            try {
+              await window.__serialReader.cancel();
+            } catch (e) {
+              console.warn("取消 reader 失败:", e);
+            }
+            window.__serialReader = null;
+          }
+  
+          if (window.__serialWriter) {
+            try {
+              await window.__serialWriter.releaseLock();
+            } catch (e) {
+              console.warn("释放 writer 失败:", e);
+            }
+            window.__serialWriter = null;
+          }
+  
+          if (port.readable || port.writable) {
+            try {
+              await port.close();
+            } catch (err) {
+              console.warn("关闭端口失败:", err);
+            }
+          }
+  
+          if (typeof window.__onSerialConnectData === "function") {
+            window.__onSerialConnectData({
+              type: "isOpenPort",
+              data: { message: false },
+            });
+          }
+  
+          window.__serialPort = null;
+          window.__serialPortInfo = null;
+  
+          if (window.__onSerialDeviceRemoved) {
+            window.__onSerialDeviceRemoved();
+          }
+          setVersion(['microbit',''])
+          setVersion(['icrobot',''])
+          setVersion(['icrobotHard',''])
+          setVersionHardIn('')
+          setVersionIn('')
+        } catch (err) {
+          console.warn("全局清理失败:", err);
+        }
+      }
       appendLog(`准备烧录 ${firmwareFiles.length} 个固件...`);
       let device = null;
       let transport = null;
@@ -882,7 +1113,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
           // 4. 创建 ESPLoader
           esploader = new ESPLoader({
               transport,
-              baudrate,
+              baudrate:baudrateOs,
               terminal,
               debugLogging: false
           });
@@ -902,24 +1133,9 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
               if (!res.ok) throw new Error(`下载固件失败: ${res.status} ${res.statusText}`);
 
               let bin
-              if (
-                fw.url.startsWith("https://raw.githubusercontent.com") ||
-                fw.url.startsWith("https://github.com") ||
-                fw.url.endsWith(".bin")
-              ) {
-                console.log('本地/github')
-                const buf = await res.arrayBuffer();
-                bin = new Uint8Array(buf);
-              }
-              // ✅ 情况 2：Gitee contents API（base64）
-              else {
-                console.log('gitee固件')
-                const file = await res.json();
-                if (!file.content) {
-                  throw new Error("Gitee 固件内容为空");
-                }
-                bin = base64ToUint8Array(file.content);
-              }
+              const buf = await res.arrayBuffer();
+              bin = new Uint8Array(buf);
+
               // if(firmwareFiles[0].url==FLASH_COMMON_PATH){
               //   const buf = await res.arrayBuffer();
               //   bin=new Uint8Array(buf)
@@ -997,6 +1213,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
           try { if (esploader?.after) await esploader.after(); } catch {}
           try { if (esploader?.disconnect) await esploader.disconnect(); } catch {}
           try { if (transport?.disconnect) await transport.disconnect(); } catch {}
+          onRequestClose()
 
           return true;
       } catch (err) {
@@ -1221,6 +1438,8 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
     setProgress({ stage: "", percent: 0 });
     appendLog("=== 普通固件流程 ===");
 
+    channelLoading.postMessage(true)
+
     // try {
     //   const ok = await flashTwoWithEsptoolOfficial([
     //       { address: 0x0, url: FLASH_COMMON_PATH },
@@ -1241,32 +1460,45 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
 
    try {
     if (selectedStandardFirmware === "local") {
+      channelLoading.postMessage(false)
       await flashTwoWithEsptoolOfficial([
         { address: 0x0, url: FLASH_COMMON_PATH },
         { address: 0x1420000, url: FLASH_VFS },
       ]);
     } else {
-      const fw = giteeFirmware.standard.find(
+      const fw = ossFirmware.standard.find(
         f => f.folder === selectedStandardFirmware
       );
       if (!fw) throw new Error("未找到 Gitee 固件");
 
       appendLog(`使用 Gitee 固件版本: ${fw.version}`);
 
-      const flashList = fw.bins.map(bin => {
-        const name = bin.name.toLowerCase();
-        if (name.includes("firmware"))
-          return { address: 0x0, url: bin.url };
-        if (name.includes("spiffs") || name.includes("vfs"))
-          return { address: 0x1420000, url: bin.url };
-        return null;
-      }).filter(Boolean);
+      // const flashList = fw.bins.map(bin => {
+      //   const name = bin.name.toLowerCase();
+      //   if (name.includes("firmware"))
+      //     return { address: 0x0, url: bin.url };
+      //   if (name.includes("spiffs") || name.includes("vfs"))
+      //     return { address: 0x1420000, url: bin.url };
+      //   return null;
+      // }).filter(Boolean);
+      const flashList = [
+        {
+            address: parseInt(fw.place.first,16),
+            url: fw.bins.find(b=>b.name==="firmware.bin").url
+        },
+        {
+            address: parseInt(fw.place.second,16),
+            url: fw.bins.find(b=>b.name==="vfs.bin").url
+        }
+        ];
 
+        channelLoading.postMessage(false)
       await flashTwoWithEsptoolOfficial(flashList);
     }
 
     appendLog("烧录完成");
   } catch (e) {
+    channelLoading.postMessage(false)
     appendLog("烧录失败: " + e.message);
   } finally {
     setBusy(false);
@@ -1351,7 +1583,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       if (selectedXiaoZhiFirmware === 'local') {
         await flashWithEsptoolOfficial(FLASH_COMBINED_PATH);
       } else {
-        const fw = giteeFirmware.xiaozhi.find(
+        const fw = ossFirmware.xiaozhi.find(
           f => f.folder === selectedXiaoZhiFirmware
         );
         if (!fw) throw new Error('未找到 Gitee 小智固件');
@@ -1410,9 +1642,76 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   //   }
   // }
 
+  function showToast(message, duration = 3000) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          Object.assign(container.style, {
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              zIndex: 9999,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+          });
+          document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.textContent = message;
+
+      Object.assign(toast.style, {
+          background: '#333',
+          color: '#fff',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          opacity: '0',
+          transform: 'translateY(-20px)',
+          transition: 'opacity 0.3s ease, transform 0.3s ease',
+          maxWidth: '300px'
+      });
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateY(0)';
+      });
+
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-20px)';
+          setTimeout(() => {
+              toast.remove();
+              if (container.children.length === 0) {
+                  container.remove();
+              }
+          }, 300);
+      }, duration);
+  }
   const handleFlashMicro = async () => {
     console.log('microbit 固件');
   
+    
+    if(!window.__microbitUSB){
+      showToast(
+        formatMessage({
+            id: "gui.firmware.microbitDisconnect",
+            default: 'No device connected',
+            description: "gui.firmware.microbitDisconnect"
+          })
+      )
+      return
+    }
+    setVersion(['microbit',''])
+    setVersion(['icrobot',''])
+    setVersion(['icrobotHard',''])
+    setVersionHardIn('')
+    setVersionIn('')
+    channelLoading.postMessage(true)
     try {
       let hexText = '';
   
@@ -1425,7 +1724,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
         if (!response.ok) throw new Error('本地 HEX 加载失败');
         hexText = await response.text();
       } else {
-        const fwInfo = giteeFirmware.microbit.find(
+        const fwInfo = ossFirmware.microbit.find(
           f => f.folder === selectedMicrobitFirmware
         );
   
@@ -1435,18 +1734,26 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   
         const hexFile = fwInfo.bins[0];
   
-        if (hexFile.url.includes('/contents/')) {
-          setMicrobitUrl(hexFile.url);
-          const res = await fetch(hexFile.url);
-          if (!res.ok) throw new Error('HEX 下载失败');
-          const json = await res.json();
-          hexText = atob(json.content.replace(/\n/g, ''));
-        } else {
-          setMicrobitUrl(hexFile.url);
-          const res = await fetch(hexFile.url);
-          if (!res.ok) throw new Error('HEX 下载失败');
-          hexText = await res.text();
-        }
+        // if (hexFile.url.includes('/contents/')) {
+        //   setMicrobitUrl(hexFile.url);
+        //   const res = await fetch(hexFile.url);
+        //   if (!res.ok) throw new Error('HEX 下载失败');
+        //   const json = await res.json();
+        //   hexText = atob(json.content.replace(/\n/g, ''));
+        // } else {
+        //   setMicrobitUrl(hexFile.url);
+        //   const res = await fetch(hexFile.url);
+        //   if (!res.ok) throw new Error('HEX 下载失败');
+        //   hexText = await res.text();
+        // }
+        setMicrobitUrl(hexFile.url);
+
+        const res = await fetch(hexFile.url);
+
+        if (!res.ok)
+            throw new Error("HEX 下载失败");
+
+        hexText = await res.text();
       }
   
       /* ---------- 通过 DAPLink 烧录 ---------- */
@@ -1454,11 +1761,13 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       if (!usbDevice) throw new Error('未连接 Micro:bit USB');
   
       const transport = new WebUSB(usbDevice);
-      const daplink = new DAPLink(transport);
+      // const daplink = new DAPLink(transport);
   
-      await daplink.connect();
+      // await daplink.connect();
+      const daplink=window.__daplink
       console.log('DAPLink 已连接，开始烧录...');
   
+      channelLoading.postMessage(false)
       let lastPercent = -1;
       daplink.on(DAPLink.EVENT_PROGRESS, (pct) => {
         const percent = Math.round(pct * 100);
@@ -1479,7 +1788,24 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
       await daplink.flash(new Uint8Array(hexText.split('').map(c => c.charCodeAt(0))));
       console.log('烧录完成！');
   
-      await daplink.disconnect();
+      // await daplink.disconnect();
+      try {
+        clearInterval(window.dapReadTime)
+        window.hasResponse=false;
+        await window.__daplink.disconnect()
+        await window.__microbitUSB.close();
+        
+        console.log("micro:bit WebUSB 已断开");
+      } catch (err) {
+        console.warn("断开 WebUSB 失败:", err);
+        channelLoading.postMessage(false)
+      } finally {
+        clearInterval(window.dapReadTime)
+        window.__microbitUSB = null;
+        window.__daplink=null
+        
+      }
+      
       console.log('DAPLink 已断开');
       handleFirmwareData(JSON.stringify({
         type: 'burnLogs',
@@ -1488,7 +1814,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
           logs:`success`
         } }
       }))
-  
+      onRequestClose()
       // channelLoading.postMessage(false);
   
       // alert(
@@ -1502,7 +1828,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
     } catch (err) {
       console.error('烧录失败:', err);
       // channelLoading.postMessage(false);
-  
+      channelLoading.postMessage(false)
       handleFirmwareData(JSON.stringify({
         type: 'burnLogs',
         data: { message: {
@@ -1552,7 +1878,7 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
   //       hexText = await response.text();
   //     } else {
   //       // ✅ 仓库固件（Gitee / GitHub）
-  //       const fwInfo = giteeFirmware.microbit.find(
+  //       const fwInfo = ossFirmware.microbit.find(
   //         f => f.folder === selectedMicrobitFirmware
   //       );
   
@@ -1616,10 +1942,393 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
                         default: 'Default firmware',
                         description: 'gui.firmware.localFirmware'
                   })
-  const selectedStandardInfo = giteeFirmware.standard.find(f => f.folder === selectedStandardFirmware);
-  const selectedXiaozhiInfo = giteeFirmware.xiaozhi.find(f => f.folder === selectedXiaoZhiFirmware);
-  const selectedMicrobitInfo  = giteeFirmware.microbit.find(f => f.folder === selectedMicrobitFirmware);
+  let noSelectFile=formatMessage({
+        id: 'gui.firmware.noSelectFile',
+        default: 'No File Selected',
+        description: 'gui.firmware.noSelectFile'
+  })
+  const selectedStandardInfo = ossFirmware.standard.find(f => f.folder === selectedStandardFirmware);
+  const selectedXiaozhiInfo = ossFirmware.xiaozhi.find(f => f.folder === selectedXiaoZhiFirmware);
+  const selectedMicrobitInfo  = ossFirmware.microbit.find(f => f.folder === selectedMicrobitFirmware);
 
+
+  const lang =
+    localStorage.getItem('tw:language') ||
+    navigator.language ||
+    'zh';
+
+  const isZh = lang.startsWith('zh');
+
+  const flashCustomWithEsptoolOfficial = async (
+  ) => {
+
+      appendLog("准备开始自定义烧录...");
+
+      let device = null;
+      let transport = null;
+      let esploader = null;
+
+      try {
+
+          //-----------------------------------
+          // 1. 选择串口
+          //-----------------------------------
+
+          appendLog("请求串口权限...");
+
+          device = await navigator.serial.requestPort({
+              filters: [
+                  {
+                      usbVendorId: 0x1A86
+                  }
+              ]
+          });
+
+          ensureDeviceInfo(device);
+
+          //-----------------------------------
+          // 2. 创建 Transport
+          //-----------------------------------
+
+          transport = new Transport(device, true);
+
+          //-----------------------------------
+          // 3. terminal
+          //-----------------------------------
+
+          const terminal = {
+
+              clean() {},
+
+              writeLine(data) {
+
+                  appendLog(data);
+
+                  handleFirmwareData(
+                      JSON.stringify({
+                          type: "burnLogs",
+                          data: {
+                              message: {
+                                  flashing: true,
+                                  logs: `${data}`
+                              }
+                          }
+                      })
+                  );
+
+              },
+
+              write(data) {
+
+                  appendLog(data);
+
+                  handleFirmwareData(
+                      JSON.stringify({
+                          type: "burnLogs",
+                          data: {
+                              message: {
+                                  flashing: true,
+                                  logs: `${data}`
+                              }
+                          }
+                      })
+                  );
+
+              }
+
+          };
+
+          //-----------------------------------
+          // 4. ESPLoader
+          //-----------------------------------
+
+          console.log(customBaud)
+          esploader = new ESPLoader({
+
+              transport,
+
+              baudrate:customBaud,
+
+              terminal,
+
+              debugLogging: false
+
+          });
+
+          appendLog("连接设备...");
+
+          const chip = await esploader.main();
+
+          appendLog(`检测到芯片：${chip}`);
+
+          //-----------------------------------
+          // 5. 构造 fileArray
+          //-----------------------------------
+
+          appendLog("读取文件...");
+
+          const fileArray = [];
+          console.log(customFiles)
+
+          for (const item of customFiles) {
+
+              if (!item.file)
+                  continue;
+
+              appendLog(
+                  `读取 ${item.file.name}`
+              );
+
+              const buf =
+                  await item.file.arrayBuffer();
+
+              const bin =
+                  new Uint8Array(buf);
+
+              function binToLatin1(bin) {
+                  let result = "";
+                  const chunkSize = 0x8000;
+                  for (let i = 0; i < bin.length; i += chunkSize) {
+                      result += String.fromCharCode(...bin.subarray(i, i + chunkSize));
+                  }
+                  return result;
+              }
+              const binStr =
+                  binToLatin1(bin);
+
+              fileArray.push({
+
+                  data: binStr,
+
+                  address:
+                      parseInt(item.address, 16)
+
+              });
+
+          }
+
+          if (fileArray.length === 0)
+              throw new Error("没有选择固件文件");
+
+          console.log(fileArray);
+
+          //-----------------------------------
+          // 6. 开始烧录
+          //-----------------------------------
+
+          appendLog("开始烧录...");
+
+          setProgress({
+              stage: "烧录固件",
+              percent: 0
+          });
+
+          await esploader.writeFlash({
+
+              fileArray,
+
+              eraseAll: false,
+
+              compress: true,
+
+              flashSize: "keep",
+
+              reportProgress: (
+                  fileIndex,
+                  written,
+                  total
+              ) => {
+
+                  const percent =
+                      Math.round(
+                          written / total * 100
+                      );
+
+                  setProgress({
+
+                      stage:
+                          `烧录文件 ${fileIndex + 1}/${fileArray.length}`,
+
+                      percent
+
+                  });
+
+              },
+
+              calculateMD5Hash: () => null
+
+          });
+
+          //-----------------------------------
+          // 7. reset
+          //-----------------------------------
+
+          try {
+
+              await esploader.hardReset();
+
+          }
+          catch (e) {
+
+              appendLog(
+                  "硬复位失败（可忽略）"
+              );
+
+          }
+
+          //-----------------------------------
+          // 8. 完成
+          //-----------------------------------
+
+          appendLog("烧录完成");
+
+          setProgress({
+
+              stage: "烧录完成",
+
+              percent: 100
+
+          });
+
+          handleFirmwareData(
+              JSON.stringify({
+                  type: "burnLogs",
+                  data: {
+                      message: {
+                          flashing: false,
+                          logs: "success"
+                      }
+                  }
+              })
+          );
+
+          //-----------------------------------
+          // 9. disconnect
+          //-----------------------------------
+
+          try {
+
+              if (
+                  esploader &&
+                  typeof esploader.after === "function"
+              ) {
+
+                  await esploader.after();
+
+              }
+
+          }
+          catch {}
+
+          try {
+
+              if (
+                  esploader &&
+                  typeof esploader.disconnect === "function"
+              )
+                  await esploader.disconnect();
+
+              if (
+                  transport &&
+                  typeof transport.disconnect === "function"
+              )
+                  await transport.disconnect();
+
+          }
+          catch {}
+
+          return true;
+
+      }
+      catch (err) {
+
+          console.log(err);
+
+          appendLog(
+              "烧录错误：" +
+              (
+                  err?.message ||
+                  String(err)
+              )
+          );
+
+          handleFirmwareData(
+              JSON.stringify({
+                  type: "burnLogs",
+                  data: {
+                      message: {
+                          flashing: false,
+                          logs: "Failed"
+                      }
+                  }
+              })
+          );
+
+          try {
+
+              if (
+                  esploader &&
+                  typeof esploader.disconnect === "function"
+              )
+                  esploader.disconnect();
+
+              if (
+                  transport &&
+                  typeof transport.disconnect === "function"
+              )
+                  transport.disconnect();
+
+          }
+          catch {}
+
+          return false;
+
+      }
+
+  };
+  const flashCustom = async ()=>{
+
+      if (!device)
+      {
+          appendLog("请先选择串口");
+          return;
+      }
+
+      const fileArray=[];
+
+      for(const item of customFiles)
+      {
+
+          if(!item.file)
+              continue;
+
+          const buf =
+              await item.file.arrayBuffer();
+
+          fileArray.push({
+              address:
+                  parseInt(item.address,16),
+
+              data:
+                  new Uint8Array(buf)
+          });
+
+      }
+
+      if(fileArray.length===0)
+      {
+          appendLog("请选择文件");
+          return;
+      }
+
+      await esploader.writeFlash({
+          fileArray,
+          flashSize:"keep",
+          eraseAll:false,
+          compress:true
+      });
+
+  };
   // ---------- UI ----------
   // return (
   //   <div className={styles.overlay}>
@@ -1754,213 +2463,550 @@ export default function FirmwareFlasher({ onRequestClose, handleFirmwareData}) {
             <option>COM - 请选择</option>
           </select>
         </div> */}
-        {/* 当前固件版本显示 */}
-        {version && <div className={styles.field}>
-          <label className={styles.versionLabel}>
-            <FormattedMessage
-              id="gui.firmware.currentVersion"
-              defaultMessage="Current Firmware Version"
-            />
-          </label>
-          {version && <input
-            className={styles.versionInput}
-            type="text"
-            value={version || ''}
-            readOnly
-          />}
-        </div>}
+        <div className={styles.tabBar}>
 
-        {/* ICRobot 双卡片 */}
-        {getCurrent() === "ICRobot" && (
-          <div className={styles.cardsRow}>
-            {/* 标准固件 */}
-            <div className={styles.card}>
-              <div className={styles.cardTitle}>
-                <FormattedMessage
-                  id="gui.firmware.icrobot"
-                  defaultMessage="Standard Firmware"
-                />
+          <button
+              className={
+                  activeTab === "default"
+                      ? styles.activeTab
+                      : styles.tab
+              }
+              onClick={() => setActiveTab("default")}
+          >
+              <FormattedMessage
+                id="gui.firmware.default"
+                defaultMessage="Default Flash"
+              />
+          </button>
+
+          <button
+              className={
+                  activeTab === "custom"
+                      ? styles.activeTab
+                      : styles.tab
+              }
+              onClick={() => setActiveTab("custom")}
+          >
+              <FormattedMessage
+                id="gui.firmware.custom"
+                defaultMessage="Custom Flash"
+              />
+          </button>
+
+          </div>
+          {
+          activeTab==="default" && (
+            <div>
+              {/* 当前固件版本显示 */}
+              {/* {version && <div className={styles.field}>
+                <label className={styles.versionLabel}>
+                  <FormattedMessage
+                    id="gui.firmware.currentVersion"
+                    defaultMessage="Current Firmware Version"
+                  />
+                </label>
+                {version && <input
+                  className={styles.versionInput}
+                  type="text"
+                  value={version || ''}
+                  readOnly
+                />}
+              </div>} */}
+              <div className={styles.versionRow}>
+                {/* 当前固件版本 */}
+                {version && (
+                  <div className={styles.field}>
+                    <label className={styles.versionLabel}>
+                      <FormattedMessage
+                        id="gui.firmware.currentVersion"
+                        defaultMessage="Current Firmware Version"
+                      />
+                    </label>
+
+                    <input
+                      className={styles.versionInput}
+                      type="text"
+                      value={version || ''}
+                      readOnly
+                    />
+                  </div>
+                )}
+
+                {/* 当前硬件版本 */}
+                {versionHard && (
+                  <div className={styles.field}>
+                    <label className={styles.versionLabel}>
+                      <FormattedMessage
+                        id="gui.firmware.currentHardwareVersion"
+                        defaultMessage="Current Hardware Version"
+                      />
+                    </label>
+
+                    <input
+                      className={styles.versionInput}
+                      type="text"
+                      value={versionHard || ''}
+                      readOnly
+                    />
+                  </div>
+                )}
               </div>
 
-              <select
-                value={selectedStandardFirmware}
-                onChange={(e) => setSelectedStandardFirmware(e.target.value)}
-              >
-                <option value="local">
-                  {/* <FormattedMessage
-                    id="gui.firmware.localFirmware"
-                    defaultMessage="Default firmware"
-                  /> */}
-                  {localFirm+'(1.1.0)'}
-                </option>
-
-                {giteeFirmware.standard.map(f => (
-                  <option key={f.folder} value={f.folder}>
-                    {f.version}
-                  </option>
-                ))}
-              </select>
-
-              {selectedStandardInfo && selectedStandardInfo.commits?.[0] && (
-                <div className={styles.commitBox}>
-
-
-                  <div className={styles.commitItem}>
-                    <div className={styles.commitMsg}>
-                      {selectedStandardInfo.commits[0].message}
+              {/* ICRobot 双卡片 */}
+              {getCurrent() === "ICRobot" && (
+                <div className={styles.cardsRow}>
+                  {/* 标准固件 */}
+                  <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                      <FormattedMessage
+                        id="gui.firmware.icrobot"
+                        defaultMessage="Standard Firmware"
+                      />
                     </div>
+
+                    <select
+                      value={selectedStandardFirmware}
+                      onChange={(e) => setSelectedStandardFirmware(e.target.value)}
+                    >
+                      <option value="local">
+                        {/* <FormattedMessage
+                          id="gui.firmware.localFirmware"
+                          defaultMessage="Default firmware"
+                        /> */}
+                        {localFirm+'(1.1.0)'}
+                      </option>
+
+                      {ossFirmware.standard.map(f => (
+                      <option key={f.folder} value={f.folder}>
+                      {
+                          `${f.version}`
+                      }
+                      </option>
+                      ))}
+                    </select>
+
+                    {/* {selectedStandardInfo && selectedStandardInfo.commits?.[0] && (
+                      <div className={styles.commitBox}>
+
+
+                        <div className={styles.commitItem}>
+                          <div className={styles.commitMsg}>
+                            {selectedStandardInfo.commits[0].message}
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+                    {selectedStandardInfo && (
+                      <div className={styles.commitBox}>
+                          <div className={styles.commitMsg}>
+                              {
+                                  isZh
+                                  ? selectedStandardInfo.description?.zh
+                                  : selectedStandardInfo.description?.en
+                              }
+                          </div>
+                      </div>
+                      )}
+
+                    {/* <div className={styles.cardDesc}>
+                      适用于 ICRobot 标准功能，包含基础控制与扩展能力。
+                    </div> */}
+
+                    <button
+                      className={styles.cardBtn}
+                      disabled={busy}
+                      onClick={handleFlashCommonThenUpload}
+                    >
+                      <FormattedMessage id="gui.firmware.standerdUpdate" defaultMessage="Update" />
+                    </button>
                   </div>
+
+                  {/* 小智固件 */}
+                  {/* <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                      <FormattedMessage
+                        id="gui.firmware.xiaozhi"
+                        defaultMessage="XiaoZhi AI Firmware"
+                      />
+                    </div>
+
+                   
+                    <select
+                      value={selectedXiaoZhiFirmware}
+                      onChange={(e) => setSelectedXiaoZhiFirmware(e.target.value)}
+                    >
+                      <option value="local">
+                        {localFirm+'(1.0.0)'}
+                      </option>
+
+                      {ossFirmware.xiaozhi.map(f => (
+                      <option key={f.folder} value={f.folder}>
+                      {
+                          `${f.version}`
+                      }
+                      </option>
+                      ))}
+                    </select>
+
+                    {selectedXiaozhiInfo && (
+                      <div className={styles.commitBox}>
+                          <div className={styles.commitMsg}>
+                              {
+                                  isZh
+                                  ? selectedXiaozhiInfo.description?.zh
+                                  : selectedXiaozhiInfo.description?.en
+                              }
+                          </div>
+                      </div>
+                      )}
+
+                    <button
+                      className={styles.cardBtn}
+                      disabled={busy}
+                      onClick={handleFlashXiaoZhi}
+                    >
+                      <FormattedMessage id="gui.firmware.xiaozhiUpdate" defaultMessage="Update" />
+                    </button>
+                  </div> */}
                 </div>
               )}
 
-              {/* <div className={styles.cardDesc}>
-                适用于 ICRobot 标准功能，包含基础控制与扩展能力。
-              </div> */}
-
-              <button
-                className={styles.cardBtn}
-                disabled={busy}
-                onClick={handleFlashCommonThenUpload}
-              >
-                <FormattedMessage id="gui.firmware.standerdUpdate" defaultMessage="Update" />
-              </button>
-            </div>
-
-            {/* 小智固件 */}
-            <div className={styles.card}>
-              <div className={styles.cardTitle}>
-                <FormattedMessage
-                  id="gui.firmware.xiaozhi"
-                  defaultMessage="XiaoZhi AI Firmware"
-                />
-              </div>
-
-              {/* <select
-                value={selectedXiaoZhiFirmware}
-                onChange={(e) => setSelectedXiaoZhiFirmware(e.target.value)}
-              >
-                <option value="local">本地固件（默认）</option>
-                {giteeFirmware.xiaozhi.map(f => (
-                  <option key={f.folder} value={f.folder}>
-                    {f.version}
-                  </option>
-                ))}
-              </select> */}
-              <select
-                value={selectedXiaoZhiFirmware}
-                onChange={(e) => setSelectedXiaoZhiFirmware(e.target.value)}
-              >
-                <option value="local">
-                   {localFirm+'(1.0.0)'}
-                </option>
-
-                {giteeFirmware.xiaozhi.map(f => (
-                  <option key={f.folder} value={f.folder}>
-                    {f.version}
-                  </option>
-                ))}
-              </select>
-
-              {/* <div className={styles.cardDesc}>
-                集成小智 AI 能力，仅需烧录固件即可使用。
-              </div> */}
-
-              {selectedXiaozhiInfo && selectedXiaozhiInfo.commits?.[0] && (
-              <div className={styles.commitBox}>
-
-                <div className={styles.commitItem}>
-                  <div className={styles.commitMsg}>
-                    {selectedXiaozhiInfo.commits[0].message}
+              {/* Microbit 单卡片 */}
+              {/* {getCurrent() === "Microbit" && (
+                <div className={`${styles.card} ${styles.singleCard}`}>
+                  <div className={styles.cardTitle}>
+                    <FormattedMessage
+                      id="gui.firmware.microbit"
+                      defaultMessage="Microbit Firmware"
+                    />
                   </div>
-                </div>
-              </div>
-            )}
 
-              <button
-                className={styles.cardBtn}
-                disabled={busy}
-                onClick={handleFlashXiaoZhi}
-              >
-                <FormattedMessage id="gui.firmware.xiaozhiUpdate" defaultMessage="Update" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Microbit 单卡片 */}
-        {/* {getCurrent() === "Microbit" && (
-          <div className={`${styles.card} ${styles.singleCard}`}>
-            <div className={styles.cardTitle}>
-              <FormattedMessage
-                id="gui.firmware.microbit"
-                defaultMessage="Microbit Firmware"
-              />
-            </div>
-
-            <div className={styles.cardDesc}>
-              <FormattedMessage
-                id="gui.firmware.microbitDesc"
-                defaultMessage="Basic micro:bit firmware compatible with this software"
-              />
-            </div>
-
-            <button
-              className={styles.cardBtn}
-              disabled={busy}
-              onClick={handleFlashMicro}
-            >
-              <FormattedMessage id="gui.firmware.microbitUpdate" defaultMessage="Flash micro:bit firmware" />
-            </button>
-          </div>
-        )} */}
-
-        {getCurrent() === "Microbit" && (
-          <div className={`${styles.card} ${styles.singleCard}`}>
-            <div className={styles.cardTitle}>
-              <FormattedMessage
-                id="gui.firmware.microbit"
-                defaultMessage="Microbit Firmware"
-              />
-            </div>
-
-            <select
-              value={selectedMicrobitFirmware}
-              onChange={(e) => setSelectedMicrobitFirmware(e.target.value)}
-            >
-              <option value="local">
-                {localFirm+'(1.0.0)'}
-              </option>
-
-              {giteeFirmware.microbit.map(f => (
-                <option key={f.folder} value={f.folder}>
-                  {f.version}
-                </option>
-              ))}
-            </select>
-
-            {/* 提交记录 */}
-            {selectedMicrobitInfo && selectedMicrobitInfo.commits?.[0] && (
-              <div className={styles.commitBox}>
-                <div className={styles.commitItem}>
-                  <div className={styles.commitMsg}>
-                    {selectedMicrobitInfo.commits[0].message}
+                  <div className={styles.cardDesc}>
+                    <FormattedMessage
+                      id="gui.firmware.microbitDesc"
+                      defaultMessage="Basic micro:bit firmware compatible with this software"
+                    />
                   </div>
-                </div>
-              </div>
-            )}
 
-            <button
-              className={styles.cardBtn}
-              disabled={busy}
-              onClick={handleFlashMicro}
-            >
-              <FormattedMessage
-                id="gui.firmware.microbitUpdate"
-                defaultMessage="Flash micro:bit firmware"
-              />
-            </button>
+                  <button
+                    className={styles.cardBtn}
+                    disabled={busy}
+                    onClick={handleFlashMicro}
+                  >
+                    <FormattedMessage id="gui.firmware.microbitUpdate" defaultMessage="Flash micro:bit firmware" />
+                  </button>
+                </div>
+              )} */}
+
+              {getCurrent() === "Microbit" && (
+                <div className={`${styles.card} ${styles.singleCard}`}>
+                  <div className={styles.cardTitle}>
+                    <FormattedMessage
+                      id="gui.firmware.microbit"
+                      defaultMessage="Microbit Firmware"
+                    />
+                  </div>
+
+                  <select
+                    value={selectedMicrobitFirmware}
+                    onChange={(e) => setSelectedMicrobitFirmware(e.target.value)}
+                  >
+                    <option value="local">
+                      {localFirm+'(1.0.0)'}
+                    </option>
+
+                    {ossFirmware.microbit.map(f => (
+                      <option key={f.folder} value={f.folder}>
+                        {f.version}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* 提交记录 */}
+                  {/* {selectedMicrobitInfo && selectedMicrobitInfo.commits?.[0] && (
+                    <div className={styles.commitBox}>
+                      <div className={styles.commitItem}>
+                        <div className={styles.commitMsg}>
+                          {selectedMicrobitInfo.commits[0].message}
+                        </div>
+                      </div>
+                    </div>
+                  )} */}
+
+                  {selectedMicrobitInfo && (
+                    <div className={styles.commitBox}>
+                        <div className={styles.commitMsg}>
+                            {
+                                isZh
+                                ? selectedMicrobitInfo.description?.zh
+                                : selectedMicrobitInfo.description?.en
+                            }
+                        </div>
+                    </div>
+                  )}
+                  <button
+                    className={styles.cardBtn}
+                    disabled={busy}
+                    onClick={handleFlashMicro}
+                  >
+                    <FormattedMessage
+                      id="gui.firmware.microbitUpdate"
+                      defaultMessage="Flash micro:bit firmware"
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+          }
+          {
+            activeTab==="custom" && (
+
+              <div className={styles.customCard}>
+
+              {/* 串口 */}
+              <div className={styles.field}>
+                  {/* <label>选择串口</label>
+          
+                  <select
+                      className={styles.select}
+                      value={selectedPort}
+                      onChange={handlePortChange}
+                  >
+                      <option value="">请选择串口</option>
+          
+                      {
+                          ports.map((port,index)=>(
+                              <option
+                                  key={index}
+                                  value={index}
+                              >
+                                  {port.name}
+                              </option>
+                          ))
+                      }
+          
+                  </select> */}
+              </div>
+          
+          
+              {/* 波特率 */}
+              <div className={styles.field}>
+          
+                  <label style={{color:'black'}}>
+                  <FormattedMessage
+                    id="gui.firmware.baud"
+                    defaultMessage="Baud Rate"
+                  />
+                  </label>
+          
+                  <select
+                      className={styles.select}
+                      value={customBaud}
+                      onChange={(e)=>
+                          setCustomBaud(Number(e.target.value))
+                      }
+                  >
+          
+                      <option value={9600}>9600</option>
+                      <option value={57600}>57600</option>
+                      <option value={115200}>115200</option>
+                      <option value={230400}>230400</option>
+                      <option value={921600}>921600</option>
+                      <option value={1152000}>1152000</option>
+          
+                  </select>
+          
+              </div>
+          
+          
+              {/* 文件列表 */}
+          
+              <div className={styles.field}>
+          
+                  <label style={{color:'black'}}>
+                  <FormattedMessage
+                    id="gui.firmware.addressFile"
+                    defaultMessage="Flash Address & Firmware File"
+                  />
+                  </label>
+          
+                  <div className={styles.fileList}>
+          
+                      {
+                          customFiles.map((item,index)=>(
+          
+                              <div
+                                  key={index}
+                                  className={styles.fileRow}
+                              >
+          
+                                  {/* 地址 */}
+          
+                                  <input
+                                      className={styles.flashAddress}
+                                      value={item.address}
+                                      placeholder="0x0"
+                                      onChange={(e)=>{
+          
+                                          const arr=[...customFiles];
+          
+                                          arr[index].address =
+                                              e.target.value;
+          
+                                          setCustomFiles(arr);
+          
+                                      }}
+                                  />
+          
+          
+                                  {/* 文件按钮 */}
+          
+                                  <label
+                                      className={styles.chooseFileBtn}
+                                  >
+                                      <FormattedMessage
+                                        id="gui.firmware.selectFile"
+                                        defaultMessage="Select File"
+                                      />
+          
+                                      <input
+                                          hidden
+                                          type="file"
+                                          accept=".bin"
+          
+                                          onChange={(e)=>{
+          
+                                              const arr=[...customFiles];
+          
+                                              arr[index].file =
+                                                  e.target.files[0];
+          
+                                              arr[index].fileName =
+                                                  e.target.files[0]?.name ||
+                                                  "";
+          
+                                              setCustomFiles(arr);
+          
+                                          }}
+                                      />
+          
+                                  </label>
+          
+          
+                                  {/* 文件名 */}
+          
+                                  <span
+                                      className={styles.fileName}
+                                  >
+          
+                                      {
+                                          item.fileName ||
+                                          noSelectFile
+                                      }
+          
+                                  </span>
+          
+          
+                                  {/* 删除 */}
+          
+                                  {
+                                      customFiles.length>1 &&
+          
+                                      <button
+          
+                                          className={
+                                              styles.deleteBtn
+                                          }
+          
+                                          onClick={()=>{
+          
+                                              setCustomFiles(
+          
+                                                  customFiles.filter(
+                                                      (_,i)=>
+                                                          i!==index
+                                                  )
+          
+                                              );
+          
+                                          }}
+          
+                                      >
+                                          ×
+                                      </button>
+          
+                                  }
+          
+                              </div>
+          
+                          ))
+                      }
+          
+                  </div>
+          
+              </div>
+          
+          
+              {/* 新增文件 */}
+          
+              <button
+          
+                  className={styles.addFileBtn}
+          
+                  onClick={()=>{
+          
+                      setCustomFiles([
+          
+                          ...customFiles,
+          
+                          {
+          
+                              address:"0x0",
+          
+                              file:null,
+          
+                              fileName:""
+          
+                          }
+          
+                      ]);
+          
+                  }}
+          
+              >
+          
+                  <FormattedMessage
+                    id="gui.firmware.addFile"
+                    defaultMessage="Add File"
+                  />
+          
+              </button>
+          
+          
+              {/* 开始烧录 */}
+          
+              <button
+          
+                  className={styles.customFlashBtn}
+          
+                  onClick={flashCustomWithEsptoolOfficial}
+          
+              >
+          
+                  <FormattedMessage
+                    id="gui.firmware.startCustomFlash"
+                    defaultMessage="Start Flashing"
+                  />
+          
+              </button>
+          
+          
           </div>
-        )}
+
+            )
+            }
+        
 
         
 

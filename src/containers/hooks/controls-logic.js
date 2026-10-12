@@ -76,6 +76,7 @@ export function createControlsLogic(componentInstance) {
         self.props.vm.stopAll();
         console.log('停止')
         self.stopAll.postMessage(true)
+        console.log(getIsRobot())
         if(getIsRobot()){
 
             if(self.whatSendFun=='net'){

@@ -15,6 +15,7 @@ export const LANGUAGE_KEY = 'tw:language';
  * @return {string} the preferred locale
  */
 const detectLocale = supportedLocales => {
+    // const supportedLocales =['en','zh-cn','pl','ru','zh-tw']
     // tw: read language from localStorage
     try {
         const storedLanguage = localStorage.getItem(LANGUAGE_KEY);

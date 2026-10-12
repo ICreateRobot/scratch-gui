@@ -10,7 +10,7 @@ const ConnectDevice = props => (
     <MenuItem onClick={props.onClick}>
         <div className={styles.option}>
             <FormattedMessage
-                defaultMessage='连接'
+                defaultMessage='Connect'
                 description="Button in menu bar under settings to open desktop app settings"
                 id="connectDevice"
             />

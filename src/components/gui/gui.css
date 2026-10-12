@@ -248,6 +248,9 @@
         /* this will only ever be as wide as the stage */
         flex-basis: 0;
         /* min-width: 500px; */
+
+         height: calc(100vh-$menu-bar-height);          /*或 calc(100vh - 头部高度) */
+        min-height: 0;           /*防止 flex 子项溢出 */
     }
     .code-and-tab{
         display: flex;
@@ -259,6 +262,9 @@
         /* this will only ever be as wide as the stage */
         flex-basis: 0;
         min-width: 478px;
+
+        flex: 1;               /* ✅ 关键 */
+        min-height: 0;         /* ✅ 防止内容撑爆 */
     }
 }
 

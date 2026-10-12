@@ -297,6 +297,7 @@ class Blocks extends React.Component {
         this.props.vm.runtime.on('PROJECT_RUN_STOP',()=>{
             // console.log('程序停止')
         })
+        window.onWorkspaceUpdate = this.onWorkspaceUpdate.bind(this);
 
     }
     shouldComponentUpdate (nextProps, nextState) {
@@ -630,7 +631,8 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
-        // console.log('11111111111111111111')
+        this.workspaceToCode({ type: 'change' })
+        console.log('11111111111111111111')
     }
     handleMonitorsUpdate (monitors) {
         // Update the checkboxes of the relevant monitors.

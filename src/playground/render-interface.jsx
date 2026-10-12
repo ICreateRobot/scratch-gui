@@ -205,7 +205,7 @@ class Interface extends React.Component {
     handleUpdateProjectTitle (title, isDefault) {
         if (isDefault || !title) {
             // document.title = `${APP_NAME} - ${this.props.intl.formatMessage(messages.defaultTitle)}`;
-            document.title = `${APP_NAME} web 0.1.0 Beta`;
+            document.title = `${APP_NAME} web 0.1.6 Beta`;
         } else {
             document.title = `${title} - ${APP_NAME}`;
         }

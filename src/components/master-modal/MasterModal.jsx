@@ -76,15 +76,25 @@ const MasterModal = ({ onRequestClose, handleData }) => {
 
   // 点击红色减号
   const deselectDevice = async(index, e) => {
-    e.stopPropagation();
-    const newState = [...selected];
-    newState[index] = false;
-    setSelected(newState);
-    await new Promise(resolve => setTimeout(resolve, 1000));  
-    handleData({
-      type: 'close',
-      data: { message: newState }
-    });
+    let result = confirm(
+        formatMessage({
+            id: 'gui.alert.confirmchangemode',
+            default: 'This operation will clear the workspace. Continue?',
+            description: 'gui.alert.confirmchangemode'
+        })
+    );
+    if(result){
+      e.stopPropagation();
+      const newState = [...selected];
+      newState[index] = false;
+      setSelected(newState);
+      await new Promise(resolve => setTimeout(resolve, 1000));  
+      handleData({
+        type: 'close',
+        data: { message: newState }
+      });
+    }
+   
   };
 
   const devices = [
@@ -98,7 +108,7 @@ const MasterModal = ({ onRequestClose, handleData }) => {
       <div className={styles.modalContent}>
         {/* 标题栏 */}
         <div className={styles.modalHeader}>
-          <h2> <FormattedMessage
+          <h2 style={{color:'black'}}> <FormattedMessage
                     defaultMessage="select device"
                     description="select device"
                     id="gui.master.selectDevice"
@@ -133,7 +143,7 @@ const MasterModal = ({ onRequestClose, handleData }) => {
                       </div>
                     )}
 
-                    <p>{dev.name}</p>
+                    <p style={{color:'black'}}>{dev.name}</p>
                     <img src={dev.img} alt={dev.name} />
                   </div>
                 </td>

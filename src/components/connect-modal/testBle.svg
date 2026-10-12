@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer layer - large semi-transparent circle -->
+  <circle cx="500" cy="500" r="450" fill="rgba(255,255,255,0.8)" opacity="0.8"/>
+  
+  <!-- Middle layer - second ring -->
+  <circle cx="500" cy="500" r="350" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="80"/>
+  
+  <!-- Center circle with gradient -->
+  <defs>
+    <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a3e9d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="500" cy="500" r="220" fill="url(#centerGradient)"/>
+  
+  <!-- Bluetooth symbol corrected according to reference image -->
+  <path d="M500 350 L500 480 L550 420 L500 350 Z" fill="white"/>
+  <path d="M500 520 L500 620 L550 550 L500 520 Z" fill="white"/>
+  <path d="M405 435 L500 480 L420 455 L405 435 Z" fill="white"/>
+  <path d="M405 525 L500 480 L420 505 L405 525 Z" fill="white"/>
+  
+  <!-- Four corner dots -->
+  <circle cx="500" cy="40" r="18" fill="#48a899"/>
+  <circle cx="40" cy="480" r="18" fill="#48a899"/>
+  <circle cx="960" cy="480" r="18" fill="#48a899"/>
+  <circle cx="500" cy="960" r="18" fill="#48a899"/>
+</svg>

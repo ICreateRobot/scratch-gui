@@ -138,6 +138,17 @@ class LibraryItem extends React.PureComponent {
     }
     render () {
         const iconMd5 = this.curIconMd5();
+        // console.log(iconMd5)
+        // let iconURL
+        // if(iconMd5=='b9dceeedbff38a8770e52ede57eb6231.svg'){
+        //     iconURL = iconMd5 ?
+        //     `../assets/${iconMd5}` :
+        //     this.props.iconRawURL;
+        // }else{
+        //     iconURL = iconMd5 ?
+        //     `https://cdn.assets.scratch.mit.edu/internalapi/asset/${iconMd5}/get/` :
+        //     this.props.iconRawURL;
+        // }
         // const iconURL = iconMd5 ?
         //     `https://cdn.assets.scratch.mit.edu/internalapi/asset/${iconMd5}/get/` :
         //     this.props.iconRawURL;

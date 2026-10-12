@@ -83,6 +83,11 @@ import {
     microbitPeripheralExtension,
     robotExtendExtension,
     k210Extension,
+    robotPinExtension,
+    gestureDetectExtension,
+    iotSchoolExtension,
+    poseDetectExtension,
+    zerothExtension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -116,7 +121,12 @@ export default [
     microbitExtension,
     microbitPeripheralExtension,
     robotExtendExtension,
-    k210Extension,
+    // k210Extension,
+    robotPinExtension,
+    gestureDetectExtension,
+    poseDetectExtension,
+    iotSchoolExtension,
+    zerothExtension,
     {
         name: (
             <FormattedMessage

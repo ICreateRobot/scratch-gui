@@ -204,6 +204,7 @@ import {getMicrobitUrl} from '../utils/utils.js'
 import {getLatestMicrobitHexUrlWithFallback} from './microbitLatest'
 
 import { DAPLink, WebUSB } from 'dapjs';
+import { getCurrent } from '../utils/utils.js';
 
 const currentURL = window.location.href;
 const oneLevelUp = currentURL.substring(0, currentURL.lastIndexOf("/"));
@@ -216,6 +217,7 @@ const MICRO_PATH = `${modelPath}/MICROBIT.hex`
 let progressBar = null;
 let progressBarContainer = null;
 let progressText=null
+let progressOverlay = null;
 
 function showProgress(msg) {
     // 确保msg在0-100范围内
@@ -232,115 +234,221 @@ function showProgress(msg) {
     progressText.textContent = `${progress}%`;
     
     // 自动隐藏逻辑（当进度完成时）
+    // if (progress >= 100) {
+    //     setTimeout(() => {
+    //         if (progressBarContainer) {
+    //             progressBarContainer.style.opacity = '0';
+    //             setTimeout(() => {
+    //                 progressBarContainer.remove();
+    //                 progressBar = null;
+    //                 progressBarContainer = null;
+    //                 progressText=null
+    //             }, 500);
+    //         }
+    //     }, 1000);
+    // }
+
     if (progress >= 100) {
         setTimeout(() => {
-            if (progressBarContainer) {
-                progressBarContainer.style.opacity = '0';
+            if (progressOverlay) {
+                progressOverlay.style.opacity = '0';
+    
                 setTimeout(() => {
-                    progressBarContainer.remove();
+                    progressOverlay.remove();
+    
                     progressBar = null;
                     progressBarContainer = null;
-                    progressText=null
+                    progressOverlay = null;
                 }, 500);
             }
-        }, 1000);
+        }, 800);
     }
 }
 
-function createProgressBar() {
-    // 创建容器
-    progressBarContainer = document.createElement('div');
-    Object.assign(progressBarContainer.style, {
-        position: 'fixed',
-        top: '30%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '300px',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        borderRadius: '4px',
-        padding: '10px',
-        zIndex: '1001',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-        transition: 'opacity 0.5s ease',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-    });
+// function createProgressBar() {
+//     // 创建容器
+//     progressBarContainer = document.createElement('div');
+//     Object.assign(progressBarContainer.style, {
+//         position: 'fixed',
+//         top: '30%',
+//         left: '50%',
+//         transform: 'translateX(-50%)',
+//         width: '300px',
+//         backgroundColor: 'rgba(0,0,0,0.7)',
+//         borderRadius: '4px',
+//         padding: '10px',
+//         zIndex: '1001',
+//         boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+//         transition: 'opacity 0.5s ease',
+//         display: 'flex',
+//         flexDirection: 'column',
+//         alignItems: 'center'
+//     });
 
-    // 创建文本标签
-    progressText = document.createElement('div');
-    // progressText.textContent = '下载中...';
-    progressText.style.color = 'white';
-    progressText.style.marginBottom = '8px';
-    progressText.style.fontSize = '14px';
-    progressText.id = 'progress-text';
+//     // 创建文本标签
+//     progressText = document.createElement('div');
+//     // progressText.textContent = '下载中...';
+//     progressText.style.color = 'white';
+//     progressText.style.marginBottom = '8px';
+//     progressText.style.fontSize = '14px';
+//     progressText.id = 'progress-text';
 
-    // 创建进度条背景
-    const progressTrack = document.createElement('div');
-    Object.assign(progressTrack.style, {
-        width: '100%',
-        height: '6px',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: '3px',
-        overflow: 'hidden'
-    });
+//     // 创建进度条背景
+//     const progressTrack = document.createElement('div');
+//     Object.assign(progressTrack.style, {
+//         width: '100%',
+//         height: '6px',
+//         backgroundColor: 'rgba(255,255,255,0.2)',
+//         borderRadius: '3px',
+//         overflow: 'hidden'
+//     });
 
-    // 创建进度条前景
-    progressBar = document.createElement('div');
-    Object.assign(progressBar.style, {
-        height: '100%',
-        width: '0%',
-        backgroundColor: '#4CAF50',
-        borderRadius: '3px',
-        transition: 'width 0.3s ease',
-        position: 'relative'
-    });
+//     // 创建进度条前景
+//     progressBar = document.createElement('div');
+//     Object.assign(progressBar.style, {
+//         height: '100%',
+//         width: '0%',
+//         backgroundColor: '#4CAF50',
+//         borderRadius: '3px',
+//         transition: 'width 0.3s ease',
+//         position: 'relative'
+//     });
 
-    // 添加百分比标签
-    const percentLabel = document.createElement('span');
-    percentLabel.style.position = 'absolute';
-    percentLabel.style.right = '4px';
-    percentLabel.style.top = '50%';
-    percentLabel.style.transform = 'translateY(-50%)';
-    percentLabel.style.color = 'white';
-    percentLabel.style.fontSize = '10px';
-    //percentLabel.textContent = '0%';
-    progressBar.appendChild(percentLabel);
+//     // 添加百分比标签
+//     const percentLabel = document.createElement('span');
+//     percentLabel.style.position = 'absolute';
+//     percentLabel.style.right = '4px';
+//     percentLabel.style.top = '50%';
+//     percentLabel.style.transform = 'translateY(-50%)';
+//     percentLabel.style.color = 'white';
+//     percentLabel.style.fontSize = '10px';
+//     //percentLabel.textContent = '0%';
+//     progressBar.appendChild(percentLabel);
 
-    // 组装元素
-    progressTrack.appendChild(progressBar);
-    progressBarContainer.appendChild(progressText);
-    progressBarContainer.appendChild(progressTrack);
-    document.body.appendChild(progressBarContainer);
+//     // 组装元素
+//     progressTrack.appendChild(progressBar);
+//     progressBarContainer.appendChild(progressText);
+//     progressBarContainer.appendChild(progressTrack);
+//     document.body.appendChild(progressBarContainer);
 
-    // 添加鼠标悬停效果
-    progressBarContainer.addEventListener('mouseenter', () => {
-        progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.9)';
-    });
+//     // 添加鼠标悬停效果
+//     progressBarContainer.addEventListener('mouseenter', () => {
+//         progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.9)';
+//     });
     
-    progressBarContainer.addEventListener('mouseleave', () => {
-        progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    });
+//     progressBarContainer.addEventListener('mouseleave', () => {
+//         progressBarContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+//     });
 
-    // 动态更新百分比标签
-    const observer = new MutationObserver(() => {
-        const progress = progressBar.getAttribute('data-progress') || '0';
-        //percentLabel.textContent = `${progress}%`;
+//     // 动态更新百分比标签
+//     const observer = new MutationObserver(() => {
+//         const progress = progressBar.getAttribute('data-progress') || '0';
+//         //percentLabel.textContent = `${progress}%`;
         
-        // 根据进度改变颜色
-        if (progress < 30) {
-            progressBar.style.backgroundColor = '#FF5722';
-        } else if (progress < 70) {
-            progressBar.style.backgroundColor = '#FFC107';
-        } else {
-            progressBar.style.backgroundColor = '#4CAF50';
-        }
-    });
+//         // 根据进度改变颜色
+//         if (progress < 30) {
+//             progressBar.style.backgroundColor = '#FF5722';
+//         } else if (progress < 70) {
+//             progressBar.style.backgroundColor = '#FFC107';
+//         } else {
+//             progressBar.style.backgroundColor = '#4CAF50';
+//         }
+//     });
     
-    observer.observe(progressBar, { 
-        attributes: true, 
-        attributeFilter: ['data-progress'] 
-    });
+//     observer.observe(progressBar, { 
+//         attributes: true, 
+//         attributeFilter: ['data-progress'] 
+//     });
+// }
+function createProgressBar() {
+  // ====== 全屏遮罩层 ======
+  progressOverlay = document.createElement('div');
+  Object.assign(progressOverlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.5)', // 半透明黑色
+      zIndex: '1000',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+  });
+
+  // ====== 容器（进度条卡片） ======
+  progressBarContainer = document.createElement('div');
+  Object.assign(progressBarContainer.style, {
+      width: '320px',
+      backgroundColor: 'rgba(20,20,20,0.85)',
+      borderRadius: '8px',
+      padding: '16px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+      transition: 'opacity 0.5s ease',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+  });
+
+  // ====== 文本 ======
+  progressText = document.createElement('div');
+  progressText.textContent = '下载中...';
+  progressText.style.color = 'white';
+  progressText.style.marginBottom = '10px';
+  progressText.style.fontSize = '14px';
+
+  // ====== 轨道 ======
+  const progressTrack = document.createElement('div');
+  Object.assign(progressTrack.style, {
+      width: '100%',
+      height: '8px',
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      borderRadius: '4px',
+      overflow: 'hidden'
+  });
+
+  // ====== 进度条 ======
+  progressBar = document.createElement('div');
+  Object.assign(progressBar.style, {
+      height: '100%',
+      width: '0%',
+      backgroundColor: '#4CAF50',
+      borderRadius: '4px',
+      transition: 'width 0.3s ease'
+  });
+
+  progressTrack.appendChild(progressBar);
+  progressBarContainer.appendChild(progressText);
+  progressBarContainer.appendChild(progressTrack);
+  progressOverlay.appendChild(progressBarContainer);
+  document.body.appendChild(progressOverlay);
+
+  // 鼠标效果（可选）
+  progressBarContainer.addEventListener('mouseenter', () => {
+      progressBarContainer.style.transform = 'scale(1.02)';
+  });
+
+  progressBarContainer.addEventListener('mouseleave', () => {
+      progressBarContainer.style.transform = 'scale(1)';
+  });
+
+  // 颜色变化
+  const observer = new MutationObserver(() => {
+      const progress = Number(progressBar.getAttribute('data-progress') || 0);
+
+      if (progress < 30) {
+          progressBar.style.backgroundColor = '#FF5722';
+      } else if (progress < 70) {
+          progressBar.style.backgroundColor = '#FFC107';
+      } else {
+          progressBar.style.backgroundColor = '#4CAF50';
+      }
+  });
+
+  observer.observe(progressBar, {
+      attributes: true,
+      attributeFilter: ['data-progress']
+  });
 }
 
 //添加进度条动画样式
@@ -378,14 +486,18 @@ const SerialMonitor = ({ serialData }) => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [serialData]);
-
-  const handleSend = () => {
+  }, [serialData]); 
+  const handleSend = async() => {
     if (inputValue.trim()) {
       // 这里可以添加发送数据的逻辑
       console.log('发送数据:', inputValue);
       setInputValue('');
-      channelPort.postMessage(inputValue)
+      if(getCurrent()=='ICRobot'){
+        channelPort.postMessage(inputValue)
+      }else if(getCurrent()=='Microbit'){
+        await window.EditorPreload.sendCommandToDevice(inputValue);
+      }
+      
     }
   };
 
@@ -411,7 +523,7 @@ const SerialMonitor = ({ serialData }) => {
     }
   }, [serialData]); // 当 serialData 改变时，更新 displayData
   return (
-    <div className={styles.tabswitcherSerialFirst} style={{ padding: '10px' }}>
+    <div className={styles.tabswitcherSerialFirst} style={{ padding: '10px' ,height:'100%'}}>
       {/* 输入控制行 */}
       <div style={{ 
         display: 'flex', 
@@ -429,7 +541,8 @@ const SerialMonitor = ({ serialData }) => {
             borderRadius: '4px',
             padding: '6px 12px',
             backgroundColor: '#f0ffff',
-            width:'20%'
+            width:'20%',
+            color:'black'
           }}
         />
         <button 
@@ -442,7 +555,7 @@ const SerialMonitor = ({ serialData }) => {
             cursor: 'pointer'
           }}>
              <FormattedMessage
-                defaultMessage="发送"
+                defaultMessage="send"
                 description="Button in menu bar under settings to open desktop app settings"
                 id="sendMonitior"
             />
@@ -457,7 +570,7 @@ const SerialMonitor = ({ serialData }) => {
             cursor: 'pointer'
           }}>
             <FormattedMessage
-                defaultMessage="清除"
+                defaultMessage="clear"
                 description="Button in menu bar under settings to open desktop app settings"
                 id="clearMonitior"
             />
@@ -499,8 +612,8 @@ const SerialMonitor = ({ serialData }) => {
         ref={scrollRef}
         style={{
           // backgroundColor: '#e0f8e8', // 浅绿色背景
-          color: '#000',
-          height: '16vh',
+          // color: '#000',
+          height: '80%',
           overflowY: 'auto',
           fontFamily: 'monospace',
           borderRadius: '5px',
@@ -712,7 +825,7 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
     //     bot5,
     //   ];
     const images=botImages[getAccent()]
-      console.log(images)
+      // console.log(images)
       
 
       const handlePrev = () => {
@@ -944,29 +1057,32 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
 
           try {
             const hexUrl = await getLatestMicrobitHexUrlWithFallback();
+          
             console.log('最新 microbit hex:', hexUrl);
-            if (
-              hexUrl.startsWith("https://raw.githubusercontent.com") ||
-              hexUrl.startsWith("https://github.com") ||
-              hexUrl.endsWith(".hex")
-            ) {
-              console.log('本地/github')
-              baseResponse = await fetch(hexUrl);
-              baseHex = await baseResponse.text();
+          
+            // ❗ OSS / GitHub / raw / 统一处理：都是“直接 hex 文件”
+            baseResponse = await fetch(hexUrl);
+          
+            if (!baseResponse.ok) {
+              throw new Error('HEX_FETCH_FAILED');
             }
-            // ✅ 情况 2：Gitee contents API（base64）
-            else {
-              console.log('gitee固件')
-              baseResponse = await fetch(hexUrl);
-              const json = await baseResponse.json();
-              baseHex = atob(json.content.replace(/\n/g, ''));
-            }
+          
+            baseHex = await baseResponse.text();
+          
+            console.log('microbit 固件加载成功');
           } catch (e) {
+            console.warn('获取远程 microbit 失败:', e);
+          
             if (e.message === 'MICROBIT_FIRMWARE_UNAVAILABLE') {
-              // alert('网络异常，无法获取 micro:bit 固件，请检查网络连接');
+              // fallback 本地固件
               baseResponse = await fetch(MICRO_PATH);
               baseHex = await baseResponse.text();
-              console.log('网络错误，获取本地')
+              console.log('网络错误，使用本地固件');
+            } else {
+              // 其他错误也走本地
+              baseResponse = await fetch(MICRO_PATH);
+              baseHex = await baseResponse.text();
+              console.log('未知错误，使用本地固件');
             }
           }
           // Step 2: 用 micropython-fs-hex 将 Python 代码写入 main.py
@@ -991,16 +1107,30 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
           channelLoading.postMessage(false)
           try {
 
-              const usbDevice = window.__microbitUSB;
-              if (!usbDevice) throw new Error('未连接 Micro:bit USB');
+              // const usbDevice = window.__microbitUSB;
+              // if (!usbDevice) throw new Error('未连接 Micro:bit USB');
 
-              const transport = new WebUSB(usbDevice);
-              const daplink = new DAPLink(transport);
+              // const transport = new WebUSB(usbDevice);
+              // const daplink = new DAPLink(transport);
 
-              await daplink.connect();
+              // await daplink.connect();
+
+              if(!window.__microbitUSB){
+                  showToast(
+                    formatMessage({
+                        id: "gui.firmware.microbitDisconnect",
+                        default: 'No device connected',
+                        description: "gui.firmware.microbitDisconnect"
+                      })
+                  )
+                  throw { success: false, error: '未连接设备' }
+              }
+              const daplink = window.__daplink
+              if (!daplink) throw new Error('未连接 Micro:bit USB');
               console.log('DAPLink 已连接，开始烧录...');
 
               let lastPercent = -1;
+              daplink.removeAllListeners(DAPLink.EVENT_PROGRESS)
               daplink.on(DAPLink.EVENT_PROGRESS, (pct) => {
                 const percent = Math.round(pct * 100);
                 if (percent !== lastPercent) {
@@ -1012,11 +1142,14 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
                 }
               });
 
-              await daplink.flash(new Uint8Array(boardHex.split('').map(c => c.charCodeAt(0))));
+              // await daplink.flash(new Uint8Array(boardHex.split('').map(c => c.charCodeAt(0))));
+              await daplink.flash(
+                new TextEncoder().encode(boardHex)
+              );
               console.log('烧录完成！');
 
-              await daplink.disconnect();
-              console.log('DAPLink 已断开');
+              // await daplink.disconnect();
+              // console.log('DAPLink 已断开');
 
               showToast(formatMessage({
                   id: 'gui.alert.downSuccess',
@@ -1027,11 +1160,11 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
               return { success: true };
           } catch (err) {
             channelLoading.postMessage(false)
-            showToast(formatMessage({
-                id: 'gui.alert.downFailed',
-                default: 'download failed',
-                description: 'gui.alert.downFailed'
-            }));
+            // showToast(formatMessage({
+            //     id: 'gui.alert.downFailed',
+            //     default: 'download failed',
+            //     description: 'gui.alert.downFailed'
+            // }));
               if (err.name === 'AbortError') {
               return { success: false, error: '用户取消了保存操作' };
               }
@@ -1047,6 +1180,19 @@ const ProgramDownload = ({onSendData,extension,parentIsDown }) => {
               description: 'gui.alert.downFailed'
           }));
           channelLoading.postMessage(false)
+          setTimeout(() => {
+              if (progressOverlay) {
+                  progressOverlay.style.opacity = '0';
+      
+                  setTimeout(() => {
+                      progressOverlay.remove();
+      
+                      progressBar = null;
+                      progressBarContainer = null;
+                      progressOverlay = null;
+                  }, 500);
+              }
+          }, 800);
           return { success: false, error: `生成 HEX 文件失败: ${err.message}` };
       }
         // console.log(result)
@@ -1988,6 +2134,35 @@ const ControlPanelLayout = ({extension}) => {
 const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
   const [activeTab, setActiveTab] = useState('download');
 
+  console.log(extension)
+  console.log(getCurrent())
+  
+  const currentDevice = getCurrent();
+  if (!currentDevice) {
+    return (
+      <div className={styles.total}>
+        <div
+          style={{
+            height: '100%',
+            backgroundColor: '#fff',
+            // border: '1px solid #17a934',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '18px',
+            color: '#999',
+            borderRadius:'20px'
+          }}
+        >
+          <FormattedMessage
+                id="gui.alert.selectDevice"
+                defaultMessage="Please select a device first"
+                description="first select device"
+              />
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={styles.total}
@@ -1995,9 +2170,9 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
       {/* Tabs */}
       <div style={{ display: 'flex' }}>
         {[
-          { key: 'download', label: '下载' },
-          { key: 'control', label: '控制台' },
-          { key: 'monitor', label: '串口监视器' },
+          { key: 'download', label: 'download' },
+          { key: 'control', label: 'control' },
+          { key: 'monitor', label: 'monitor' },
         ].map(({ key, label }) => (
           <div
             key={key}
@@ -2022,21 +2197,21 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
             {key === 'download' && (
               <FormattedMessage
                 id="download"
-                defaultMessage="下载"
+                defaultMessage="download"
                 description="Button for download tab"
               />
             )}
             {key === 'control' && (
               <FormattedMessage
                 id="control"
-                defaultMessage="控制台"
+                defaultMessage="control"
                 description="Button for control tab"
               />
             )}
             {key === 'monitor' && (
               <FormattedMessage
                 id="monitor"
-                defaultMessage="串口监视器"
+                defaultMessage="monitor"
                 description="Button for monitor tab"
               />
             )}
@@ -2049,9 +2224,9 @@ const TabSwitcher = ({ serialData ,onSendData,extension,isDown  }) => {
         style={{
           backgroundColor: '#fff',
           // padding: '20px',
-          borderRadius: '0 0 8px 8px',
+          // borderRadius: '0 0 8px 8px',
           border: '1px solid #17a934', 
-          height: '80%',
+          height: '83%',
         }}
       >
         {activeTab === 'download' && <ProgramDownload  onSendData ={onSendData } extension={extension} parentIsDown={isDown}/>}

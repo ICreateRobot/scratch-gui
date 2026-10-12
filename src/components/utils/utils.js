@@ -16,13 +16,14 @@ let allLoaded=[]
 
 let deletedCategoriesID = ['robotwifi', 'robotcat'];
 
-let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi'];
+let hiddenBlocksTypes = ['robotsensors_asrStart','robotsensors_asrStop','robotsensors_asrResult','robotevent_when','robotimg_isCat','robotimg_catNum','robotimg_catPlace','robotimg_isOpenModel','brickstwomotor_speedmoveplace','brickssensors_colorSensor','brickssensors_colorRgb','brickssensors_colorLight','brickssensors_touch','k210_settingsBricks','k210_wirelessSetBricks','k210_wirelessConnectBricks','k210_lightSwitchBricks','k210_lightBrightnessBricks','k210_lightGetBrightnessBricks','k210_xiaozhi','robotpin_setIICPort','robotpin_IICScan','robotpin_IICWriteTo','robotpin_IICWriteToMem','robotpin_IICReadFrom','robotpin_IICReadFromInto','robotpin_IICReadFromMem','robotpin_IICReadFromMemInto'];
 
 let showCode=false
 
 let isDown=false
 
 let electronVisable=false
+let isOpenAiMode=false
 
 const codeArray=[
         `time.sleep(0.5)
@@ -164,6 +165,7 @@ let currentMicrobitUrl=''
 let masterVersion={
     icbricks:'',
     icrobot:'',
+    icrobotHard:'',
     microbit:''
 }
 
@@ -173,11 +175,11 @@ function getVersion(){
   
 const channelVersion = new BroadcastChannel('channel-version')
 function setVersion(a){
+    console.log(a)
     masterVersion[a[0]]=a[1]
-    channelVersion.postMessage(masterVersion.microbit ||
-        masterVersion.icrobot ||
-        masterVersion.icbricks ||
-      '')
+    // channelVersion.postMessage(a[0],
+    //     a[1])
+    channelVersion.postMessage(a)
 }
 
 function setMicrobitUrl(a){
@@ -339,6 +341,13 @@ function getLastTime(){
 function setLastTime(a){
     time=a
 }
+function setIsAiMode(a){
+    isOpenAiMode=a
+}
+
+function getIsAiMode(){
+    return isOpenAiMode
+}
 export {
     setIsMaster,
     getIsMaster,
@@ -379,5 +388,7 @@ export {
     getVersion,
     setVersion,
     getLastTime,
-    setLastTime
+    setLastTime,
+    setIsAiMode,
+    getIsAiMode
 }

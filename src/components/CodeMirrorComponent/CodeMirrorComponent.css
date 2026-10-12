@@ -15,7 +15,11 @@
         background-color: #f9f9f9;
         padding: 10px;
         border-radius:10px;
-        height:55vh;
+        /* height:51vh; */
+        flex: 1;
+        min-height: 0;
+        width: 460px;
+        overflow: hidden;
     }
 }
 

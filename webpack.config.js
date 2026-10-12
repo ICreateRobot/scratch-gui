@@ -14,7 +14,7 @@ const postcssImport = require('postcss-import');
 const STATIC_PATH = process.env.STATIC_PATH || '/static';
 const {APP_NAME} = require('./src/lib/brand');
 const express = require('express');
-
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const root = process.env.ROOT || '';
 if (root.length > 0 && !root.endsWith('/')) {
     throw new Error('If ROOT is defined, it must have a trailing slash.');
@@ -204,7 +204,7 @@ module.exports = [
                 template: 'src/playground/index.ejs',
                 filename: 'editor.html',
                 // title: `${APP_NAME} - Run Scratch projects faster`,
-                title: `${APP_NAME} web 0.1.0 Beta`,
+                title: `${APP_NAME} web 0.1.6 Beta`,
                 isEditor: true,
                 ...htmlWebpackPluginCommon
             }),
@@ -213,7 +213,7 @@ module.exports = [
                 template: 'src/playground/index.ejs',
                 filename: 'index.html',
                 // title: `${APP_NAME} - Run Scratch projects faster`,
-                title: `${APP_NAME} web 0.1.0 Beta`,
+                title: `${APP_NAME} web 0.1.6 Beta`,
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
@@ -221,7 +221,7 @@ module.exports = [
                 template: 'src/playground/index.ejs',
                 filename: 'fullscreen.html',
                 // title: `${APP_NAME} - Run Scratch projects faster`,
-                title: `${APP_NAME} web 0.1.0 Beta`,
+                title: `${APP_NAME} web 0.1.6 Beta`,
                 ...htmlWebpackPluginCommon
             }),
             new HtmlWebpackPlugin({
@@ -285,7 +285,11 @@ module.exports = [
                         context: 'src/examples'
                     }
                 ]
-            })
+            }),
+            // new BundleAnalyzerPlugin({
+            //     analyzerMode: 'server',
+            //     openAnalyzer: true
+            // })
         ])
     })
 ].concat(

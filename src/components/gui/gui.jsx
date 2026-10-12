@@ -65,7 +65,9 @@ import importCodeRed from './importRed.svg'
 import importCodeBlue from './importBlue.svg'
 import importCodePurple from './importPurple.svg'
 import codeModule from '../../../../../utils/global.js';
-
+import ChatAi from '../ChatAi/ChatAI.jsx'
+import Toast from '../toast/toast.jsx';//警告窗口
+import IotScan from '../iotScan/iotScan.jsx';//连接窗口
 const messages = defineMessages({
     addExtension: {
         id: 'gui.gui.addExtension',
@@ -250,11 +252,13 @@ const GUIComponent = props => {
         setOpen,
         selected,
         setSelected,
+        aiMode,
         handleOpenExample,
         handleSelect,
         handledata,
         handleConnectData,
-        handleFirmwareData
+        handleFirmwareData,
+        handleOpenAiMode
     } = useGuiLogic({
         onExtensionButtonClick,
         onOpenCustomExtensionModal,
@@ -477,6 +481,7 @@ const GUIComponent = props => {
                     modeValue={modeValue}
                     extensionName={extensionName}
                     openExampleCode={handleOpenExample}
+                    openAiMode={handleOpenAiMode}
                 />
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
@@ -595,6 +600,20 @@ const GUIComponent = props => {
                         <LoadingOverlay isLoading={isLoading} />
                         <BurnLogs isLoading={isFlashing} logs={logs}></BurnLogs>
                         <TrainPage isTrain={isTrain}></TrainPage>
+
+                        {aiMode && (
+                                <div style={{
+                                position: 'absolute',
+                                top: '3rem',
+                                insetInlineEnd: '0',
+                                // width: '30vw',
+                                width:'490px',
+                                height:'calc(100% - 3rem)',
+                                zIndex: '100'
+                                }}>
+                                <ChatAi />
+                                </div>
+                        )}
                         
                         <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
                             <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', alignItems: 'center',paddingTop:'10px'}}>
@@ -684,8 +703,8 @@ const GUIComponent = props => {
                             {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension} isDown={isDown}/>} */}
 
                             {showCode && <div className={styles.codeAndTab}>
-                                {showCode && <CodeMirrorComponent code={pythonCode}/>}
-                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension}/>}
+                                {showCode && <CodeMirrorComponent theme={theme} code={pythonCode}/>}
+                                {showCode && <TabSwitcher serialData={data} onSendData={handleChildData} extension={currentExtension} isDown={isDown}/>}
                             </div>}
 
                             {!showCode && <StageWrapper
@@ -719,6 +738,11 @@ const GUIComponent = props => {
                                 </div>
                                 </div>
                             )} */}
+                            {/* 警告窗口 */}
+                            <Toast />
+
+                            {/* 扫描对应iot服务的窗口 */}
+                            <IotScan />
 
                             {/* 弹窗 */}
                             <ExampleModal

@@ -249,7 +249,7 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #1b5e20;
+  /* color: #1b5e20; */
   margin-bottom: 6px;
 }
 
@@ -257,15 +257,15 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 2px solid rgba(102, 187, 106, 0.45);
+  /* border: 2px solid rgba(102, 187, 106, 0.45); */
   background: rgba(255, 255, 255, 0.85);
   font-size: 14px;
-  color: #2e7d32;
+  /* color: #2e7d32; */
   outline: none;
 }
 
 .field select:focus {
-  border-color: #43a047;
+  /* border-color: #43a047; */
   box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.15);
 }
 
@@ -289,7 +289,7 @@
 /* ========== 单个卡片 ========== */
 .card {
   /* flex: 1; */
-  background: linear-gradient(145deg, #f6fdf9, #eef6f1);
+  /* background: linear-gradient(145deg, #f6fdf9, #eef6f1); */
   border-radius: 16px;
   border: 1px solid rgba(102, 187, 106, 0.25);
   padding: 14px 14px 16px;
@@ -312,7 +312,7 @@
 .cardTitle {
   font-size: 15px;
   font-weight: 700;
-  color: #1b5e20;
+  color: black;
   letter-spacing: 0.2px;
 }
 
@@ -322,16 +322,16 @@
   padding: 8px 10px;
   font-size: 13px;
   border-radius: 8px;
-  border: 1px solid #c8e6c9;
+  border: 1px solid $tabswitcher-tabs-equles-true;
   background: rgba(255, 255, 255, 0.9);
-  color: #2e7d32;
+  color: $tabswitcher-tabs-equles-true;
 }
 
 /* 描述文字 */
 .cardDesc {
   font-size: 12.5px;
   line-height: 1.5;
-  color: #2e7d32;
+  color: $tabswitcher-tabs-equles-true;
   opacity: 0.9;
 }
 
@@ -343,6 +343,11 @@
   border: none;
   /* background: linear-gradient(135deg, #66bb6a, #43a047); */
   background: linear-gradient(135deg, $tabswitcher-tabs-equles-true, $tabswitcher-tabs-equles-true);
+  /* background:linear-gradient(
+      135deg,
+      #00c7a8,
+      #14a87f
+  ); */
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -367,12 +372,19 @@
 }
 
 .commitMsg {
-  color: #52c41a; /* 好看的绿色（Ant Design 风格） */
+  /* color: #52c41a;  */
+  color: $tabswitcher-tabs-equles-true;
 }
 
 /* 版本号显示 */
 .field {
+  /* margin-bottom: 14px; */
+  flex: 1;
   margin-bottom: 14px;
+}
+.versionRow {
+  display: flex;
+  gap: 16px;
 }
 
 .versionLabel {
@@ -392,4 +404,293 @@
   font-size: 14px;
   color: #333;
   cursor: default;
+}
+
+.tabBar{
+  display:flex;
+  border-bottom:2px solid $tabswitcher-tabs-equles-true;
+  margin-bottom:15px;
+}
+
+.tab{
+
+  padding:10px 20px;
+
+  background:white;
+
+  color:$tabswitcher-tabs-equles-true;
+
+  border:2px solid $tabswitcher-tabs-equles-true;
+
+  border-bottom:none;
+
+  cursor:pointer;
+
+  border-top-left-radius:10px;
+
+  border-top-right-radius:10px;
+}
+
+.activeTab{
+
+  padding:10px 20px;
+
+  background:$tabswitcher-tabs-equles-true;
+
+  color:white;
+
+  border:2px solid $tabswitcher-tabs-equles-true;
+
+  border-bottom:none;
+
+  border-top-left-radius:10px;
+
+  border-top-right-radius:10px;
+}
+
+.customCard{
+  /* background:#f8fffc; */
+  /* background-color: $tabswitcher-tabs-noequles-false; */
+  border:1px solid rgba(0,191,165,.18);
+  border-radius:18px;
+  padding:14px;
+
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+
+  box-shadow:
+      0 6px 20px rgba(0,191,165,.08),
+      inset 0 1px 0 rgba(255,255,255,.8);
+
+  max-height:72vh;
+  overflow-y:auto;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field label{
+  font-size:14px;
+  /* color:#0f7c68; */
+  font-weight:600;
+}
+.select{
+  width:100%;
+
+  padding:12px 14px;
+
+  border-radius:12px;
+
+  /* border:1px solid #9ddfcd; */
+  
+  border:1px solid $tabswitcher-tabs-equles-true;
+  background:white;
+
+  font-size:14px;
+
+  color:#333;
+
+  outline:none;
+
+  transition:.2s;
+}
+
+.select:focus{
+  /* border-color:#00bfa5; */
+  border-color: $tabswitcher-tabs-equles-true;
+
+  box-shadow:
+      0 0 0 4px rgba(0,191,165,.12);
+}
+.fileList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.fileRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  background:white;
+
+  padding:8px 12px;
+
+  border-radius:16px;
+
+  border:1px solid rgba(0,191,165,.12);
+
+  box-shadow:
+      0 4px 10px rgba(0,191,165,.06);
+
+  transition:.25s;
+}
+
+.fileRow:hover{
+  transform:translateY(-2px);
+
+  box-shadow:
+      0 8px 18px rgba(0,191,165,.12);
+}
+.flashAddress{
+  width:110px;
+
+  padding:6px 10px;
+
+  border-radius:10px;
+
+  border:1px solid $tabswitcher-tabs-noequles-false;
+
+  background:#fbfffe;
+
+  font-size:13px;
+
+  outline:none;
+
+  transition:.2s;
+  color: black;
+}
+
+.flashAddress:focus{
+  /* border-color:#00bfa5; */
+  border-color: $tabswitcher-tabs-noequles-false;
+
+  box-shadow:
+      0 0 0 4px $tabswitcher-tabs-noequles-false;
+}
+.chooseFileBtn{
+  padding:7px 14px;
+
+  border-radius:10px;
+
+  /* background:linear-gradient(
+      135deg,
+      #33c7ad,
+      #1ba888
+  ); */
+
+  background: linear-gradient(135deg, $tabswitcher-tabs-equles-true, $tabswitcher-tabs-equles-true);
+  color:white;
+
+  font-size:13px;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  white-space:nowrap;
+}
+
+.chooseFileBtn:hover{
+  transform:translateY(-1px);
+
+  box-shadow:
+      0 5px 14px rgba(34,163,122,.3);
+}
+.fileName{
+  flex:1;
+
+  color:$tabswitcher-tabs-equles-true;
+
+  font-size:13px;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+.deleteBtn{
+  width:30px;
+  height:30px;
+
+  border:none;
+
+  border-radius:8px;
+
+  background:#ff6b6b;
+
+  color:white;
+
+  font-size:16px;
+
+  cursor:pointer;
+
+  transition:.2s;
+}
+
+.deleteBtn:hover{
+  background:#ff4f4f;
+
+  transform:scale(1.05);
+}
+.addFileBtn{
+  padding:8px;
+
+  border-radius:10px;
+
+  background:white;
+
+  color:$tabswitcher-tabs-equles-true;
+
+  /* border:2px dashed #8fdcca; */
+
+  border:2px dashed $tabswitcher-tabs-equles-true;
+  font-size:13px;
+
+  cursor:pointer;
+
+  transition:.2s;
+}
+
+.addFileBtn:hover{
+  /* background:#f0fffb; */
+  background: $ic-main-light-very;
+
+  /* border-color:#00bfa5; */
+  border-color: $ic-main-light;
+}
+.customFlashBtn{
+  margin-top:4px;
+
+  padding:11px;
+
+  border:none;
+
+  border-radius:12px;
+
+  /* background:linear-gradient(
+      135deg,
+      #00c7a8,
+      #14a87f
+  ); */
+
+  background: linear-gradient(135deg, $tabswitcher-tabs-equles-true, $tabswitcher-tabs-equles-true);
+  color:white;
+
+  font-size:14px;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  /* box-shadow:
+      0 8px 18px rgba(0,191,165,.25); */
+}
+
+.customFlashBtn:hover{
+  transform:translateY(-2px);
+
+  /* box-shadow:
+      0 12px 24px rgba(0,191,165,.35); */
+}
+
+.customFlashBtn:active{
+  transform:scale(.98);
 }
