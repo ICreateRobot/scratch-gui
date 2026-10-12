@@ -11,7 +11,7 @@ import makeToolboxXML from '../../lib/make-toolbox-xml';
 export function createBlocksLogic(componentInstance) {
     const self = componentInstance
 
-    let downEnableCategories=['control','operators','variables','myBlocks','robot','bricks','Microbit','arduino','py']
+    let downEnableCategories=['control','operators','variables','myBlocks','robot','bricks','Microbit','arduino','py','ic']
     let isChangeMode=false
     // let mode=!getShowCodeDb()
     const channelMode=new BroadcastChannel('mode')
@@ -446,6 +446,14 @@ export function createBlocksLogic(componentInstance) {
             self.onWorkspaceUpdate(self.dataXML)
             self.workspace.clear()
             
+        }else if(event.data=='6'){
+                await restoreCategoriesToToolbox([
+                'ic2007'
+
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
+            
         }
 
 
@@ -562,11 +570,22 @@ export function createBlocksLogic(componentInstance) {
             self.onWorkspaceUpdate(self.dataXML)
             self.workspace.clear()
         }
+        else if(self.preClose[5] && !close[5]){
+
+
+            await removeCategoryFromToolbox([
+                'ic2007',
+                
+            ]);
+            self.onWorkspaceUpdate(self.dataXML)
+            self.workspace.clear()
+        }
         self.preClose[0]=close[0]
         self.preClose[1]=close[1]
         self.preClose[2]=close[2]
         self.preClose[3]=close[3]
         self.preClose[4]=close[4]
+        self.preClose[5]=close[5]
     })
 
 

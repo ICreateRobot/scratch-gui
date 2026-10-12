@@ -85,7 +85,8 @@ import {
     k210Extension,
     robotPinExtension,
     arduinoUnoExtension,
-    py32Extension
+    py32Extension,
+    ic2007Extension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -123,6 +124,7 @@ export default [
     robotPinExtension,
     arduinoUnoExtension,
     py32Extension,
+    ic2007Extension,
     {
         name: (
             <FormattedMessage
@@ -279,101 +281,101 @@ export default [
         ),
         helpLink: 'https://scratch.mit.edu/microbit'
     },
-    {
-        name: 'LEGO MINDSTORMS EV3',
-        extensionId: 'ev3',
-        collaborator: 'LEGO',
-        iconURL: ev3IconURL,
-        insetIconURL: ev3InsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Build interactive robots and more."
-                description="Description for the 'LEGO MINDSTORMS EV3' extension"
-                id="gui.extension.ev3.description"
-            />
-        ),
-        tags: ['scratch'],
-        featured: true,
-        disabled: false,
-        bluetoothRequired: true,
-        internetConnectionRequired: true,
-        launchPeripheralConnectionFlow: true,
-        useAutoScan: false,
-        connectionIconURL: ev3ConnectionIconURL,
-        connectionSmallIconURL: ev3ConnectionSmallIconURL,
-        connectingMessage: (
-            <FormattedMessage
-                defaultMessage="Connecting. Make sure the pin on your EV3 is set to 1234."
-                description="Message to help people connect to their EV3. Must note the PIN should be 1234."
-                id="gui.extension.ev3.connectingMessage"
-            />
-        ),
-        helpLink: 'https://scratch.mit.edu/ev3'
-    },
-    {
-        name: 'LEGO BOOST',
-        extensionId: 'boost',
-        collaborator: 'LEGO',
-        iconURL: boostIconURL,
-        insetIconURL: boostInsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Bring robotic creations to life."
-                description="Description for the 'LEGO BOOST' extension"
-                id="gui.extension.boost.description"
-            />
-        ),
-        tags: ['scratch'],
-        featured: true,
-        disabled: false,
-        bluetoothRequired: true,
-        internetConnectionRequired: true,
-        launchPeripheralConnectionFlow: true,
-        useAutoScan: true,
-        connectionIconURL: boostConnectionIconURL,
-        connectionSmallIconURL: boostConnectionSmallIconURL,
-        connectionTipIconURL: boostConnectionTipIconURL,
-        connectingMessage: (
-            <FormattedMessage
-                defaultMessage="Connecting"
-                description="Message to help people connect to their BOOST."
-                id="gui.extension.boost.connectingMessage"
-            />
-        ),
-        helpLink: 'https://scratch.mit.edu/boost'
-    },
-    {
-        name: 'LEGO Education WeDo 2.0',
-        extensionId: 'wedo2',
-        collaborator: 'LEGO',
-        iconURL: wedo2IconURL,
-        insetIconURL: wedo2InsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Build with motors and sensors."
-                description="Description for the 'LEGO WeDo 2.0' extension"
-                id="gui.extension.wedo2.description"
-            />
-        ),
-        tags: ['scratch'],
-        featured: true,
-        disabled: false,
-        bluetoothRequired: true,
-        internetConnectionRequired: true,
-        launchPeripheralConnectionFlow: true,
-        useAutoScan: true,
-        connectionIconURL: wedo2ConnectionIconURL,
-        connectionSmallIconURL: wedo2ConnectionSmallIconURL,
-        connectionTipIconURL: wedo2ConnectionTipIconURL,
-        connectingMessage: (
-            <FormattedMessage
-                defaultMessage="Connecting"
-                description="Message to help people connect to their WeDo."
-                id="gui.extension.wedo2.connectingMessage"
-            />
-        ),
-        helpLink: 'https://scratch.mit.edu/wedo'
-    },
+    // {
+    //     name: 'LEGO MINDSTORMS EV3',
+    //     extensionId: 'ev3',
+    //     collaborator: 'LEGO',
+    //     iconURL: ev3IconURL,
+    //     insetIconURL: ev3InsetIconURL,
+    //     description: (
+    //         <FormattedMessage
+    //             defaultMessage="Build interactive robots and more."
+    //             description="Description for the 'LEGO MINDSTORMS EV3' extension"
+    //             id="gui.extension.ev3.description"
+    //         />
+    //     ),
+    //     tags: ['scratch'],
+    //     featured: true,
+    //     disabled: false,
+    //     bluetoothRequired: true,
+    //     internetConnectionRequired: true,
+    //     launchPeripheralConnectionFlow: true,
+    //     useAutoScan: false,
+    //     connectionIconURL: ev3ConnectionIconURL,
+    //     connectionSmallIconURL: ev3ConnectionSmallIconURL,
+    //     connectingMessage: (
+    //         <FormattedMessage
+    //             defaultMessage="Connecting. Make sure the pin on your EV3 is set to 1234."
+    //             description="Message to help people connect to their EV3. Must note the PIN should be 1234."
+    //             id="gui.extension.ev3.connectingMessage"
+    //         />
+    //     ),
+    //     helpLink: 'https://scratch.mit.edu/ev3'
+    // },
+    // {
+    //     name: 'LEGO BOOST',
+    //     extensionId: 'boost',
+    //     collaborator: 'LEGO',
+    //     iconURL: boostIconURL,
+    //     insetIconURL: boostInsetIconURL,
+    //     description: (
+    //         <FormattedMessage
+    //             defaultMessage="Bring robotic creations to life."
+    //             description="Description for the 'LEGO BOOST' extension"
+    //             id="gui.extension.boost.description"
+    //         />
+    //     ),
+    //     tags: ['scratch'],
+    //     featured: true,
+    //     disabled: false,
+    //     bluetoothRequired: true,
+    //     internetConnectionRequired: true,
+    //     launchPeripheralConnectionFlow: true,
+    //     useAutoScan: true,
+    //     connectionIconURL: boostConnectionIconURL,
+    //     connectionSmallIconURL: boostConnectionSmallIconURL,
+    //     connectionTipIconURL: boostConnectionTipIconURL,
+    //     connectingMessage: (
+    //         <FormattedMessage
+    //             defaultMessage="Connecting"
+    //             description="Message to help people connect to their BOOST."
+    //             id="gui.extension.boost.connectingMessage"
+    //         />
+    //     ),
+    //     helpLink: 'https://scratch.mit.edu/boost'
+    // },
+    // {
+    //     name: 'LEGO Education WeDo 2.0',
+    //     extensionId: 'wedo2',
+    //     collaborator: 'LEGO',
+    //     iconURL: wedo2IconURL,
+    //     insetIconURL: wedo2InsetIconURL,
+    //     description: (
+    //         <FormattedMessage
+    //             defaultMessage="Build with motors and sensors."
+    //             description="Description for the 'LEGO WeDo 2.0' extension"
+    //             id="gui.extension.wedo2.description"
+    //         />
+    //     ),
+    //     tags: ['scratch'],
+    //     featured: true,
+    //     disabled: false,
+    //     bluetoothRequired: true,
+    //     internetConnectionRequired: true,
+    //     launchPeripheralConnectionFlow: true,
+    //     useAutoScan: true,
+    //     connectionIconURL: wedo2ConnectionIconURL,
+    //     connectionSmallIconURL: wedo2ConnectionSmallIconURL,
+    //     connectionTipIconURL: wedo2ConnectionTipIconURL,
+    //     connectingMessage: (
+    //         <FormattedMessage
+    //             defaultMessage="Connecting"
+    //             description="Message to help people connect to their WeDo."
+    //             id="gui.extension.wedo2.connectingMessage"
+    //         />
+    //     ),
+    //     helpLink: 'https://scratch.mit.edu/wedo'
+    // },
     {
         name: 'Go Direct Force & Acceleration',
         extensionId: 'gdxfor',

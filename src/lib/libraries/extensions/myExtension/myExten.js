@@ -821,6 +821,28 @@ const py32Extension = {
     featured: true
 };
 
+const ic2007Extension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="ic2007"
+            description="Name for the 'ic2007' extension"
+            id="gui.extension.ic2007.name"
+        />
+    ),
+    extensionId: 'ic2007',
+    iconURL: robotPinImage, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        <FormattedMessage
+            defaultMessage="This extension can control the digital pins, analog pins, and IIC pins of ic2007 devices."
+            description="Description for the 'ic2007' extension"
+            id="gui.extension.ic2007.description"
+        />
+    ),
+    tags: ['main'],
+    featured: true
+};
+
 
 
 export {
@@ -857,5 +879,6 @@ export {
     k210Extension,
     robotPinExtension,
     arduinoUnoExtension,
-    py32Extension
+    py32Extension,
+    ic2007Extension
 };

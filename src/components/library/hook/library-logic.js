@@ -12,7 +12,7 @@ export const HIDDEN_EXTENSIONS = [
     'bricksmotor','brickstwomotor','brickslight','brickssensors','bricksevent',
     'robotmove','robotsensors','robotevent','robotwifi','robotemote','robotshow',
     'robotsound','robotactuator','robotble','MicrobitIcreate','MicrobiteIcreateP',
-    'robotextend','arduinouno','py32'
+    'robotextend','arduinouno','py32','ic2007'
 ];
 
 let preKey = null;
@@ -455,6 +455,18 @@ export function createLibraryLogic(componentInstance) {
                         // self.props.onItemSelected(getHiddenData()[14]);
                         self.props.onItemSelected(getHiddenData()[18]);
                         oneExtension.postMessage(18);
+                        handleClose();
+                        setIsMaster(false);
+                        channelLoad.postMessage(false);
+                        fetch('http://localhost:38127/set-extension', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: 0
+                        });
+                    }else if (extension == 6 && getIsMaster()) {
+                        // self.props.onItemSelected(getHiddenData()[14]);
+                        self.props.onItemSelected(getHiddenData()[19]);
+                        oneExtension.postMessage(19);
                         handleClose();
                         setIsMaster(false);
                         channelLoad.postMessage(false);

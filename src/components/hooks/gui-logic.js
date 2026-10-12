@@ -8,7 +8,7 @@ import { setLan, getLan } from '../../../../../utils/lanMode.js';
 import { setIsRobot, getShowCodeDb, setShowCodeDb, addLoadExtension, delLoadExtension, getLoadExtension, getAllLoaded, setAllLoaded, codeArray,setIsAiMode,getIsAiMode } from 'scratch-gui/src/components/utils/utils.js';
 
 let attemptCount = 0;
-let extensionSelect = [false, false, false];
+let extensionSelect = [false, false, false,false,false,false];
 let isRecive = false;
 let isUpLoadMode = false;
 let IP;
@@ -52,7 +52,10 @@ export const useGuiLogic = (props) => {
         if (current === 'ICBricks') return '1';
         if (current === 'ICRobot') return '2';
         if (current === 'Microbit') return '3';
-        return '2'; // 包括 '' 或其他情况
+        if (current === 'ArduinoUno') return '4';
+        if (current === 'py32') return '5';
+        if (current === 'ic2007') return '6';
+        return ''; // 包括 '' 或其他情况
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isFlashing, setIsFlashing] = useState(false);
@@ -93,8 +96,45 @@ export const useGuiLogic = (props) => {
     const channelLoadExample = new BroadcastChannel('load_example')
     const channelProjectExtension = new BroadcastChannel('project_extension')
 
+    //选择设备后将模块置灰
+    const channelGrayBlock = new BroadcastChannel('gray-block')
+
     const [showIot, setShowIot] = useState(false);
     const [aiMode,setAiMode] = useState(getIsAiMode())
+
+    const [flashLogs, setFlashLogs] = useState('');
+    const [showFlash, setShowFlash] = useState(false);
+
+    useEffect(() => {
+        window.EditorPreload.sendArduinoFlash((flash) => {
+            console.log(flash);
+
+            if(flash.includes('start compile')){
+                setFlashLogs('')
+                setShowFlash(true);
+            }
+            
+            
+
+            setFlashLogs(prev => {
+                if (!prev) {
+                    return String(flash);
+                }
+
+                return prev + String(flash);
+            });
+
+            // if(flash.includes('DONE')) {
+            //     setShowFlash(false)
+            //     setFlashLogs('')
+            // };
+            // if(flash.includes('ERROR: No PY32 bootloader found on')){
+            //     alert('请确保当前端口已连接设备')
+            //     setShowFlash(false)
+            //     setFlashLogs('')
+            // }
+        });
+    },[])
 
     useEffect(() => {
         channelProjectExtension.addEventListener('message',(event)=>{
@@ -188,12 +228,11 @@ export const useGuiLogic = (props) => {
 
     useEffect(() => {
         const handleOffline = () => {
-            if (soc?.readyState === WebSocket.OPEN) {
-                soc.send(JSON.stringify({
-                    type: 'offline',
-                    data: { message: 'true' }
-                }));
-            }
+            console.log(socketRef.current?.readyState)
+            socketRef.current?.send(JSON.stringify({
+                type: 'offline',
+                data: { message: 'true' }
+            }));
             whatConnect[1] = 0;
             channelHostPot.postMessage(false);
             console.log('Offline event handled');
@@ -202,9 +241,9 @@ export const useGuiLogic = (props) => {
         window.addEventListener('offline', handleOffline);
 
         return () => {
-            window.removeEventListener('offline', handleOffline); // ✅ 清除绑定，防止重复
+            window.removeEventListener('offline', handleOffline); //  清除绑定，防止重复
         };
-    }, []); // 👈 空依赖数组，确保只绑定一次
+    }, []); //  空依赖数组，确保只绑定一次
     const handleLoadSelectedCode = (index) => {
         const codeIndex = index ?? selectedIndex; // 👈 如果传了参数就用参数
         console.log('代码索引', codeIndex)
@@ -274,9 +313,464 @@ export const useGuiLogic = (props) => {
         return modifiedLines.join('\n');
     }
 
+    function checkAiModelInitialization(code) {
+        // 代码完全没有使用 icrobot.ai，不需要检查
+        if (!code.includes('icrobot.ai')) {
+            return true;
+        }
+    
+        const aiModels = [
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotqr.name',
+                    default: 'QR Code Recognition',
+                    description: 'gui.extension.robotqr.name'
+                }),
+                apis: [
+                    'icrobot.ai.qr_isrecognized(',
+                    'icrobot.ai.get_qr_information('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.qr_recognition)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotapriltag.name',
+                    default: 'AprilTag Recognition',
+                    description: 'gui.extension.robotapriltag.name'
+                }),
+                apis: [
+                    'icrobot.ai.apriltag_isrecognized(',
+                    'icrobot.ai.get_apriltag_information(',
+                    'icrobot.ai.get_apriltag_location(',
+                    'icrobot.ai.get_apriltag_size('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.apriltag_recognition)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotface.name',
+                    default: 'Face Recognition',
+                    description: 'gui.extension.robotface.name'
+                }),
+                apis: [
+                    'icrobot.ai.face_isdetected(',
+                    'icrobot.ai.get_face_number(',
+                    'icrobot.ai.get_face_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.face_detection)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotcolorxy.name',
+                    default: 'Color Coordinate Tracking',
+                    description: 'gui.extension.robotcolorxy.name'
+                }),
+                apis: [
+                    'icrobot.ai.color_istracked(',
+                    'icrobot.ai.set_color_tracking(',
+                    'icrobot.ai.get_color_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.color_tracking)'
+            },
+            {
+                name: formatMessage({
+                    id: 'gui.extension.robotcat.name',
+                    default: 'Cat Face Recognition',
+                    description: 'gui.extension.robotcat.name'
+                }),
+                apis: [
+                    'icrobot.ai.cat_isdetected(',
+                    'icrobot.ai.get_cat_number(',
+                    'icrobot.ai.get_cat_location('
+                ],
+                initApi: 'icrobot.ai.set_model(icrobot.ai.cat_detection)'
+            }
+        ];
+    
+        // 逐个检查 AI 模型
+        for (const model of aiModels) {
+    
+            // 判断代码中是否真正使用了这个模型的 API
+            const isUsed = model.apis.some(api => code.includes(api));
+    
+            // 没有使用这个模型，跳过
+            if (!isUsed) {
+                continue;
+            }
+    
+            // 使用了，但是没有初始化
+            if (!code.includes(model.initApi)) {
+                // alert(
+                //     `AI模型初始化错误\n\n` +
+                //     `检测到代码使用了【${model.name}】相关功能，` +
+                //     `但是没有初始化对应的AI模型。\n\n` +
+                //     `请添加：\n${model.name}对应的初始化模块`
+                // );
+                alert(
+                    formatMessage({
+                        id: 'gui.robot.aicode1',
+                        default: 'AI model initialization error',
+                        description: 'gui.robot.aicode1'
+                    })+`\n\n`+
+                    formatMessage({
+                        id: 'gui.robot.aicode2',
+                        default: 'Detected that the code uses 【',
+                        description: 'gui.robot.aicode2'
+                    })+`${model.name}`+
+                    formatMessage({
+                        id: 'gui.robot.aicode3',
+                        default: '】-related features,',
+                        description: 'gui.robot.aicode3'
+                    })+
+                    formatMessage({
+                        id: 'gui.robot.aicode4',
+                        default: 'but the corresponding AI model has not been initialized.',
+                        description: 'gui.robot.aicode4'
+                    })+`\n\n`+
+                    formatMessage({
+                        id: 'gui.robot.aicode5',
+                        default: 'Please add:',
+                        description: 'gui.robot.aicode5'
+                    })+`\n${model.name}`+
+                    formatMessage({
+                        id: 'gui.robot.aicode6',
+                        default: 'the corresponding initialization module',
+                        description: 'gui.robot.aicode6'
+                    })
+
+                )
+    
+                return false;
+            }
+        }
+    
+        return true;
+    }
+
+    // function getAudioAssetId(name){
+    //     for(let i=0; i<name.length;i++){
+            
+    //     }
+    // }
+
+    // function getAllSounds(vm) {
+    //     const sounds = [];
+    
+    //     vm.runtime.targets.forEach(target => {
+    //         if (target.sprite && Array.isArray(target.sprite.sounds)) {
+    //             sounds.push(...target.sprite.sounds);
+    //         }
+    //     });
+    
+    //     return sounds;
+    // }
+    // function getSoundMd5ByNames(vm, names) {
+    //     const sounds = getAllSounds(vm);
+    
+    //     return names
+    //         .map(name => {
+    //             const sound = sounds.find(sound => sound.name === name);
+    //             return sound ? sound.md5 : null;
+    //         })
+    //         .filter(md5 => md5 !== null);
+    // }
+
+    // // async function getSoundData(codeAudioName) {
+    // //     const md5 = getSoundMd5ByNames(vm, codeAudioName);
+    
+    // //     console.log('音频文件:', md5);
+    
+    // //     const currentURL = window.location.href;
+    
+    // //     // 获取前一级路径
+    // //     const oneLevelUp = currentURL.substring(0, currentURL.lastIndexOf('/'));
+    
+    // //     // 获取前两级路径
+    // //     const twoLevelsUp = oneLevelUp.substring(0, oneLevelUp.lastIndexOf('/'));
+    
+    // //     const assetsPath = twoLevelsUp + '/assets';
+    
+    // //     const result = [];
+    
+    // //     for (let i = 0; i < md5.length; i++) {
+    // //         const response = await fetch(`${assetsPath}/${md5[i]}`);
+    
+    // //         if (!response.ok) {
+    // //             console.error(`音频加载失败: ${md5[i]}`);
+    // //             continue;
+    // //         }
+    
+    // //         const arrayBuffer = await response.arrayBuffer();
+    
+    // //         // 原始音频解码
+    // //         const audioContext = new AudioContext();
+    
+    // //         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    // //         /*
+    // //          * 使用 OfflineAudioContext：
+    // //          * 1. 声道数 = 1
+    // //          * 2. 采样率 = 16000
+    // //          */
+    // //         const targetSampleRate = 16000;
+    // //         const targetChannels = 1;
+    
+    // //         const targetLength = Math.ceil(
+    // //             audioBuffer.duration * targetSampleRate
+    // //         );
+    
+    // //         const offlineContext = new OfflineAudioContext(
+    // //             targetChannels,
+    // //             targetLength,
+    // //             targetSampleRate
+    // //         );
+    
+    // //         const source = offlineContext.createBufferSource();
+    
+    // //         source.buffer = audioBuffer;
+    
+    // //         source.connect(offlineContext.destination);
+    
+    // //         source.start(0);
+    
+    // //         // 渲染重采样后的音频
+    // //         const renderedBuffer = await offlineContext.startRendering();
+    
+    // //         console.log(`处理后音频: ${md5[i]}`);
+    // //         console.log('采样率:', renderedBuffer.sampleRate);
+    // //         console.log('声道数:', renderedBuffer.numberOfChannels);
+    // //         console.log('采样点数量:', renderedBuffer.length);
+    // //         console.log('时长:', renderedBuffer.duration);
+    
+    // //         /*
+    // //          * 获取单声道 Float32 数据
+    // //          *
+    // //          * 因为 OfflineAudioContext 已经设置为 1 声道，
+    // //          * 所以这里直接获取第 0 个声道。
+    // //          */
+    // //         const float32Data = renderedBuffer.getChannelData(0);
+    
+    // //         /*
+    // //          * Float32 [-1.0, 1.0]
+    // //          * 转换成 16-bit PCM
+    // //          *
+    // //          * Int16 范围：
+    // //          * -32768 ~ 32767
+    // //          */
+    // //         const pcm16 = new Int16Array(float32Data.length);
+    
+    // //         for (let j = 0; j < float32Data.length; j++) {
+    // //             let sample = float32Data[j];
+    
+    // //             // 防止超过 [-1, 1]
+    // //             sample = Math.max(-1, Math.min(1, sample));
+    
+    // //             if (sample < 0) {
+    // //                 pcm16[j] = sample * 32768;
+    // //             } else {
+    // //                 pcm16[j] = sample * 32767;
+    // //             }
+    // //         }
+    
+    // //         console.log('PCM16:', pcm16);
+    // //         console.log('PCM16 字节数:', pcm16.byteLength);
+    
+    // //         result.push({
+    // //             name: md5[i],
+    // //             sampleRate: 16000,
+    // //             channels: 1,
+    // //             bitsPerSample: 16,
+    // //             data: pcm16
+    // //         });
+    
+    // //         // 释放 AudioContext
+    // //         await audioContext.close();
+    // //     }
+    
+    // //     return result;
+    // // }
+    // async function getSoundData(codeAudioName) {
+    //     const sounds = getAllSounds(vm);
+    
+    //     const result = [];
+    
+    //     for (let i = 0; i < codeAudioName.length; i++) {
+    //         const audioName = codeAudioName[i];
+    
+    //         // 根据声音名称找到对应的 sound
+    //         const sound = sounds.find(sound => sound.name === audioName);
+    
+    //         if (!sound) {
+    //             console.error(`没有找到音频: ${audioName}`);
+    //             continue;
+    //         }
+    
+    //         // 直接使用 sound.asset.data
+    //         const audioData = sound.asset && sound.asset.data;
+    
+    //         if (!audioData) {
+    //             console.error(`音频没有 data 数据: ${audioName}`);
+    //             continue;
+    //         }
+    
+    //         console.log('音频名称:', audioName);
+    //         console.log('音频 MD5:', sound.md5);
+    //         console.log('音频原始数据:', audioData);
+    
+    //         /*
+    //          * sound.asset.data 可能是：
+    //          * ArrayBuffer
+    //          * Uint8Array
+    //          * 或其他 TypedArray
+    //          *
+    //          * decodeAudioData 需要 ArrayBuffer，
+    //          * 所以统一转换一下。
+    //          */
+    //         let arrayBuffer;
+    
+    //         if (audioData instanceof ArrayBuffer) {
+    //             arrayBuffer = audioData;
+    //         } else if (ArrayBuffer.isView(audioData)) {
+    //             arrayBuffer = audioData.buffer.slice(
+    //                 audioData.byteOffset,
+    //                 audioData.byteOffset + audioData.byteLength
+    //             );
+    //         } else {
+    //             console.error(`无法识别音频数据类型: ${audioName}`);
+    //             continue;
+    //         }
+    
+    //         // 原始音频解码
+    //         const audioContext = new AudioContext();
+    
+    //         let audioBuffer;
+    
+    //         try {
+    //             audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    //         } catch (error) {
+    //             console.error(`音频解码失败: ${audioName}`, error);
+    //             await audioContext.close();
+    //             continue;
+    //         }
+    
+    //         /*
+    //          * 使用 OfflineAudioContext：
+    //          * 1. 声道数 = 1
+    //          * 2. 采样率 = 16000
+    //          */
+    //         const targetSampleRate = 16000;
+    //         const targetChannels = 1;
+    
+    //         const targetLength = Math.ceil(
+    //             audioBuffer.duration * targetSampleRate
+    //         );
+    
+    //         const offlineContext = new OfflineAudioContext(
+    //             targetChannels,
+    //             targetLength,
+    //             targetSampleRate
+    //         );
+    
+    //         const source = offlineContext.createBufferSource();
+    
+    //         source.buffer = audioBuffer;
+    
+    //         source.connect(offlineContext.destination);
+    
+    //         source.start(0);
+    
+    //         // 渲染重采样后的音频
+    //         const renderedBuffer = await offlineContext.startRendering();
+    
+    //         console.log(`处理后音频: ${audioName}`);
+    //         console.log('MD5:', sound.md5);
+    //         console.log('采样率:', renderedBuffer.sampleRate);
+    //         console.log('声道数:', renderedBuffer.numberOfChannels);
+    //         console.log('采样点数量:', renderedBuffer.length);
+    //         console.log('时长:', renderedBuffer.duration);
+    
+    //         /*
+    //          * 获取单声道 Float32 数据
+    //          */
+    //         const float32Data = renderedBuffer.getChannelData(0);
+    
+    //         /*
+    //          * Float32 [-1.0, 1.0]
+    //          * 转换成 16-bit PCM
+    //          */
+    //         const pcm16 = new Int16Array(float32Data.length);
+    
+    //         for (let j = 0; j < float32Data.length; j++) {
+    //             let sample = float32Data[j];
+    
+    //             // 防止超过 [-1, 1]
+    //             sample = Math.max(-1, Math.min(1, sample));
+    
+    //             if (sample < 0) {
+    //                 pcm16[j] = sample * 32768;
+    //             } else {
+    //                 pcm16[j] = sample * 32767;
+    //             }
+    //         }
+    
+    //         console.log('PCM16:', pcm16);
+    //         console.log('PCM16 字节数:', pcm16.byteLength);
+    
+    //         result.push({
+    //             name: sound.md5,
+    //             originalName: audioName,
+    //             sampleRate: 16000,
+    //             channels: 1,
+    //             bitsPerSample: 16,
+    //             data: pcm16
+    //         });
+    
+    //         // 释放 AudioContext
+    //         await audioContext.close();
+    //     }
+    
+    //     return result;
+    // }
+
+    // function getPlayAudioNames(code) {
+    //     const names = [];
+    
+    //     const regex = /icrobot\.playAudio\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+    
+    //     let match;
+    
+    //     while ((match = regex.exec(code)) !== null) {
+    //         let audioName = match[1].trim();
+    
+    //         // 去掉 .wav 后缀
+    //         audioName = audioName.replace(/\.wav$/i, '').trim();
+    
+    //         names.push(audioName);
+    //     }
+    
+    //     return names;
+    // }
     async function downloadCodeTotal(args) {
+        // console.log('vm',vm)
+        // let codeAudioName = getPlayAudioNames(codeModule.getCode())
+        // const audioData = await getSoundData(codeAudioName);
+
+        // console.log(audioData);
+        // for (const audio of audioData) {
+        //     const buffer = audio.data.buffer;
+        
+        //     console.log('发送字节数:', buffer);
+        
+        //     // WebSocket
+        //     // websocket.send(buffer);
+        
+        //     // Web Serial
+        //     // await writer.write(new Uint8Array(buffer));
+        // }
         if(whatConnect[1]==1){
             console.log('wifi下载');
+            let isCheck = checkAiModelInitialization(codeModule.getCode())
+            if (!isCheck) return
 
             setIsLoading(true);
             let timerLoad = setTimeout(() => {
@@ -360,8 +854,24 @@ export const useGuiLogic = (props) => {
                 }
                  setIsDown(!isDown);
             }else if(extensionName=='ICRobot'){
+                let isCheck = checkAiModelInitialization(codeModule.getCode())
+                if (!isCheck) return
                 download(args);
                 setIsLoading(true)
+                if(bleDownloadTimer){
+                    clearTimeout(bleDownloadTimer)
+                }
+                bleDownloadTimer=setTimeout(()=>{
+                    setIsLoading(false)
+                    alert(formatMessage({
+                        id: 'gui.alert.downFailed',
+                        default: 'Download failed',
+                        description: 'gui.alert.downFailed'
+                    }))
+                },10000)
+            }else if(extensionName == 'ic2007'){
+                setIsLoading(true)
+                window.EditorPreload.bleDownloadIC2007(codeModule.getCode())
                 if(bleDownloadTimer){
                     clearTimeout(bleDownloadTimer)
                 }
@@ -402,6 +912,14 @@ export const useGuiLogic = (props) => {
                         description: 'gui.alert.selectplace'
                     }));
             }
+        }
+
+        if(extensionName=='ic2007' && whatConnect[0]!=1){
+            alert(formatMessage({
+                id: 'gui.download.ic2007',
+                default: 'Please connect the device first.',
+                description: 'gui.download.ic2007'
+            }))
         }
         // if(whatConnect[2]==1){
         //     console.log('串口下载')
@@ -651,6 +1169,9 @@ export const useGuiLogic = (props) => {
                 if(extensionName=='Microbit'){
                     window.EditorPreload.exitReplMode()
                 }
+                if(extensionName == 'ic2007'){
+                    window.EditorPreload.bleSendIC2007(JSON.stringify([0xCC,0x02]));
+                }
                 isUpLoadMode=true
                 if(whatConnect[1]==1){
 
@@ -734,6 +1255,9 @@ export const useGuiLogic = (props) => {
             }else{
                 if(extensionName=='Microbit'){
                     window.EditorPreload.enterReplMode()
+                }
+                if(extensionName == 'ic2007'){
+                    window.EditorPreload.bleSendIC2007(JSON.stringify([0xCC,0x01]));
                 }
                 isUpLoadMode=false
                 if(whatConnect[1]==1){
@@ -1018,20 +1542,23 @@ export const useGuiLogic = (props) => {
                         if (!JSON.parse(event.data).data.message[1]) {
                             stopAll.postMessage(true);
                         }
-                        setExtensionName('选择设备');
                         setCurrent('');
+                        setCurrentExtension('')
+                        setExtensionName('选择设备');
+                        
                     } else if (JSON.parse(event.data).type == 'setExtension') {
                         stopAll.postMessage(true);
                         let extension = JSON.parse(event.data).data.message;
                         if (extension == 1) {
+                            setCurrent('ICBricks');
                             setCurrentExtension('1');
                             setExtensionName('ICBricks');
-                            setCurrent('ICBricks');
+                            
                             if (extensionSelect[extension - 1]) {
                                 setIsBricks(true);
                                 channel1.postMessage(extension);
                                 await new Promise(resolve => setTimeout(resolve, 100));
-                                await fetch('http://localhost:3000/set-extension', {
+                                await fetch('http://localhost:38127/set-extension', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'text/plain'
@@ -1056,9 +1583,10 @@ export const useGuiLogic = (props) => {
                             setLanMode('Lua');
                             codeModule.setCode('');
                         } else if (extension == 2) {
+                            setCurrent('ICRobot');
                             setCurrentExtension('2');
                             setExtensionName('ICRobot');
-                            setCurrent('ICRobot');
+                            
                             if (extensionSelect[extension - 1]) {
                                 setIsBricks(false);
                                 channel1.postMessage(extension);
@@ -1084,7 +1612,7 @@ export const useGuiLogic = (props) => {
                                     }
                                 }
                                 await new Promise(resolve => setTimeout(resolve, 100));
-                                await fetch('http://localhost:3000/set-extension', {
+                                await fetch('http://localhost:38127/set-extension', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'text/plain'
@@ -1109,14 +1637,15 @@ export const useGuiLogic = (props) => {
                             setLanMode('Python');
                             codeModule.setCode('');
                         } else if (extension == 3) {
+                            setCurrent('Microbit');
                             setCurrentExtension('3');
                             setExtensionName('Microbit');
-                            setCurrent('Microbit');
+                            
                             if (extensionSelect[extension - 1]) {
                                 setIsBricks(false);
                                 channel1.postMessage(extension);
                                 await new Promise(resolve => setTimeout(resolve, 100));
-                                await fetch('http://localhost:3000/set-extension', {
+                                await fetch('http://localhost:38127/set-extension', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'text/plain'
@@ -1140,6 +1669,115 @@ export const useGuiLogic = (props) => {
                             setLan('Python');
                             setLanMode('Python');
                             codeModule.setCode('');
+                        }else if(extension == 4){
+                            console.log('选择了arduino')
+                            setCurrent('ArduinoUno');
+                            setCurrentExtension('4');
+                            setExtensionName('ArduinoUno');
+                            
+                            if (extensionSelect[extension - 1]) {
+                                setIsBricks(false);
+                                channel1.postMessage(extension);
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                await fetch('http://localhost:38127/set-extension', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'text/plain'
+                                    },
+                                    body: 0
+                                })
+                                    .then(response => response.text())
+                                    .then(data => { })
+                                    .catch(error => {
+                                        console.error('错误:', error);
+                                    });
+                            } else {
+                                setIsLoading(true);
+                                setIsBricks(false);
+                                setIsMaster(true);
+                                setIsRobot(false);
+                                setAdd(true);
+                                onExtensionButtonClick();
+                                extensionSelect[extension - 1] = true;
+                            }
+                            setLan('Arduino');
+                            setLanMode('Arduino');
+                            codeModule.setCode('');
+                            setTimeout(()=>{
+                                channelGrayBlock.postMessage('arduino')
+                            },1000)
+                        }else if(extension == 5){
+                            console.log('选择了py32')
+                            setCurrent('py32');
+                            setCurrentExtension('5');
+                            setExtensionName('py32');
+                            
+                            if (extensionSelect[extension - 1]) {
+                                setIsBricks(false);
+                                channel1.postMessage(extension);
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                await fetch('http://localhost:38127/set-extension', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'text/plain'
+                                    },
+                                    body: 0
+                                })
+                                    .then(response => response.text())
+                                    .then(data => { })
+                                    .catch(error => {
+                                        console.error('错误:', error);
+                                    });
+                            } else {
+                                setIsLoading(true);
+                                setIsBricks(false);
+                                setIsMaster(true);
+                                setIsRobot(false);
+                                setAdd(true);
+                                onExtensionButtonClick();
+                                extensionSelect[extension - 1] = true;
+                            }
+                            setLan('Arduino');
+                            setLanMode('Arduino');
+                            codeModule.setCode('');
+                            setTimeout(()=>{
+                                channelGrayBlock.postMessage('py32')
+                            },1000)
+                        }else if(extension == 6){
+                            console.log('选择了ic2007')
+                            setCurrent('ic2007');
+                            setCurrentExtension('6');
+                            setExtensionName('ic2007');
+                            
+                            if (extensionSelect[extension - 1]) {
+                                setIsBricks(false);
+                                channel1.postMessage(extension);
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                await fetch('http://localhost:38127/set-extension', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'text/plain'
+                                    },
+                                    body: 0
+                                })
+                                    .then(response => response.text())
+                                    .then(data => { })
+                                    .catch(error => {
+                                        console.error('错误:', error);
+                                    });
+                            } else {
+                                setIsLoading(true);
+                                setIsBricks(false);
+                                setIsMaster(true);
+                                setIsRobot(false);
+                                setAdd(true);
+                                onExtensionButtonClick();
+                                extensionSelect[extension - 1] = true;
+                            }
+                            setLan('Python');
+                            setLanMode('Python');
+                            codeModule.setCode('');
+                            
                         }
                         channelMode.postMessage(!getShowCodeDb())
                     } else if (JSON.parse(event.data).type == 'whatIp') {
@@ -1600,6 +2238,10 @@ export const useGuiLogic = (props) => {
         handleSelect,
         handleOpenAiMode,
         showIot,
-        setShowIot
+        setShowIot,
+        flashLogs,
+        setFlashLogs,
+        showFlash,
+        setShowFlash
     };
 };

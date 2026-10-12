@@ -120,7 +120,7 @@ class Blocks extends React.Component {
         AddonHooks.blocklyCallbacks.length = [];
 
         this.dataXML
-        this.preClose=[false,false,false]
+        this.preClose=[false,false,false,false,false,false]
         this.mode=!getShowCodeDb()
         this.currentDevice=getCurrent()
         this.channelMode=this.logic.channelMode
@@ -323,6 +323,9 @@ class Blocks extends React.Component {
         if (!typePrefix) {
             console.warn('workspaceChange: typePrefix 不能为空');
             return;
+        }
+        if(typePrefix!='arduinouno' && typePrefix !='py32' && typePrefix!='arduino'){
+            return
         }
 
         const flyoutWorkspace =
@@ -940,7 +943,7 @@ class Blocks extends React.Component {
             console.warn('AI XML 加载失败，已经恢复之前的 workspace');
             return;
         }
-        this.workspace.addChangeListener(this.props.vm.blockListener);
+        // this.workspace.addChangeListener(this.props.vm.blockListener);
 
         if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
             const {scrollX, scrollY, scale} = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];

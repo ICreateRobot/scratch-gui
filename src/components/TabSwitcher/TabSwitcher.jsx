@@ -185,6 +185,11 @@ import py32PlaceRed from './py32PlaceRed.png'
 import py32PlaceBlue from './py32PlaceBlue.png'
 import py32PlacePurple from './py32PlacePurple.png'
 
+import ic2007Place from './ic2007Place.png'
+import ic2007PlaceRed from './ic2007PlaceRed.png'
+import ic2007PlaceBlue from './ic2007PlaceBlue.png'
+import ic2007PlacePurple from './ic2007PlacePurple.png'
+
 
 // import mainCon from './conn_main_con.svg'
 import connMotor from './conn_motor.svg'
@@ -501,11 +506,18 @@ const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
     blue:py32PlaceBlue,
     purple:py32PlacePurple
   }
+  const ic2007Map={
+    green:ic2007Place,
+    red:ic2007PlaceRed,
+    blue:ic2007PlaceBlue,
+    purple:ic2007PlacePurple
+  }
   const bricksHand=bricksMap[getAccent()]
   const microbitHand=microbitMap[getAccent()]
   const unoHand=unoMap[getAccent()]
 
   const py32Hand=py32Map[getAccent()]
+  const ic2007Hand=ic2007Map[getAccent()]
     // console.log('-------------------')
     // console.log(extension)
     // console.log('###################')
@@ -911,6 +923,68 @@ const ProgramDownload = ({onSendData,extension,isDark,parentIsDown }) => {
                 background:'transparent'
               }}
               onClick={downloadPyBn}
+            >
+              <img draggable={false} src={downHand}></img>
+            </button>
+          </div>
+      </div>
+    );
+  }else if(extension == '6'){
+    const downHand=downMap[getAccent()]
+    
+
+      
+    const downloadIc = ()=>{
+      onSendData(1)
+      
+    }
+    return (
+      <div className={styles.tabswitcherProgrameBack} style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',width:'100%',height:'100%'
+      }}>
+        <img draggable={false} style={{height:'150px',position:'relative',top:'8px',right:'30px'}} src={ic2007Hand}></img>
+
+         {/* 下载 & 运行按钮 */}
+          <div
+            className={styles.tabswitcherProgrameDown}
+            style={{
+              position: 'absolute',
+              right: '0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              // backgroundColor:isDark ? '#0D0D0D' : '#c9ffef',
+              height:'100%',
+              width:'70px'
+            }}
+          >
+            {/* <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#B0E0E6',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              
+            >
+              <img src={down}></img>
+            </button> */}
+            <button
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                // backgroundColor: '#00F5FF',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                background:'transparent'
+              }}
+              onClick={downloadIc}
             >
               <img draggable={false} src={downHand}></img>
             </button>
@@ -1722,78 +1796,86 @@ const ControlPanelLayout = ({extension,isDark}) => {
   }else if(extension == '1'){
   
 
-    const GridItem = React.memo(({ label, num }) => {
-      const colors = ['#FFA07A', '#90EE90', '#87CEFA', '#DDA0DD'];
+    // const GridItem = React.memo(({ label, num }) => {
+    //   const colors = ['#FFA07A', '#90EE90', '#87CEFA', '#DDA0DD'];
       
-      return (
-        <div style={{
-          position:'relative',
-          left:'20px',
-          top:'20px',
-          width: '70px',
-          height: '70px',
-          backgroundColor: num <= 2 ? '#f5f5f5' : '#eaeaea',
-          borderRadius: '8px',
-          border: '1px solid #ccc',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          transition: 'transform 0.2s ease'
-        }}>
-          {/* 顶部标识条 */}
-          <div style={{
-            width: '100%',
-            backgroundColor: label.img ? '#4fce9d' : '#7a8480',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            padding: '2px 0',
-            fontSize: '12px',
-            color: '#333'
-          }}>
-            {label.port}:{label.content}
-          </div>
+    //   return (
+    //     <div style={{
+    //       position:'relative',
+    //       left:'20px',
+    //       top:'20px',
+    //       width: '70px',
+    //       height: '70px',
+    //       backgroundColor: num <= 2 ? '#f5f5f5' : '#eaeaea',
+    //       borderRadius: '8px',
+    //       border: '1px solid #ccc',
+    //       display: 'flex',
+    //       flexDirection: 'column',
+    //       overflow: 'hidden',
+    //       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    //       transition: 'transform 0.2s ease'
+    //     }}>
+    //       {/* 顶部标识条 */}
+    //       <div style={{
+    //         width: '100%',
+    //         backgroundColor: label.img ? '#4fce9d' : '#7a8480',
+    //         textAlign: 'center',
+    //         fontWeight: 'bold',
+    //         padding: '2px 0',
+    //         fontSize: '12px',
+    //         color: '#333'
+    //       }}>
+    //         {label.port}:{label.content}
+    //       </div>
 
-          {/* 图片展示区域 */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '5px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              color: '#555'
-            }}>
-              <img draggable={false} src={label.img}></img>
-            </div>
-          </div>
-        </div>
-      );
-    });
+    //       {/* 图片展示区域 */}
+    //       <div style={{
+    //         flex: 1,
+    //         display: 'flex',
+    //         alignItems: 'center',
+    //         justifyContent: 'center',
+    //         padding: '5px'
+    //       }}>
+    //         <div style={{
+    //           width: '40px',
+    //           height: '40px',
+    //           backgroundColor: '#f0f0f0',
+    //           borderRadius: '6px',
+    //           display: 'flex',
+    //           alignItems: 'center',
+    //           justifyContent: 'center',
+    //           fontSize: '20px',
+    //           color: '#555'
+    //         }}>
+    //           <img draggable={false} src={label.img}></img>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   );
+    // });
+    // return (
+    //    <div  className={styles.tabswitcherControlFourth} style={{
+    //       display: 'grid',
+    //       gridTemplateColumns: 'repeat(4, 1fr)',
+    //       gap: '12px',
+    //       flexGrow: 1,
+    //       alignContent: 'start',
+    //       height:'100%',
+    //       // backgroundColor:isDark ? '#1F1F1F':'white'
+    //     }}>
+    //       {portContent.map((label, num) => (
+    //         <GridItem key={num} label={label} num={num} />
+    //       ))}
+    //     </div>
+    // );
     return (
-       <div  className={styles.tabswitcherControlFourth} style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '12px',
-          flexGrow: 1,
-          alignContent: 'start',
-          height:'100%',
-          // backgroundColor:isDark ? '#1F1F1F':'white'
+      <div className={styles.tabswitcherControlFourth} style={{
+        // backgroundColor:isDark ? '#1F1F1F':'white',
+        height:'100%'
         }}>
-          {portContent.map((label, num) => (
-            <GridItem key={num} label={label} num={num} />
-          ))}
-        </div>
-    );
+        {/* 占位 */}
+      </div>
+    )
   }else if(extension == '3'){
     return (
       <div className={styles.tabswitcherControlFourth} style={{
