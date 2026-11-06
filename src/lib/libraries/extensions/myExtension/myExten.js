@@ -84,6 +84,7 @@ import ICmicrobitConnectionIconURL from '../ICreate_Microbit/microbit-illustrati
 import ICmicrobitConnectionSmallIconURL from '../ICreate_Microbit/microbit-small.svg';
 
 import robotPinImage from '../robotpin/robotPinImage.png'
+import zerothIconURL from '../zeroth/zeroth.png';
 
 //k210
 
@@ -843,6 +844,29 @@ const ic2007Extension = {
     featured: true
 };
 
+const zerothExtension = {
+    name: (
+        <FormattedMessage
+            defaultMessage="zeroth"
+            description="Name for the 'zeroth' extension"
+            id="gui.extension.zeroth.name"
+        />
+    ),
+    extensionId: 'zeroth',
+    iconURL: zerothIconURL, 
+    // insetIconURL: robotactuatorInsetImage,
+    description: (
+        // <FormattedMessage
+        //     defaultMessage="This extension can control the digital pins, analog pins, and IIC pins of zeroth devices."
+        //     description="Description for the 'zeroth' extension"
+        //     id="gui.extension.zeroth.description"
+        // />
+        ''
+    ),
+    tags: ['main'],
+    featured: true
+};
+
 
 
 export {
@@ -880,5 +904,6 @@ export {
     robotPinExtension,
     arduinoUnoExtension,
     py32Extension,
-    ic2007Extension
+    ic2007Extension,
+    zerothExtension
 };

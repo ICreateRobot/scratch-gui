@@ -86,7 +86,8 @@ import {
     robotPinExtension,
     arduinoUnoExtension,
     py32Extension,
-    ic2007Extension
+    ic2007Extension,
+    zerothExtension
 } from './myExtension/myExten'
 
 // console.log(robotTeachableExtension)
@@ -125,6 +126,7 @@ export default [
     arduinoUnoExtension,
     py32Extension,
     ic2007Extension,
+    zerothExtension,
     {
         name: (
             <FormattedMessage
